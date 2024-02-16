@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "fitnesstypescript",
-    "slug": "fitnesstypescript",
+    "name": "datingapp",
+    "slug": "datingapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
