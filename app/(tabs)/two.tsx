@@ -1,37 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FlatList, TouchableOpacity, Text, View } from 'react-native';
 import { GiftedChat, IMessage, User } from 'react-native-gifted-chat';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
+
 
 interface CustomMessage extends IMessage {
   user: User;
 }
 
+
 const TabTwoScreen = () => {
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [chats, setChats] = useState<User[]>([
+    { _id: 1, name: 'User 1' },
     { _id: 2, name: 'User 2' },
-    { _id: 3, name: 'User 3' },
     // Add more users as needed
   ]);
+
 
   const [messages, setMessages] = useState<CustomMessage[]>([]);
   const navigation = useNavigation(); // Initialize useNavigation
 
-  const onChatSelect = (chatId: number) => {
+
+  const onChatSelect = async (chatId: number) => {
     setSelectedChat(chatId);
-    // Load messages for the selected chat from your data source
-    // For now, let's assume that messages are loaded for demonstration purposes
-    const loadedMessages: CustomMessage[] = [
-      {
-        _id: '1',
-        text: `Hello ${chats.find((chat) => chat._id === chatId)?.name}!`,
-        createdAt: new Date(),
-        user: { _id: 1, name: 'You' },
-      },
-    ];
-    setMessages(loadedMessages);
+ 
+    try {
+      // Fetch messages for the selected chat from the back end
+      const response = await fetch(`http://localhost:3000/api/chat/${chatId}`);
+     
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+ 
+      const messages = await response.json();
+ 
+      // Reverse the order of messages before setting them in the state
+      const reversedMessages = messages.reverse();
+ 
+      // Log the received messages
+      console.log('Received messages:', reversedMessages);
+ 
+      // Update the state with the fetched messages
+      setMessages(reversedMessages);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      // Handle the error, e.g., display a message to the user
+    }
   };
+
+
+  useEffect(() => {
+    // Fetch initial messages when the component mounts
+    if (selectedChat !== null) {
+      onChatSelect(selectedChat);
+    }
+  }, [selectedChat]);
+
 
   const renderChats = ({ item }: { item: User }) => (
     <TouchableOpacity onPress={() => onChatSelect(Number(item._id))}>
@@ -40,6 +65,7 @@ const TabTwoScreen = () => {
       </View>
     </TouchableOpacity>
   );
+
 
   const renderChatScreen = () => {
     if (selectedChat !== null) {
@@ -62,7 +88,7 @@ const TabTwoScreen = () => {
           <GiftedChat
             messages={messages}
             onSend={(newMessages) => onSend(newMessages)}
-            user={{ _id: 1, name: 'You' }}
+            user={{ _id: 0, name: 'User 0' }}
           />
         </View>
       );
@@ -77,11 +103,48 @@ const TabTwoScreen = () => {
     }
   };
 
-  const onSend = (newMessages: CustomMessage[] = []) => {
-    setMessages((prevMessages) => GiftedChat.append(prevMessages, newMessages));
+
+  const onSend = async (newMessages: CustomMessage[] = []) => {
+    // Assuming you're using the selectedChat as the chatId
+    const chatId = selectedChat?.toString();
+ 
+    if (!chatId || newMessages.length === 0) {
+      // Exit early if chatId is null or there are no new messages
+      return;
+    }
+ 
+    // Reverse the order of new messages before sending them
+    const reversedNewMessages = newMessages.reverse();
+ 
+    // POST the new message to the backend
+    try {
+      const response = await fetch(`http://localhost:3000/api/chat/${chatId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reversedNewMessages[0]), // Assuming only one message is sent at a time
+      });
+ 
+      const result = await response.json();
+      console.log(result);
+ 
+      // Fetch updated messages after sending a new message
+      const updatedMessages = await fetch(`http://localhost:3000/api/chat/${chatId}`);
+      const updatedMessagesData = await updatedMessages.json();
+ 
+      // Reverse the order of updated messages before setting them in the state
+      const reversedUpdatedMessages = updatedMessagesData.reverse();
+ 
+      setMessages(reversedUpdatedMessages);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
+
 
   return <View style={{ flex: 1 }}>{renderChatScreen()}</View>;
 };
+
 
 export default TabTwoScreen;
