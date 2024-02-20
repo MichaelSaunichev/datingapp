@@ -44,26 +44,6 @@ const TabTwoScreen = () => {
     }
   };
 
-  /*useEffect(() => {
-    // Fetch chat users when the component mounts
-    const fetchChats = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/api/chats');
-        if (!response.ok) {
-          throw new Error('Failed to fetch chat users');
-        }
-        const chatUsers = await response.json();
-        console.log('Fetched chat users:', chatUsers);
-        setChats(chatUsers);
-      } catch (error) {
-        console.error('Error fetching chat users:', error);
-        // Handle the error, e.g., display a message to the user
-      }
-    };
-  
-    fetchChats();
-  }, []);*/
-
   useFocusEffect(
     React.useCallback(() => {
       const fetchChats = async () => {
@@ -77,7 +57,6 @@ const TabTwoScreen = () => {
         setChats(chatUsers);
       } catch (error) {
         console.error('Error fetching chat users:', error);
-        // Handle the error, e.g., display a message to the user
       }
       };
       fetchChats();
