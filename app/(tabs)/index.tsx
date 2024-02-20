@@ -1,47 +1,157 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
 
 interface Card {
   id: number;
   text: string;
+  longText: string;
   imageUrl: string;
-  longText: string; // Add a new property for longer text
+  likesYou: number;
 }
-
-const data: Card[] = [
-  { id: 1, text: 'Card 1', imageUrl: 'https://example.com/image1.jpg', longText: 'Long text for Card 1...' },
-  { id: 2, text: 'Card 2', imageUrl: 'https://example.com/image2.jpg', longText: 'Long text for Card 2...' },
-  { id: 3, text: 'Card 3', imageUrl: 'https://example.com/image3.jpg', longText: 'Long text for Card 3...' },
-  // Add more data as needed
-];
 
 const TabOneScreen = () => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [cards, setCards] = useState<Card[]>(data);
+  const [cards, setCards] = useState<Card[]>([]);
 
-  const onLike = () => {
-    // Handle like event
-    console.log('Liked:', cards[currentIndex]);
-    showNextCard();
+  useEffect(() => {
+    // Fetch the initial card when the component mounts
+    renderCardUI();
+  }, []); // Empty dependency array to ensure it runs only on mount
+
+  const renderCardUI = async () => {
+    try {
+      // Fetch card data from the backend
+      const response = await fetch(`http://localhost:3000/api/cards`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch card data');
+      }
+  
+      const cardData = await response.json();
+
+      // Update the cards state with the fetched data
+      setCards(cardData);
+
+    } catch (error) {
+      console.error('Error fetching card data:', error);
+    }
   };
 
-  const onDislike = () => {
-    // Handle dislike event
-    console.log('Disliked:', cards[currentIndex]);
-    showNextCard();
+  const setNextIndex = async (removed : number) => {
+    try {
+      // Fetch the next card data
+      const response = await fetch(`http://localhost:3000/api/cards`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch card data');
+      }
+  
+      const updatedCardData = await response.json();
+  
+      // Update the cards state with the fetched data
+      setCards(updatedCardData);
+
+      console.log('updated:', updatedCardData);
+
+      console.log('Cards length:', cards.length);
+
+      var nextIndex = currentIndex;
+
+      if (!removed){
+        // Increment the index to show the next card
+        nextIndex = currentIndex + 1 < updatedCardData.length ? currentIndex + 1 : 0;
+      }
+      else{
+        nextIndex = currentIndex < updatedCardData.length ? currentIndex : 0;
+      }
+
+      // Set the current index to the next index
+      setCurrentIndex(nextIndex);
+      
+    } catch (error) {
+      console.error('Error fetching or updating card data:', error);
+    }
   };
 
-  const showNextCard = () => {
-    // Increment the index to show the next card
-    setCurrentIndex((prevIndex) => (prevIndex + 1 < cards.length ? prevIndex + 1 : 0));
+  const removeCard = async (card: Card) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/cards/${card.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to remove card');
+      }
+  
+      console.log('Card removed successfully');
+    } catch (error) {
+      console.error('Error removing card:', error);
+    }
+  };
+
+  const addChat = async (card: Card) => {
+    try {
+      // Extract relevant properties from the card
+      const { id, text } = card;
+  
+      // Create an object with id and name properties
+      const user = { _id: id, name: text };
+  
+      const response = await fetch('http://localhost:3000/api/addchat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(user),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to add user to chats');
+      }
+  
+      console.log('User added to chats:', user);
+    } catch (error) {
+      console.error('Error adding user to chats:', error);
+    }
+  };
+
+  const onLike = async () => {
+    // Get the current card
+    const currentCard = cards[currentIndex];
+  
+    console.log('Liked:', currentCard);
+  
+    if (currentCard.likesYou === 1) {
+      try {
+        // Add the user to the chats array on the backend
+        await addChat(currentCard);
+        await removeCard(currentCard).then(() => {
+          // Call setNextIndex only after removeCard is completed
+          setNextIndex(1);
+        });
+      } catch (error) {
+        console.error('Error adding user to chats or removing card:', error);
+      }
+    } else {
+      // If the card doesn't have likes show the next card
+      setNextIndex(0);
+    }
+  };
+
+  const onDislike = async () => {
+    const currentCard = cards[currentIndex];
+    console.log('Disliked:', currentCard);
+    setNextIndex(0);
   };
 
   const renderCard = (card: Card) => (
     <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled>
       <View style={styles.card}>
-        <Image source={{ uri: card.imageUrl }} style={styles.image} />
-        <Text style={styles.cardText}>{card.text}</Text>
+        {/* Customize how to display the card data */}
+        <Text>{card.text}</Text>
         <Text>{card.longText}</Text>
+        {/* ... (other card data) */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={onDislike}>
             <Text style={styles.buttonText}>Dislike</Text>
@@ -56,7 +166,7 @@ const TabOneScreen = () => {
 
   return (
     <View style={styles.container}>
-      {renderCard(cards[currentIndex])}
+      {cards.length > 0 && renderCard(cards[currentIndex])}
     </View>
   );
 };
@@ -83,17 +193,6 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '100%', // Adjust the width based on your design
     height: '100%',
-  },
-  cardText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  image: {
-    width: '100%',
-    height: '50%', // Adjust the height based on your design
-    borderRadius: 8,
-    marginBottom: 10,
   },
   buttonContainer: {
     flexDirection: 'row',

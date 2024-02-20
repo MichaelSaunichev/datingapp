@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { FlatList, TouchableOpacity, Text, View } from 'react-native';
 import { GiftedChat, IMessage, User } from 'react-native-gifted-chat';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
@@ -11,16 +12,10 @@ interface CustomMessage extends IMessage {
 
 const TabTwoScreen = () => {
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
-  const [chats, setChats] = useState<User[]>([
-    { _id: 1, name: 'User 1' },
-    { _id: 2, name: 'User 2' },
-    // Add more users as needed
-  ]);
-
+  const [chats, setChats] = useState<User[]>([]);
 
   const [messages, setMessages] = useState<CustomMessage[]>([]);
   const navigation = useNavigation(); // Initialize useNavigation
-
 
   const onChatSelect = async (chatId: number) => {
     setSelectedChat(chatId);
@@ -49,13 +44,45 @@ const TabTwoScreen = () => {
     }
   };
 
+  /*useEffect(() => {
+    // Fetch chat users when the component mounts
+    const fetchChats = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/chats');
+        if (!response.ok) {
+          throw new Error('Failed to fetch chat users');
+        }
+        const chatUsers = await response.json();
+        console.log('Fetched chat users:', chatUsers);
+        setChats(chatUsers);
+      } catch (error) {
+        console.error('Error fetching chat users:', error);
+        // Handle the error, e.g., display a message to the user
+      }
+    };
+  
+    fetchChats();
+  }, []);*/
 
-  useEffect(() => {
-    // Fetch initial messages when the component mounts
-    if (selectedChat !== null) {
-      onChatSelect(selectedChat);
-    }
-  }, [selectedChat]);
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchChats = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/chats');
+        if (!response.ok) {
+          throw new Error('Failed to fetch chat users');
+        }
+        const chatUsers = await response.json();
+        console.log('Fetched chat users:', chatUsers);
+        setChats(chatUsers);
+      } catch (error) {
+        console.error('Error fetching chat users:', error);
+        // Handle the error, e.g., display a message to the user
+      }
+      };
+      fetchChats();
+    }, [])
+  );
 
 
   const renderChats = ({ item }: { item: User }) => (
@@ -65,7 +92,6 @@ const TabTwoScreen = () => {
       </View>
     </TouchableOpacity>
   );
-
 
   const renderChatScreen = () => {
     if (selectedChat !== null) {
