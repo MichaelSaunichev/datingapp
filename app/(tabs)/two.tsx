@@ -19,25 +19,20 @@ const TabTwoScreen = () => {
 
   const onChatSelect = async (chatId: number) => {
     setSelectedChat(chatId);
- 
+  
     try {
-      // Fetch messages for the selected chat from the back end
+      // Fetch messages for the selected chat from the backend
       const response = await fetch(`http://localhost:3000/api/chat/${chatId}`);
-     
+  
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
- 
+  
       const messages = await response.json();
- 
-      // Reverse the order of messages before setting them in the state
-      const reversedMessages = messages.reverse();
- 
-      // Log the received messages
-      console.log('Received messages:', reversedMessages);
- 
-      // Update the state with the fetched messages
-      setMessages(reversedMessages);
+  
+      // Update the state with the fetched messages without reversing
+      setMessages(messages);
+      console.log('messages:', messages);
     } catch (error) {
       console.error('Error loading messages:', error);
       // Handle the error, e.g., display a message to the user
@@ -53,7 +48,6 @@ const TabTwoScreen = () => {
           throw new Error('Failed to fetch chat users');
         }
         const chatUsers = await response.json();
-        console.log('Fetched chat users:', chatUsers);
         setChats(chatUsers);
       } catch (error) {
         console.error('Error fetching chat users:', error);
@@ -94,6 +88,7 @@ const TabTwoScreen = () => {
             messages={messages}
             onSend={(newMessages) => onSend(newMessages)}
             user={{ _id: 0, name: 'User 0' }}
+            inverted = {false}
           />
         </View>
       );
@@ -112,15 +107,15 @@ const TabTwoScreen = () => {
   const onSend = async (newMessages: CustomMessage[] = []) => {
     // Assuming you're using the selectedChat as the chatId
     const chatId = selectedChat?.toString();
- 
+  
     if (!chatId || newMessages.length === 0) {
       // Exit early if chatId is null or there are no new messages
       return;
     }
- 
-    // Reverse the order of new messages before sending them
-    const reversedNewMessages = newMessages.reverse();
- 
+  
+    // Send the last message instead of the first one
+    const lastNewMessage = newMessages[newMessages.length - 1];
+  
     // POST the new message to the backend
     try {
       const response = await fetch(`http://localhost:3000/api/chat/${chatId}`, {
@@ -128,20 +123,17 @@ const TabTwoScreen = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(reversedNewMessages[0]), // Assuming only one message is sent at a time
+        body: JSON.stringify(lastNewMessage),
       });
- 
+  
       const result = await response.json();
-      console.log(result);
- 
+  
       // Fetch updated messages after sending a new message
       const updatedMessages = await fetch(`http://localhost:3000/api/chat/${chatId}`);
       const updatedMessagesData = await updatedMessages.json();
- 
-      // Reverse the order of updated messages before setting them in the state
-      const reversedUpdatedMessages = updatedMessagesData.reverse();
- 
-      setMessages(reversedUpdatedMessages);
+  
+      // Update the state with the fetched messages without reversing
+      setMessages(updatedMessagesData);
     } catch (error) {
       console.error('Error sending message:', error);
     }

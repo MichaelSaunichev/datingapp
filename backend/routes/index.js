@@ -51,13 +51,14 @@ router.get('/api/cards', function(req, res, next) {
 router.post('/api/addchat', (req, res) => {
   const newUser = req.body;
 
-  // Add the new user to the chats array
-  chats.push(newUser);
+  // Add the new user to the beginning of the chats array
+  chats.unshift(newUser);
 
   res.json({ message: 'User added to chats', user: newUser });
 });
 
 router.get('/api/chats', function(req, res, next) {
+  console.log(chatData)
   res.json(chats);
 });
 
