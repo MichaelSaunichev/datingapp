@@ -1,28 +1,60 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, Button, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Switch, Modal, View, Text, TextInput, Button, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Link } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import {NavigationContainer} from '@react-navigation/native';
 
 type ProfileState = {
   name: string;
   bio: string;
   profileImageUris: string[]; // Array of URIs for profile images
+  datingPreferences: 'Men' | 'Women' | 'Non-binary' | 'Everyone';
 };
 
-const openSettings = () => {
-  console.log('Open Settings');
-  // Here, you would navigate to a Settings screen or open a modal
-};
-
-const ProfileScreen: React.FC = () => {
+const ProfileScreen: React.FC = ({}) => {
   const [profileState, setProfileState] = useState<ProfileState>({
     name: 'Michael, 22',
     bio: 'Hey',
-    profileImageUris: []
+    profileImageUris: [],
+    datingPreferences: 'Everyone',
   });
-  const [editMode, setEditMode] = useState<boolean>(false);
   const [tempProfileState, setTempProfileState] = useState<ProfileState>({ ...profileState })
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
+  const [accountPaused, setAccountPaused] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  const toggleSettingsModal = () => {
+    setIsSettingsModalVisible(!isSettingsModalVisible)
+  }
+
+  const handleLogOut = () => {
+    console.log('Log Out ');
+    // clear data, depends on our authentication protocol
+  };
+
+  const deleteImage = (index: number) => {
+    setProfileState(prevState => ({
+      ...prevState,
+      profileImageUris: prevState.profileImageUris.filter((_, i) => i !== index),
+    }));
+  };
+
+  const isPreference = (value: any): value is ProfileState['datingPreferences'] => {
+    return ['Men', 'Women', 'Non-binary', 'Everyone'].includes(value);
+  };
+
+  const handleDatingPreferenceChange = (preference: string) => {
+    if (isPreference(preference)) {
+      setProfileState((prevState) => ({
+        ...prevState,
+        datingPreferences: preference,
+      }));
+    } else {
+      console.error('Invalid preference value:', preference);
+    }
+  };
 
   const handleImageUpload = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -31,16 +63,13 @@ const ProfileScreen: React.FC = () => {
       alert("Please allow access to your camera roll in Settings.");
       return;
     }
-
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 5],
       quality: 1,
     });
-
     console.log(result);
-
     if (!result.canceled) {
       const newUri = result.assets[0].uri;
       setProfileState(prevState => ({
@@ -72,7 +101,7 @@ const ProfileScreen: React.FC = () => {
       <View style={styles.buttonAndLabelContainer}>
         {/* Settings Button Group */}
         <View style={styles.buttonGroup}>
-          <TouchableOpacity onPress={openSettings} style={styles.iconButton}>
+          <TouchableOpacity onPress={toggleSettingsModal} style={styles.iconButton}>
             <MaterialIcons name="settings" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.labelText}>Settings</Text>
@@ -85,44 +114,98 @@ const ProfileScreen: React.FC = () => {
           <Text style={styles.labelText}>Edit Profile</Text>
         </View>
       </View>
-      <Modal
-  animationType="slide"
-  transparent={true}
-  visible={isEditModalVisible}
-  onRequestClose={() => {
-    setIsEditModalVisible(!isEditModalVisible);
-  }}
->
-  <View style={styles.centeredView}>
-    <View style={styles.modalView}>
-      <TextInput
-        style={styles.input}
-        placeholder="Edit Name"
-        value={tempProfileState.name}
-        onChangeText={(text) => setTempProfileState({ ...tempProfileState, name: text })}
-      />
-      <TextInput
-        style={[styles.input, {height: 100}]} // Make the bio input taller
-        placeholder="Edit Bio"
-        multiline
-        numberOfLines={4}
-        value={tempProfileState.bio}
-        onChangeText={(text) => setTempProfileState({ ...tempProfileState, bio: text })}
-      />
-      {/* Button for adding images, assuming `handleImageUpload` is adapted for modal use */}
-      <Button title="Add Image" onPress={handleImageUpload} disabled={profileState.profileImageUris.length >= 6} />
-      {/* Display thumbnails of selected images */}
-      <View style={styles.imagePreviewContainer}>
-        {profileState.profileImageUris.map((uri, index) => (
-          <Image key={index} source={{ uri }} style={styles.thumbnail} />
-        ))}
-      </View>
-      <Button title="Save Changes" onPress={saveChanges} />
-      <Button title="Cancel" onPress={() => setIsEditModalVisible(false)} />
-    </View>
-  </View>
-</Modal>
 
+      {/* SETTINGS*/}
+      <Modal
+        animationType ="slide"
+        transparent={true}
+        visible={isSettingsModalVisible}
+        onRequestClose={toggleSettingsModal}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Settings</Text>
+
+            {/*pause account*/}
+            <View style={styles.settingContainer}>
+              <Text>Pause my account</Text>
+              <Switch
+                value={accountPaused}
+                onValueChange={setAccountPaused}
+              />
+            </View>
+
+            <View style={styles.settingContainer}>
+              <Text>Enable notifications</Text>
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={setNotificationsEnabled}
+              />
+            </View>
+
+            {/* Dating Preferences */}
+            <View style={styles.settingContainer}>
+              <Text>Dating Preferences</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+                {['Men', 'Women', 'Non-binary', 'Everyone'].map((preference) => (
+                  <TouchableOpacity
+                    key={preference}
+                    style={[styles.preferenceButton, profileState.datingPreferences === preference ? styles.selectedPreference : {}]}
+                    onPress={() => handleDatingPreferenceChange(preference)}
+                  >
+                    <Text>{preference}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+          </View>
+          <TouchableOpacity onPress={toggleSettingsModal} style={styles.closeSettingsButton}>
+            <Text style={styles.closeSettingsButtonText}>Close Settings</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogOut} style={styles.logOutButton}>
+            <Text style={styles.logOutButtonText}>Log Out</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+
+      </Modal>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isEditModalVisible}
+        onRequestClose={() => {
+          setIsEditModalVisible(!isEditModalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <TextInput
+              style={styles.input}
+              placeholder="Edit Name"
+              value={tempProfileState.name}
+              onChangeText={(text) => setTempProfileState({ ...tempProfileState, name: text })}
+            />
+            <TextInput
+              style={[styles.input, {height: 100}]} 
+              placeholder="Edit Bio"
+              multiline
+              numberOfLines={4}
+              value={tempProfileState.bio}
+              onChangeText={(text) => setTempProfileState({ ...tempProfileState, bio: text })}
+            />
+          <Button title="Add Image" onPress={handleImageUpload} disabled={profileState.profileImageUris.length >= 6} />
+          <View style={styles.imagePreviewContainer}>
+            {profileState.profileImageUris.map((uri, index) => (
+              <TouchableOpacity key={index} onPress={() => deleteImage(index)}>
+                <Image source={{ uri }} style={styles.thumbnail} />
+              </TouchableOpacity>
+            ))}
+          </View>
+            <Button title="Save Changes" onPress={saveChanges} />
+            <Button title="Cancel" onPress={() => setIsEditModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -131,6 +214,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 0,
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 20,
     backgroundColor: '#f0f0f0',
   },
@@ -142,9 +226,11 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   buttonAndLabelContainer: {
+    width: '100%', 
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-around', 
     alignItems: 'center',
+    marginTop: 100, 
   },
   buttonGroup: {
     alignItems: 'center',
@@ -157,7 +243,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e91e63',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 5, // Space between button and label
+    marginBottom: 5,
   },
   labelText: {
     color: '#333',
@@ -201,13 +287,63 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap', 
+    justifyContent: 'center', 
+    marginTop: 10,
+  },
+  imagePreview: {
+    width: 100,
+    height: 100,
+    margin: 5,
   },
   thumbnail: {
     width: 50,
     height: 50,
     margin: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  settingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 20,
+  },
+  preferenceButton: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+  },
+  selectedPreference: {
+    backgroundColor: '#007bff',
+    borderColor: '#007bff',
+    color: '#ffffff',
+  },
+  logOutButton: {
+    marginTop: 20, 
+    backgroundColor: 'red', 
+    padding: 10,
+    borderRadius: 5,
+  },
+  logOutButtonText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  closeSettingsButton: {
+    marginTop: 20, 
+    backgroundColor: 'gray', 
+    padding: 10,
+    borderRadius: 5,
+  },
+  closeSettingsButtonText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
 
