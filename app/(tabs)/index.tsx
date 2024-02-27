@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface Card {
   id: number;
@@ -10,18 +11,20 @@ interface Card {
 }
 
 const TabOneScreen = () => {
+  
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [cards, setCards] = useState<Card[]>([]);
 
-  useEffect(() => {
-    // Fetch the initial card when the component mounts
-    renderCardUI();
-  }, []); // Empty dependency array to ensure it runs only on mount
+  useFocusEffect(
+    React.useCallback(() => {
+      renderCardUI();
+    }, [])
+  );
 
   const renderCardUI = async () => {
     try {
       // Fetch card data from the backend
-      const response = await fetch(`http://localhost:3000/api/cards`);
+      const response = await fetch(`http://192.168.1.10:3000/api/cards`);
       if (!response.ok) {
         throw new Error('Failed to fetch card data');
       }
@@ -39,21 +42,21 @@ const TabOneScreen = () => {
   const setNextIndex = async (removed : number) => {
     try {
       // Fetch the next card data
-      const response = await fetch(`http://localhost:3000/api/cards`);
+      const response = await fetch(`http://192.168.1.10:3000/api/cards`);
       if (!response.ok) {
         throw new Error('Failed to fetch card data');
       }
   
       const updatedCardData = await response.json();
-  
+
       // Update the cards state with the fetched data
       setCards(updatedCardData);
 
       console.log('updated:', updatedCardData);
-
+      console.log('Updated Cards length:', updatedCardData.length);
       console.log('Cards length:', cards.length);
 
-      var nextIndex = currentIndex;
+      var nextIndex;
 
       if (!removed){
         // Increment the index to show the next card
@@ -62,7 +65,9 @@ const TabOneScreen = () => {
       else{
         nextIndex = currentIndex < updatedCardData.length ? currentIndex : 0;
       }
-
+      
+      console.log('next index:', nextIndex);
+      
       // Set the current index to the next index
       setCurrentIndex(nextIndex);
       
@@ -73,7 +78,7 @@ const TabOneScreen = () => {
 
   const removeCard = async (card: Card) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/cards/${card.id}`, {
+      const response = await fetch(`http://192.168.1.10:3000/api/cards/${card.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +103,7 @@ const TabOneScreen = () => {
       // Create an object with id and name properties
       const user = { _id: id, name: text };
   
-      const response = await fetch('http://localhost:3000/api/addchat', {
+      const response = await fetch('http://192.168.1.10:3000/api/addchat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,6 +150,14 @@ const TabOneScreen = () => {
     setNextIndex(0);
   };
 
+  const getRenderedCard = () => {
+    // Ensure currentIndex is within bounds
+    const validIndex = currentIndex < cards.length ? currentIndex : 0;
+
+    // Render the card at the valid index
+    return cards.length > 0 ? renderCard(cards[validIndex]) : null;
+  };
+
   const renderCard = (card: Card) => (
     <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled>
       <View style={styles.card}>
@@ -166,7 +179,7 @@ const TabOneScreen = () => {
 
   return (
     <View style={styles.container}>
-      {cards.length > 0 && renderCard(cards[currentIndex])}
+      {getRenderedCard()}
     </View>
   );
 };

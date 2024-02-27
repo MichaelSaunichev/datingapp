@@ -17,12 +17,30 @@ const TabTwoScreen = () => {
   const [messages, setMessages] = useState<CustomMessage[]>([]);
   const navigation = useNavigation(); // Initialize useNavigation
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchChats = async () => {
+      try {
+        const response = await fetch('http://192.168.1.10:3000/api/chats');
+        if (!response.ok) {
+          throw new Error('Failed to fetch chat users');
+        }
+        const chatUsers = await response.json();
+        setChats(chatUsers);
+      } catch (error) {
+        console.error('Error fetching chat users:', error);
+      }
+      };
+      fetchChats();
+    }, [])
+  );
+
   const onChatSelect = async (chatId: number) => {
     setSelectedChat(chatId);
   
     try {
       // Fetch messages for the selected chat from the backend
-      const response = await fetch(`http://localhost:3000/api/chat/${chatId}`);
+      const response = await fetch(`http://192.168.1.10:3000/api/chat/${chatId}`);
   
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
@@ -38,25 +56,6 @@ const TabTwoScreen = () => {
       // Handle the error, e.g., display a message to the user
     }
   };
-
-  useFocusEffect(
-    React.useCallback(() => {
-      const fetchChats = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/api/chats');
-        if (!response.ok) {
-          throw new Error('Failed to fetch chat users');
-        }
-        const chatUsers = await response.json();
-        setChats(chatUsers);
-      } catch (error) {
-        console.error('Error fetching chat users:', error);
-      }
-      };
-      fetchChats();
-    }, [])
-  );
-
 
   const renderChats = ({ item }: { item: User }) => (
     <TouchableOpacity onPress={() => onChatSelect(Number(item._id))}>
@@ -103,7 +102,6 @@ const TabTwoScreen = () => {
     }
   };
 
-
   const onSend = async (newMessages: CustomMessage[] = []) => {
     // Assuming you're using the selectedChat as the chatId
     const chatId = selectedChat?.toString();
@@ -118,7 +116,7 @@ const TabTwoScreen = () => {
   
     // POST the new message to the backend
     try {
-      const response = await fetch(`http://localhost:3000/api/chat/${chatId}`, {
+      const response = await fetch(`http://192.168.1.10:3000/api/chat/${chatId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +127,7 @@ const TabTwoScreen = () => {
       const result = await response.json();
   
       // Fetch updated messages after sending a new message
-      const updatedMessages = await fetch(`http://localhost:3000/api/chat/${chatId}`);
+      const updatedMessages = await fetch(`http://192.168.1.10:3000/api/chat/${chatId}`);
       const updatedMessagesData = await updatedMessages.json();
   
       // Update the state with the fetched messages without reversing
@@ -138,7 +136,6 @@ const TabTwoScreen = () => {
       console.error('Error sending message:', error);
     }
   };
-
 
   return <View style={{ flex: 1 }}>{renderChatScreen()}</View>;
 };

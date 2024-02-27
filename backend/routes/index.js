@@ -2,18 +2,22 @@ const express = require('express');
 const router = express.Router();
 const uuid = require('uuid');
 
+const users = [
+  { id: '0', name: 'User 0', age: '21', gender: 'male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', accountPaused: false, notificationsEnabled: false },
+  { id: '1', name: 'User 1', age: '22', gender: 'female', bio: 'Description 1', profileImageUris: [], datingPreferences: 'Men', accountPaused: false, notificationsEnabled: true },
+  { id: '2', name: 'User 2', age: '23', gender: 'male', bio: 'Description 2', profileImageUris: [], datingPreferences: 'Women', accountPaused: false, notificationsEnabled: false },
+];
+
 const cardData = [
   { id: 1, text: 'User 1', longText: 'Description', imageUrl: 'https://example.com/image1.jpg', likesYou: 1 },
-  { id: 2, text: 'User 2', longText: 'Description', imageUrl: 'https://example.com/image2.jpg', likesYou: 0 },
+  { id: 2, text: 'User 2', longText: 'Description', imageUrl: 'https://example.com/image2.jpg', likesYou: 1 },
   { id: 3, text: 'User 3', longText: 'Description', imageUrl: 'https://example.com/image3.jpg', likesYou: 1 },
   { id: 6, text: 'User 6', longText: 'Description', imageUrl: 'https://example.com/image3.jpg', likesYou: 1 },
-  // Add more card data as needed
 ];
 
 const chats = [
   { _id: 4, name: 'User 4' },
   { _id: 5, name: 'User 5' },
-  // Add more users as needed
 ];
 
 const chatData = new Map([
@@ -25,8 +29,35 @@ const chatData = new Map([
       _id: uuid.v4(),
     }
   ]],
-  // ... (other chat data)
 ]);
+
+// Get user by ID
+router.get('/api/user/:userId', (req, res) => {
+  console.log("asd")
+  const { userId } = req.params;
+  const user = users.find(u => u.id === userId);
+
+  if (user) {
+    res.json(user);
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+});
+
+// Update user data
+router.post('/api/user/:userId/update', (req, res) => {
+  const { userId } = req.params;
+  const updatedData = req.body;
+
+  const userIndex = users.findIndex(u => u.id === userId);
+
+  if (userIndex !== -1) {
+    users[userIndex] = { ...users[userIndex], ...updatedData };
+    res.json(users[userIndex]);
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+});
 
 router.delete('/api/cards/:id', (req, res) => {
   const { id } = req.params;
@@ -47,7 +78,7 @@ router.get('/api/cards', function(req, res, next) {
   res.json(cardData);
 });
 
-// Route to add a user to chats
+// Add user to chat
 router.post('/api/addchat', (req, res) => {
   const newUser = req.body;
 

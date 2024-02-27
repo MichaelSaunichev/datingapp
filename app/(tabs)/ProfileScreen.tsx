@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Switch, Modal, View, Text, TextInput, Button, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Link } from 'expo-router';
@@ -7,23 +7,58 @@ import {NavigationContainer} from '@react-navigation/native';
 
 type ProfileState = {
   name: string;
+  age: string;
+  gender: string;
   bio: string;
   profileImageUris: string[]; // Array of URIs for profile images
   datingPreferences: 'Men' | 'Women' | 'Non-binary' | 'Everyone';
+  accountPaused: boolean;
+  notificationsEnabled: boolean
 };
 
 const ProfileScreen: React.FC = ({}) => {
   const [profileState, setProfileState] = useState<ProfileState>({
-    name: 'Michael, 22',
-    bio: 'Hey',
+    name: '',
+    age: '',
+    gender: '',
+    bio: '',
     profileImageUris: [],
     datingPreferences: 'Everyone',
+    accountPaused: false,
+    notificationsEnabled: false
   });
   const [tempProfileState, setTempProfileState] = useState<ProfileState>({ ...profileState })
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
-  const [accountPaused, setAccountPaused] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  const userId = '0'; // Replace with the actual user ID
+
+  useEffect(() => {
+    console.log('Fetching user data for userId:', userId);
+  
+    // Fetch user data when the component mounts
+    fetch(`http://192.168.1.10:3000/api/user/${userId}`)
+      .then(response => response.json())
+      .then(userData => {
+        console.log('User Data:', userData);
+        setProfileState(userData);
+        setTempProfileState(userData);
+      })
+      .catch(error => console.error('Error fetching user data:', error));
+  }, [userId]);
+  
+  const updateUserData = () => {
+    // Send a request to update user data
+    fetch(`http://192.168.1.10:3000/api/user/${userId}/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(tempProfileState),
+    })
+      .then(response => response.json())
+      .catch(error => console.error('Error updating user data:', error));
+  };
 
   const toggleSettingsModal = () => {
     setIsSettingsModalVisible(!isSettingsModalVisible)
@@ -35,7 +70,7 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const deleteImage = (index: number) => {
-    setProfileState(prevState => ({
+    setTempProfileState(prevState => ({
       ...prevState,
       profileImageUris: prevState.profileImageUris.filter((_, i) => i !== index),
     }));
@@ -46,6 +81,7 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const handleDatingPreferenceChange = (preference: string) => {
+    console.log(preference);
     if (isPreference(preference)) {
       setProfileState((prevState) => ({
         ...prevState,
@@ -58,40 +94,41 @@ const ProfileScreen: React.FC = ({}) => {
 
   const handleImageUpload = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+  
     if (permissionResult.granted === false) {
       alert("Please allow access to your camera roll in Settings.");
       return;
     }
+  
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 5],
       quality: 1,
     });
+  
     console.log(result);
     if (!result.canceled) {
       const newUri = result.assets[0].uri;
-      setProfileState(prevState => ({
+      setTempProfileState((prevState) => ({
         ...prevState,
         profileImageUris: [...prevState.profileImageUris, newUri],
       }));
-    }    
+    }
   };
 
   const saveChanges = () => {
     setProfileState({
-      ...tempProfileState,
-      profileImageUris: profileState.profileImageUris,
-    });
+      ...tempProfileState});
+    updateUserData();
     setIsEditModalVisible(false);
-  };  
+  }; 
 
   return (
     <View style={styles.container}>
       {/* Profile Image */}
       <Image
-        source={{ uri: profileState.profileImageUris[profileState.profileImageUris.length - 1] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+        source={{ uri: profileState.profileImageUris[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
         style={styles.profileImage}
       />
     <View style={styles.container}>
@@ -130,22 +167,22 @@ const ProfileScreen: React.FC = ({}) => {
             <View style={styles.settingContainer}>
               <Text>Pause my account</Text>
               <Switch
-                value={accountPaused}
-                onValueChange={setAccountPaused}
+                value={profileState.accountPaused}
+                onValueChange={(value) => setProfileState((prevState) => ({ ...prevState, accountPaused: value }))}
               />
             </View>
 
             <View style={styles.settingContainer}>
               <Text>Enable notifications</Text>
               <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
+                value={profileState.notificationsEnabled}
+                onValueChange={(value) => setProfileState((prevState) => ({ ...prevState, notificationsEnabled: value }))}
               />
             </View>
 
             {/* Dating Preferences */}
             <View style={styles.settingContainer}>
-              <Text>Dating Preferences</Text>
+            <Text style={{ marginBottom: 10 }}>Dating Preferences</Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
                 {['Men', 'Women', 'Non-binary', 'Everyone'].map((preference) => (
                   <TouchableOpacity
@@ -159,10 +196,10 @@ const ProfileScreen: React.FC = ({}) => {
               </View>
           </View>
           <TouchableOpacity onPress={toggleSettingsModal} style={styles.closeSettingsButton}>
-            <Text style={styles.closeSettingsButtonText}>Close Settings</Text>
+            <Text style={styles.buttonText}>Close Settings</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleLogOut} style={styles.logOutButton}>
-            <Text style={styles.logOutButtonText}>Log Out</Text>
+            <Text style={styles.buttonText}>Log Out</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -193,16 +230,28 @@ const ProfileScreen: React.FC = ({}) => {
               value={tempProfileState.bio}
               onChangeText={(text) => setTempProfileState({ ...tempProfileState, bio: text })}
             />
-          <Button title="Add Image" onPress={handleImageUpload} disabled={profileState.profileImageUris.length >= 6} />
-          <View style={styles.imagePreviewContainer}>
-            {profileState.profileImageUris.map((uri, index) => (
-              <TouchableOpacity key={index} onPress={() => deleteImage(index)}>
-                <Image source={{ uri }} style={styles.thumbnail} />
-              </TouchableOpacity>
-            ))}
-          </View>
-            <Button title="Save Changes" onPress={saveChanges} />
-            <Button title="Cancel" onPress={() => setIsEditModalVisible(false)} />
+            <TouchableOpacity onPress={handleImageUpload} style={styles.addImageButton}>
+              <Text style={styles.buttonText}>Add Image</Text>
+            </TouchableOpacity>
+
+            <View style={styles.imagePreviewContainer}>
+              {tempProfileState.profileImageUris.map((uri, index) => (
+                <TouchableOpacity key={index} onPress={() => deleteImage(index)}>
+                  <Image source={{ uri }} style={styles.thumbnail} />
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity onPress={saveChanges} style={styles.saveChangesButton}>
+              <Text style={styles.buttonText}>Save Changes</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => {
+                setIsEditModalVisible(false);
+                setTempProfileState(profileState);
+              }} style={styles.cancelButton}>
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+            
           </View>
         </View>
       </Modal>
@@ -311,9 +360,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     marginBottom: 20,
+    flexWrap: 'wrap',
   },
+  
   preferenceButton: {
-    padding: 10,
+    padding: 8,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
@@ -323,16 +374,16 @@ const styles = StyleSheet.create({
     borderColor: '#007bff',
     color: '#ffffff',
   },
+  buttonText: {
+    color: 'white', // Text color, you can customize
+    fontSize: 16,
+    textAlign: 'center',
+  },
   logOutButton: {
     marginTop: 20, 
     backgroundColor: 'red', 
     padding: 10,
     borderRadius: 5,
-  },
-  logOutButtonText: {
-    color: 'white',
-    fontSize: 16,
-    textAlign: 'center',
   },
   closeSettingsButton: {
     marginTop: 20, 
@@ -340,10 +391,25 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
   },
-  closeSettingsButtonText: {
-    color: 'white',
-    fontSize: 16,
-    textAlign: 'center',
+  addImageButton: {
+    marginTop: 20, 
+    backgroundColor: 'orange', 
+    padding: 10,
+    borderRadius: 5,
+  },
+
+  saveChangesButton: {
+    marginTop: 20, 
+    backgroundColor: 'green', 
+    padding: 10,
+    borderRadius: 5,
+  },
+
+  cancelButton: {
+    marginTop: 20, 
+    backgroundColor: 'grey', 
+    padding: 10,
+    borderRadius: 5,
   },
 });
 
