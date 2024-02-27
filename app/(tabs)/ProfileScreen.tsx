@@ -235,11 +235,15 @@ const ProfileScreen: React.FC = ({}) => {
             </TouchableOpacity>
 
             <View style={styles.imagePreviewContainer}>
-              {tempProfileState.profileImageUris.map((uri, index) => (
-                <TouchableOpacity key={index} onPress={() => deleteImage(index)}>
-                  <Image source={{ uri }} style={styles.thumbnail} />
-                </TouchableOpacity>
-              ))}
+              {tempProfileState.profileImageUris.length > 0 ? (
+                tempProfileState.profileImageUris.map((uri, index) => (
+                  <TouchableOpacity key={index} onPress={() => deleteImage(index)}>
+                    <Image source={{ uri }} style={styles.thumbnail} />
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text>No images selected</Text>
+              )}
             </View>
             <TouchableOpacity onPress={saveChanges} style={styles.saveChangesButton}>
               <Text style={styles.buttonText}>Save Changes</Text>
@@ -394,21 +398,21 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   addImageButton: {
-    marginTop: 20, 
+    marginTop: 10, 
     backgroundColor: 'orange', 
     padding: 10,
     borderRadius: 5,
   },
 
   saveChangesButton: {
-    marginTop: 20, 
+    marginTop: 10, 
     backgroundColor: 'green', 
     padding: 10,
     borderRadius: 5,
   },
 
   cancelButton: {
-    marginTop: 20, 
+    marginTop: 10, 
     backgroundColor: 'grey', 
     padding: 10,
     borderRadius: 5,
