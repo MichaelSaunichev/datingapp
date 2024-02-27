@@ -261,14 +261,15 @@ const ProfileScreen: React.FC = ({}) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 0,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 20,
     backgroundColor: '#f0f0f0',
+    marginTop: 0,
   },
   profileImage: {
-    marginTop: 20,
+    marginTop: 40,
     width: 200,
     height: 200,
     borderRadius: 150,
@@ -279,7 +280,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around', 
     alignItems: 'center',
-    marginTop: 100, 
+    marginBottom: 50, 
   },
   buttonGroup: {
     alignItems: 'center',
@@ -362,6 +363,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     flexWrap: 'wrap',
   },
+
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+  },
   
   preferenceButton: {
     padding: 8,
@@ -373,11 +380,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#007bff',
     borderColor: '#007bff',
     color: '#ffffff',
-  },
-  buttonText: {
-    color: 'white', // Text color, you can customize
-    fontSize: 16,
-    textAlign: 'center',
   },
   logOutButton: {
     marginTop: 20, 
