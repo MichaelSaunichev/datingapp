@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Switch, Modal, View, Text, TextInput, Button, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Switch, Modal, View, Text, TextInput, Button, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
 import { Link } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -8,10 +9,12 @@ import {NavigationContainer} from '@react-navigation/native';
 type ProfileState = {
   name: string;
   age: string;
-  gender: string;
+  gender: 'Man' | 'Woman' | 'Non-binary';
   bio: string;
   profileImageUris: string[]; // Array of URIs for profile images
   datingPreferences: 'Men' | 'Women' | 'Non-binary' | 'Everyone';
+  minimumAge: number;
+  maximumAge: number;
   accountPaused: boolean;
   notificationsEnabled: boolean
 };
@@ -20,10 +23,12 @@ const ProfileScreen: React.FC = ({}) => {
   const [profileState, setProfileState] = useState<ProfileState>({
     name: '',
     age: '',
-    gender: '',
+    gender: 'Man',
     bio: '',
     profileImageUris: [],
     datingPreferences: 'Everyone',
+    minimumAge: 18,
+    maximumAge: 25,
     accountPaused: false,
     notificationsEnabled: false
   });
@@ -32,6 +37,7 @@ const ProfileScreen: React.FC = ({}) => {
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
 
   const userId = '0'; // Replace with the actual user ID
+  
 
   useEffect(() => {
     console.log('Fetching user data for userId:', userId);
@@ -60,9 +66,20 @@ const ProfileScreen: React.FC = ({}) => {
       .catch(error => console.error('Error updating user data:', error));
   };
 
-  const toggleSettingsModal = () => {
-    setIsSettingsModalVisible(!isSettingsModalVisible)
-  }
+  const saveChanges = () => {
+    if (tempProfileState.minimumAge > tempProfileState.maximumAge) {
+      alert("Invalid Age Range")
+      return;
+    }
+    else{
+      setProfileState({
+        ...tempProfileState
+      });
+      updateUserData();
+      setIsSettingsModalVisible(false)
+      setIsEditModalVisible(false)
+    }
+  };
 
   const handleLogOut = () => {
     console.log('Log Out ');
@@ -83,7 +100,7 @@ const ProfileScreen: React.FC = ({}) => {
   const handleDatingPreferenceChange = (preference: string) => {
     console.log(preference);
     if (isPreference(preference)) {
-      setProfileState((prevState) => ({
+      setTempProfileState((prevState) => ({
         ...prevState,
         datingPreferences: preference,
       }));
@@ -117,28 +134,25 @@ const ProfileScreen: React.FC = ({}) => {
     }
   };
 
-  const saveChanges = () => {
-    setProfileState({
-      ...tempProfileState});
-    updateUserData();
-    setIsEditModalVisible(false);
-  }; 
-
   return (
-    <View style={styles.container}>
+    <View style={styles.profileContainer}>
       {/* Profile Image */}
       <Image
         source={{ uri: profileState.profileImageUris[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
         style={styles.profileImage}
       />
-    <View style={styles.container}>
-      {/*name*/}
-      <Text style={styles.nameText}>{profileState.name}</Text>
-    </View>
+      <View style={styles.textContainer}>
+        {/*name*/}
+        <Text style={styles.nameText}>{profileState.name}</Text>
+      </View>
+      <View style={styles.textContainer}>
+        {/*bio*/}
+        <Text style={styles.bioText}>{profileState.bio}</Text>
+      </View>
       <View style={styles.buttonAndLabelContainer}>
         {/* Settings Button Group */}
         <View style={styles.buttonGroup}>
-          <TouchableOpacity onPress={toggleSettingsModal} style={styles.iconButton}>
+          <TouchableOpacity onPress={() => setIsSettingsModalVisible(!isSettingsModalVisible)} style={styles.iconButton}>
             <MaterialIcons name="settings" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.labelText}>Settings</Text>
@@ -152,12 +166,12 @@ const ProfileScreen: React.FC = ({}) => {
         </View>
       </View>
 
-      {/* SETTINGS*/}
+      {/* Settings*/}
       <Modal
         animationType ="slide"
         transparent={true}
         visible={isSettingsModalVisible}
-        onRequestClose={toggleSettingsModal}
+        onRequestClose={()=> setIsSettingsModalVisible(!isSettingsModalVisible)}
       >
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
@@ -167,16 +181,16 @@ const ProfileScreen: React.FC = ({}) => {
             <View style={styles.settingContainer}>
               <Text>Pause my account</Text>
               <Switch
-                value={profileState.accountPaused}
-                onValueChange={(value) => setProfileState((prevState) => ({ ...prevState, accountPaused: value }))}
+                value={tempProfileState.accountPaused}
+                onValueChange={(value) => setTempProfileState((prevState) => ({ ...prevState, accountPaused: value }))}
               />
             </View>
 
             <View style={styles.settingContainer}>
               <Text>Enable notifications</Text>
               <Switch
-                value={profileState.notificationsEnabled}
-                onValueChange={(value) => setProfileState((prevState) => ({ ...prevState, notificationsEnabled: value }))}
+                value={tempProfileState.notificationsEnabled}
+                onValueChange={(value) => setTempProfileState((prevState) => ({ ...prevState, notificationsEnabled: value }))}
               />
             </View>
 
@@ -187,88 +201,148 @@ const ProfileScreen: React.FC = ({}) => {
                 {['Men', 'Women', 'Non-binary', 'Everyone'].map((preference) => (
                   <TouchableOpacity
                     key={preference}
-                    style={[styles.preferenceButton, profileState.datingPreferences === preference ? styles.selectedPreference : {}]}
+                    style={[styles.preferenceButton, tempProfileState.datingPreferences === preference ? styles.selectedPreference : {}]}
                     onPress={() => handleDatingPreferenceChange(preference)}
                   >
                     <Text>{preference}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
+            </View>
+
+
+            <View style={styles.settingContainer}>
+              <Text>Minimum Age: {tempProfileState?.minimumAge || 'N/A'}</Text>
+              <Slider
+                style={{ width: '100%' }}
+                minimumValue={18}
+                maximumValue={25}
+                step={1}
+                minimumTrackTintColor="red"
+                maximumTrackTintColor="green"
+                thumbTintColor="green"
+                onValueChange={(value) => {
+                  console.log('Slider value:', value);
+                  setTempProfileState((prevState) => ({
+                    ...prevState,
+                    minimumAge: value,
+                  }));
+                
+                }}
+                value={tempProfileState?.minimumAge || 18}
+              />
+            </View>
+
+            <View style={styles.settingContainer}>
+              <Text>Maximum Age: {tempProfileState?.maximumAge || 'N/A'}</Text>
+              <Slider
+                style={{ width: '100%' }}
+                minimumValue={18}
+                maximumValue={25}
+                step={1}
+                minimumTrackTintColor="green"
+                maximumTrackTintColor="red"
+                thumbTintColor="green"
+                onValueChange={(value) => {
+                  console.log('Slider value:', value);
+                  setTempProfileState((prevState) => ({
+                    ...prevState,
+                    maximumAge: value,
+                  }));
+                
+                }}
+                value={tempProfileState?.maximumAge || 18}
+              />
+            </View>
+
+
+            <TouchableOpacity onPress={saveChanges} style={styles.saveChangesButton}>
+              <Text style={styles.buttonText}>Save Changes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => {setIsSettingsModalVisible(!isSettingsModalVisible), setTempProfileState(profileState)}} style={styles.cancelButton}>
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleLogOut} style={styles.logOutButton}>
+              <Text style={styles.buttonText}>Log Out</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={toggleSettingsModal} style={styles.closeSettingsButton}>
-            <Text style={styles.buttonText}>Close Settings</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleLogOut} style={styles.logOutButton}>
-            <Text style={styles.buttonText}>Log Out</Text>
-          </TouchableOpacity>
         </View>
-      </View>
-
-
       </Modal>
+      
+      {/* Edit Profile*/}
       <Modal
         animationType="slide"
         transparent={true}
         visible={isEditModalVisible}
         onRequestClose={() => {
-          setIsEditModalVisible(!isEditModalVisible);
+          setIsEditModalVisible(false);
         }}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <TextInput
-              style={styles.input}
-              placeholder="Edit Name"
-              value={tempProfileState.name}
-              onChangeText={(text) => setTempProfileState({ ...tempProfileState, name: text })}
-            />
-            <TextInput
-              style={[styles.input, {height: 100}]} 
-              placeholder="Edit Bio"
-              multiline
-              numberOfLines={4}
-              value={tempProfileState.bio}
-              onChangeText={(text) => setTempProfileState({ ...tempProfileState, bio: text })}
-            />
-            <TouchableOpacity onPress={handleImageUpload} style={styles.addImageButton}>
-              <Text style={styles.buttonText}>Add Image</Text>
-            </TouchableOpacity>
+      > 
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <ScrollView style = {styles.modalScrollView} showsVerticalScrollIndicator={false}>
+                <Text style={styles.modalTitle}>Edit Profile</Text>
+                <View style={styles.editProfileContainer}>
+                    <Text style={styles.editProfileText}>Bio:</Text>
+                </View>
+                <TextInput
+                  style={[styles.input, { height: 100 }]}
+                  placeholder="Edit Bio"
+                  placeholderTextColor="grey"
+                  multiline
+                  value={tempProfileState.bio}
+                  onChangeText={(text) => {
+                    const maxLines = 1; // Set your desired maximum number of lines
+                    const maxCharacters = 200; // Set your desired maximum number of characters
 
-            <View style={styles.imagePreviewContainer}>
-              {tempProfileState.profileImageUris.length > 0 ? (
-                tempProfileState.profileImageUris.map((uri, index) => (
-                  <TouchableOpacity key={index} onPress={() => deleteImage(index)}>
-                    <Image source={{ uri }} style={styles.thumbnail} />
+                    const lines = text.split('\n');
+                    if (lines.length <= maxLines && text.length <= maxCharacters) {
+                      setTempProfileState({ ...tempProfileState, bio: text });
+                    }
+                  }}
+                />
+                <View style={styles.editProfileContainer}>
+                  <Text style={styles.editProfileText}>Images:</Text>
+                  <TouchableOpacity onPress={handleImageUpload} style={styles.addImageButton}>
+                    <Text style={styles.buttonText}>Add Image</Text>
                   </TouchableOpacity>
-                ))
-              ) : (
-                <Text>No images selected</Text>
-              )}
-            </View>
-            <TouchableOpacity onPress={saveChanges} style={styles.saveChangesButton}>
-              <Text style={styles.buttonText}>Save Changes</Text>
-            </TouchableOpacity>
+                </View>
 
-            <TouchableOpacity onPress={() => {
-                setIsEditModalVisible(false);
-                setTempProfileState(profileState);
-              }} style={styles.cancelButton}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-            
+                <View style={styles.imagePreviewContainer}>
+                  {tempProfileState.profileImageUris.length > 0 ? (
+                    tempProfileState.profileImageUris.map((uri, index) => (
+                      <TouchableOpacity key={index} onPress={() => deleteImage(index)}>
+                        <Image source={{ uri }} style={styles.thumbnail} />
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <Text>No images selected</Text>
+                  )}
+                </View>
+                <TouchableOpacity onPress={saveChanges} style={styles.saveChangesButton}>
+                  <Text style={styles.buttonText}>Save Changes</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => {
+                    setIsEditModalVisible(false);
+                    setTempProfileState(profileState);
+                  }} style={styles.cancelButton}>
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
           </View>
-        </View>
       </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  profileContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 20,
+    padding: 10,
     backgroundColor: '#f0f0f0',
     marginTop: 0,
   },
@@ -277,7 +351,15 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 150,
-    marginBottom: 1,
+    marginBottom: 10,
+  },
+  textContainer: {
+    flex: 0,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 0,
+    backgroundColor: '#f0f0f0',
+    marginTop: 10,
   },
   buttonAndLabelContainer: {
     width: '100%', 
@@ -306,14 +388,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 22
+    marginTop: 20
   },
   nameText: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#333',
-    marginTop: 10,
-    marginBottom: 20,
+  },
+  bioText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom:100,
   },
   modalView: {
     margin: 20,
@@ -331,6 +417,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5
+  },
+  modalScrollView: {
+    flex: 1000,
+    width: '100%',
+    marginTop: 10,
   },
   input: {
     width: '100%',
@@ -351,8 +442,8 @@ const styles = StyleSheet.create({
     margin: 5,
   },
   thumbnail: {
-    width: 50,
-    height: 50,
+    width: 200,
+    height: 200,
     margin: 5,
   },
   modalTitle: {
@@ -365,6 +456,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     marginBottom: 20,
+    flexWrap: 'wrap',
+  },
+
+  editProfileContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 10,
     flexWrap: 'wrap',
   },
 
@@ -386,16 +485,16 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   logOutButton: {
-    marginTop: 20, 
+    width: '100%',
+    marginTop: 10, 
     backgroundColor: 'red', 
     padding: 10,
     borderRadius: 5,
   },
-  closeSettingsButton: {
-    marginTop: 20, 
-    backgroundColor: 'gray', 
-    padding: 10,
-    borderRadius: 5,
+  editProfileText: {
+    marginBottom: 10, 
+    marginLeft: 0,
+    fontSize: 18,
   },
   addImageButton: {
     marginTop: 10, 
@@ -405,6 +504,7 @@ const styles = StyleSheet.create({
   },
 
   saveChangesButton: {
+    width: '100%',
     marginTop: 10, 
     backgroundColor: 'green', 
     padding: 10,
@@ -412,6 +512,7 @@ const styles = StyleSheet.create({
   },
 
   cancelButton: {
+    width: '100%',
     marginTop: 10, 
     backgroundColor: 'grey', 
     padding: 10,

@@ -19,21 +19,22 @@ const TabTwoScreen = () => {
 
   useFocusEffect(
     React.useCallback(() => {
-      const fetchChats = async () => {
-      try {
-        const response = await fetch('http://192.168.1.10:3000/api/chats');
-        if (!response.ok) {
-          throw new Error('Failed to fetch chat users');
-        }
-        const chatUsers = await response.json();
-        setChats(chatUsers);
-      } catch (error) {
-        console.error('Error fetching chat users:', error);
-      }
-      };
       fetchChats();
     }, [])
   );
+
+  const fetchChats = async () => {
+    try {
+      const response = await fetch('http://192.168.1.10:3000/api/chats');
+      if (!response.ok) {
+        throw new Error('Failed to fetch chat users');
+      }
+      const chatUsers = await response.json();
+      setChats(chatUsers);
+    } catch (error) {
+      console.error('Error fetching chat users:', error);
+    }
+  };
 
   const onChatSelect = async (chatId: number) => {
     setSelectedChat(chatId);
@@ -57,6 +58,39 @@ const TabTwoScreen = () => {
     }
   };
 
+  const onSend = async (newMessages: CustomMessage[] = []) => {
+    // Assuming you're using the selectedChat as the chatId
+    const chatId = selectedChat?.toString();
+    if (!chatId || newMessages.length === 0) {
+      // Exit early if chatId is null or there are no new messages
+      return;
+    }
+  
+    // Send the last message instead of the first one
+    const lastNewMessage = newMessages[newMessages.length - 1];
+  
+    const updatedMessages = [...messages, lastNewMessage];
+    setMessages(updatedMessages);
+    
+    try {
+      const response = await fetch(`http://192.168.1.10:3000/api/chat/${chatId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(lastNewMessage),
+      });
+      if (response.ok){
+        fetchChats();
+      }
+      else {
+        throw new Error('Failed post');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
   const renderChats = ({ item }: { item: User }) => (
     <TouchableOpacity onPress={() => onChatSelect(Number(item._id))}>
       <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: '#ccc' }}>
@@ -71,7 +105,7 @@ const TabTwoScreen = () => {
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: 10 }}>
             <TouchableOpacity
-              onPress={() => setSelectedChat(null)}
+              onPress={() => {setSelectedChat(null); setMessages([])}}
               style={{
                 backgroundColor: 'white',
                 borderRadius: 8,
@@ -99,41 +133,6 @@ const TabTwoScreen = () => {
           keyExtractor={(item) => item._id.toString()}
         />
       );
-    }
-  };
-
-  const onSend = async (newMessages: CustomMessage[] = []) => {
-    // Assuming you're using the selectedChat as the chatId
-    const chatId = selectedChat?.toString();
-  
-    if (!chatId || newMessages.length === 0) {
-      // Exit early if chatId is null or there are no new messages
-      return;
-    }
-  
-    // Send the last message instead of the first one
-    const lastNewMessage = newMessages[newMessages.length - 1];
-  
-    // POST the new message to the backend
-    try {
-      const response = await fetch(`http://192.168.1.10:3000/api/chat/${chatId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(lastNewMessage),
-      });
-  
-      const result = await response.json();
-  
-      // Fetch updated messages after sending a new message
-      const updatedMessages = await fetch(`http://192.168.1.10:3000/api/chat/${chatId}`);
-      const updatedMessagesData = await updatedMessages.json();
-  
-      // Update the state with the fetched messages without reversing
-      setMessages(updatedMessagesData);
-    } catch (error) {
-      console.error('Error sending message:', error);
     }
   };
 

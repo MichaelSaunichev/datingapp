@@ -39,43 +39,6 @@ const TabOneScreen = () => {
     }
   };
 
-  const setNextIndex = async (removed : number) => {
-    try {
-      // Fetch the next card data
-      const response = await fetch(`http://192.168.1.10:3000/api/cards`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch card data');
-      }
-  
-      const updatedCardData = await response.json();
-
-      // Update the cards state with the fetched data
-      setCards(updatedCardData);
-
-      console.log('updated:', updatedCardData);
-      console.log('Updated Cards length:', updatedCardData.length);
-      console.log('Cards length:', cards.length);
-
-      var nextIndex;
-
-      if (!removed){
-        // Increment the index to show the next card
-        nextIndex = currentIndex + 1 < updatedCardData.length ? currentIndex + 1 : 0;
-      }
-      else{
-        nextIndex = currentIndex < updatedCardData.length ? currentIndex : 0;
-      }
-      
-      console.log('next index:', nextIndex);
-      
-      // Set the current index to the next index
-      setCurrentIndex(nextIndex);
-      
-    } catch (error) {
-      console.error('Error fetching or updating card data:', error);
-    }
-  };
-
   const removeCard = async (card: Card) => {
     try {
       const response = await fetch(`http://192.168.1.10:3000/api/cards/${card.id}`, {
@@ -129,33 +92,22 @@ const TabOneScreen = () => {
   
     if (currentCard.likesYou === 1) {
       try {
-        // Add the user to the chats array on the backend
-        await addChat(currentCard);
+        addChat(currentCard);
         await removeCard(currentCard).then(() => {
-          // Call setNextIndex only after removeCard is completed
-          setNextIndex(1);
+          renderCardUI();
         });
       } catch (error) {
         console.error('Error adding user to chats or removing card:', error);
       }
     } else {
-      // If the card doesn't have likes show the next card
-      setNextIndex(0);
+      setCurrentIndex((prevIndex) => (prevIndex + 1));
     }
   };
 
   const onDislike = async () => {
     const currentCard = cards[currentIndex];
     console.log('Disliked:', currentCard);
-    setNextIndex(0);
-  };
-
-  const getRenderedCard = () => {
-    // Ensure currentIndex is within bounds
-    const validIndex = currentIndex < cards.length ? currentIndex : 0;
-
-    // Render the card at the valid index
-    return cards.length > 0 ? renderCard(cards[validIndex]) : null;
+    setCurrentIndex((prevIndex) => (prevIndex + 1));
   };
 
   const renderCard = (card: Card) => (
@@ -176,6 +128,24 @@ const TabOneScreen = () => {
       </View>
     </ScrollView>
   );
+
+  const getRenderedCard = () => {
+    if (cards.length === 0) {
+      return null;
+    }
+  
+    let validIndex = currentIndex;
+    
+    // Reset to 0 if index exceeds the length of cards array
+    if (validIndex >= cards.length) {
+      setCurrentIndex(0);
+      validIndex = 0;
+    }
+  
+    const renderedCard = renderCard(cards[validIndex]);
+  
+    return renderedCard;
+  };
 
   return (
     <View style={styles.container}>

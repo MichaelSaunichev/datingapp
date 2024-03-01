@@ -3,14 +3,17 @@ const router = express.Router();
 const uuid = require('uuid');
 
 const users = [
-  { id: '0', name: 'User 0', age: '21', gender: 'male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', accountPaused: false, notificationsEnabled: false },
-  { id: '1', name: 'User 1', age: '22', gender: 'female', bio: 'Description 1', profileImageUris: [], datingPreferences: 'Men', accountPaused: false, notificationsEnabled: true },
-  { id: '2', name: 'User 2', age: '23', gender: 'male', bio: 'Description 2', profileImageUris: [], datingPreferences: 'Women', accountPaused: false, notificationsEnabled: false },
+  { id: '0', name: 'User 0', age: '21', gender: 'male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
+  { id: '1', name: 'User 1', age: '22', gender: 'female', bio: 'Description 1', profileImageUris: [], datingPreferences: 'Men', 
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: true },
+  { id: '2', name: 'User 2', age: '23', gender: 'male', bio: 'Description 2', profileImageUris: [], datingPreferences: 'Women', 
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
 ];
 
 const cardData = [
   { id: 1, text: 'User 1', longText: 'Description', imageUrl: 'https://example.com/image1.jpg', likesYou: 1 },
-  { id: 2, text: 'User 2', longText: 'Description', imageUrl: 'https://example.com/image2.jpg', likesYou: 1 },
+  { id: 2, text: 'User 2', longText: 'Description', imageUrl: 'https://example.com/image2.jpg', likesYou: 0 },
   { id: 3, text: 'User 3', longText: 'Description', imageUrl: 'https://example.com/image3.jpg', likesYou: 1 },
   { id: 6, text: 'User 6', longText: 'Description', imageUrl: 'https://example.com/image3.jpg', likesYou: 1 },
 ];
@@ -30,6 +33,9 @@ const chatData = new Map([
     }
   ]],
 ]);
+
+// --------------------------------------------------------------------------------------
+// User
 
 // Get user by ID
 router.get('/api/user/:userId', (req, res) => {
@@ -59,6 +65,9 @@ router.post('/api/user/:userId/update', (req, res) => {
   }
 });
 
+// --------------------------------------------------------------------------------------
+// cards
+
 router.delete('/api/cards/:id', (req, res) => {
   const { id } = req.params;
 
@@ -77,6 +86,9 @@ router.delete('/api/cards/:id', (req, res) => {
 router.get('/api/cards', function(req, res, next) {
   res.json(cardData);
 });
+
+// --------------------------------------------------------------------------------------
+// chats
 
 // Add user to chat
 router.post('/api/addchat', (req, res) => {
@@ -113,11 +125,30 @@ router.post('/api/chat/:chatId', function (req, res, next) {
   // Update the chatData
   chatData.set(chatId, messages);
 
+  moveChatToTop(chatId);
+
   // Log the updated chatData structure to the console
   console.log('Updated chatData structure:', chatData);
 
   res.json({ success: true, message: 'Message added successfully' });
 });
+
+function moveChatToTop(chatId) {
+  // Find the chat with the given ID using loose equality
+  const movedChat = chats.find(chat => chat._id == chatId);
+
+  if (movedChat) {
+    // Rest of the logic
+    const chatIndex = chats.findIndex(chat => chat._id == chatId);
+    const movedChat = chats.splice(chatIndex, 1)[0];
+    chats.unshift(movedChat);
+
+    console.log('Moved chat:', movedChat);
+    console.log('Updated chats array:', chats);
+  }
+}
+
+// --------------------------------------------------------------------------------------
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
