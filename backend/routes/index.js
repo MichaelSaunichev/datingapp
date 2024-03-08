@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const uuid = require('uuid');
+const userFunctions = require('../models/user');
+const cardFunctions = require('../models/card');
+const chatFunctions = require('../models/chat');
+const chatDataFunctions = require('../models/chatData');
 
 const users = [
   { id: '0', name: 'User 0', age: '21', gender: 'male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 

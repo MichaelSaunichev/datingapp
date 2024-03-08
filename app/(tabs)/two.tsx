@@ -15,6 +15,7 @@ const TabTwoScreen = () => {
   const [chats, setChats] = useState<User[]>([]);
 
   const [messages, setMessages] = useState<CustomMessage[]>([]);
+  const [ready, setReady] = useState<boolean>(false);
   const navigation = useNavigation(); // Initialize useNavigation
 
   useFocusEffect(
@@ -25,7 +26,7 @@ const TabTwoScreen = () => {
 
   const fetchChats = async () => {
     try {
-      const response = await fetch('http://192.168.1.10:3000/api/chats');
+      const response = await fetch('http://10.144.240.30:3000/api/chats');
       if (!response.ok) {
         throw new Error('Failed to fetch chat users');
       }
@@ -41,20 +42,22 @@ const TabTwoScreen = () => {
   
     try {
       // Fetch messages for the selected chat from the backend
-      const response = await fetch(`http://192.168.1.10:3000/api/chat/${chatId}`);
+      const response = await fetch(`http://10.144.240.30:3000/api/chat/${chatId}`);
   
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
   
       const messages = await response.json();
-  
       // Update the state with the fetched messages without reversing
       setMessages(messages);
       console.log('messages:', messages);
     } catch (error) {
       console.error('Error loading messages:', error);
       // Handle the error, e.g., display a message to the user
+    }
+    finally {
+      setReady(true);
     }
   };
 
@@ -73,7 +76,7 @@ const TabTwoScreen = () => {
     setMessages(updatedMessages);
     
     try {
-      const response = await fetch(`http://192.168.1.10:3000/api/chat/${chatId}`, {
+      const response = await fetch(`http://10.144.240.30:3000/api/chat/${chatId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,12 +103,12 @@ const TabTwoScreen = () => {
   );
 
   const renderChatScreen = () => {
-    if (selectedChat !== null) {
+    if (selectedChat !== null && ready) {
       return (
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: 10 }}>
             <TouchableOpacity
-              onPress={() => {setSelectedChat(null); setMessages([])}}
+              onPress={() => {setSelectedChat(null); setMessages([]); setReady(false)}}
               style={{
                 backgroundColor: 'white',
                 borderRadius: 8,
