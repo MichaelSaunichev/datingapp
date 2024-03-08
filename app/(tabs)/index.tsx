@@ -24,7 +24,7 @@ const TabOneScreen = () => {
   const renderCardUI = async () => {
     try {
       // Fetch card data from the backend
-      const response = await fetch(`http://192.168.1.10:3000/api/cards`);
+      const response = await fetch(`http://10.144.240.30:3000/api/cards`);
       if (!response.ok) {
         throw new Error('Failed to fetch card data');
       }
@@ -41,7 +41,7 @@ const TabOneScreen = () => {
 
   const removeCard = async (card: Card) => {
     try {
-      const response = await fetch(`http://192.168.1.10:3000/api/cards/${card.id}`, {
+      const response = await fetch(`http://10.144.240.30:3000/api/cards/${card.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ const TabOneScreen = () => {
       // Create an object with id and name properties
       const user = { _id: id, name: text };
   
-      const response = await fetch('http://192.168.1.10:3000/api/addchat', {
+      const response = await fetch('http://10.144.240.30:3000/api/addchat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

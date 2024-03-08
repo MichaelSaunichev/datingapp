@@ -4,6 +4,8 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors');
+const port = 3000;
+const ip = '10.144.240.30';
 
 
 var indexRouter = require('./routes/index');
@@ -45,6 +47,10 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render('error');
+});
+
+app.listen(port, ip, () => {
+  console.log(`Server is running at http://${ip}:${port}`);
 });
 
 

@@ -8,7 +8,7 @@ import {NavigationContainer} from '@react-navigation/native';
 
 type ProfileState = {
   name: string;
-  age: string;
+  age: number;
   gender: 'Man' | 'Woman' | 'Non-binary';
   bio: string;
   profileImageUris: string[]; // Array of URIs for profile images
@@ -22,7 +22,7 @@ type ProfileState = {
 const ProfileScreen: React.FC = ({}) => {
   const [profileState, setProfileState] = useState<ProfileState>({
     name: '',
-    age: '',
+    age: 21,
     gender: 'Man',
     bio: '',
     profileImageUris: [],
@@ -43,7 +43,7 @@ const ProfileScreen: React.FC = ({}) => {
     console.log('Fetching user data for userId:', userId);
   
     // Fetch user data when the component mounts
-    fetch(`http://192.168.1.10:3000/api/user/${userId}`)
+    fetch(`http://10.144.240.30:3000/api/user/${userId}`)
       .then(response => response.json())
       .then(userData => {
         console.log('User Data:', userData);
@@ -55,7 +55,7 @@ const ProfileScreen: React.FC = ({}) => {
   
   const updateUserData = () => {
     // Send a request to update user data
-    fetch(`http://192.168.1.10:3000/api/user/${userId}/update`, {
+    fetch(`http://10.144.240.30:3000/api/user/${userId}/update`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
