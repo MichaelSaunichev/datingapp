@@ -4,8 +4,8 @@ import { useFocusEffect } from '@react-navigation/native';
 
 interface Card {
   id: number;
-  text: string;
-  longText: string;
+  name: string;
+  bio: string;
   imageUrl: string;
   likesYou: number;
 }
@@ -61,10 +61,10 @@ const TabOneScreen = () => {
   const addChat = async (card: Card) => {
     try {
       // Extract relevant properties from the card
-      const { id, text } = card;
+      const { id, name } = card;
   
       // Create an object with id and name properties
-      const user = { _id: id, name: text };
+      const user = { _id: id, name: name };
   
       const response = await fetch('http://192.168.1.9:3000/api/addchat', {
         method: 'POST',
@@ -114,8 +114,8 @@ const TabOneScreen = () => {
     <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled>
       <View style={styles.card}>
         {/* Customize how to display the card data */}
-        <Text>{card.text}</Text>
-        <Text>{card.longText}</Text>
+        <Text>{card.name}</Text>
+        <Text>{card.bio}</Text>
         {/* ... (other card data) */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={onDislike}>

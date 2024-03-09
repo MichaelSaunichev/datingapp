@@ -6,11 +6,6 @@ const cardFunctions = require('../models/card');
 const chatFunctions = require('../models/chat');
 const chatDataFunctions = require('../models/chatData');
 
-//implement chatdata to be accessed by 2 users
-
-//maybe take out cardData and implement likesyou matchedAlready (and more?)
-//maybe in one function and then just go through users
-
 const users = [
   { id: '0', name: 'User 0', age: '21', gender: 'male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
@@ -18,13 +13,23 @@ const users = [
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: true },
   { id: '2', name: 'User 2', age: '23', gender: 'male', bio: 'Description 2', profileImageUris: [], datingPreferences: 'Women', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
+  { id: '3', name: 'User 3', age: '23', gender: 'male', bio: 'Description 3', profileImageUris: [], datingPreferences: 'Women', 
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
+  { id: '4', name: 'User 4', age: '23', gender: 'female', bio: 'Description 4', profileImageUris: [], datingPreferences: 'Women', 
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
+  { id: '5', name: 'User 5', age: '23', gender: 'female', bio: 'Description 5', profileImageUris: [], datingPreferences: 'Women', 
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
+  { id: '6', name: 'User 6', age: '23', gender: 'male', bio: 'Description 6', profileImageUris: [], datingPreferences: 'Women', 
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
+  { id: '7', name: 'User 7', age: '23', gender: 'male', bio: 'Description 7', profileImageUris: [], datingPreferences: 'Women', 
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
 ];
 
 const cardData = [
-  { id: 1, text: 'User 1', longText: 'Description', imageUrl: 'https://example.com/image1.jpg', likesYou: 1 },
-  { id: 2, text: 'User 2', longText: 'Description', imageUrl: 'https://example.com/image2.jpg', likesYou: 0 },
-  { id: 3, text: 'User 3', longText: 'Description', imageUrl: 'https://example.com/image3.jpg', likesYou: 1 },
-  { id: 6, text: 'User 6', longText: 'Description', imageUrl: 'https://example.com/image3.jpg', likesYou: 1 },
+  { id: '1', likesYou: 1 },
+  { id: '2', likesYou: 0 },
+  { id: '3', likesYou: 1 },
+  { id: '6', likesYou: 1 },
 ];
 
 const chatData = new Map([
@@ -98,7 +103,21 @@ router.delete('/api/cards/:id', (req, res) => {
 });
 
 router.get('/api/cards', function(req, res, next) {
-  res.json(cardData);
+  // Create a new array combining data from cardData and users
+  const combinedData = cardData.map(card => {
+    const user = users.find(u => u.id === card.id);
+    return {
+      id: card.id,
+      likesYou: card.likesYou,
+      name: user.name,
+      age: user.age,
+      gender: user.gender,
+      bio: user.bio,
+      profileImageUris: user.profileImageUris
+    };
+  });
+
+  res.json(combinedData);
 });
 
 // --------------------------------------------------------------------------------------
