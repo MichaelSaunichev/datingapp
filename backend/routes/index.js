@@ -6,6 +6,11 @@ const cardFunctions = require('../models/card');
 const chatFunctions = require('../models/chat');
 const chatDataFunctions = require('../models/chatData');
 
+//implement chatdata to be accessed by 2 users
+
+//maybe take out cardData and implement likesyou matchedAlready (and more?)
+//maybe in one function and then just go through users
+
 const users = [
   { id: '0', name: 'User 0', age: '21', gender: 'male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
@@ -22,11 +27,6 @@ const cardData = [
   { id: 6, text: 'User 6', longText: 'Description', imageUrl: 'https://example.com/image3.jpg', likesYou: 1 },
 ];
 
-const chats = [
-  { _id: 4, name: 'User 4' },
-  { _id: 5, name: 'User 5' },
-];
-
 const chatData = new Map([
   ['5', [
     {
@@ -35,6 +35,16 @@ const chatData = new Map([
       createdAt: new Date(),
       _id: uuid.v4(),
     }
+  ]],
+  ['4', [
+    {
+      text: 'Hi!',
+      user: { _id: 4, name: 'User 4' },
+      createdAt: new Date(),
+      _id: uuid.v4(),
+    }
+  ]],
+  ['7', [
   ]],
 ]);
 
@@ -98,15 +108,28 @@ router.get('/api/cards', function(req, res, next) {
 router.post('/api/addchat', (req, res) => {
   const newUser = req.body;
 
-  // Add the new user to the beginning of the chats array
-  chats.unshift(newUser);
+  // Assuming newUser has an _id field for simplicity
+  const userId = String(newUser._id);
 
-  res.json({ message: 'User added to chats', user: newUser });
+  // Check if the chat already exists in chatData
+  if (!chatData.has(userId)) {
+    chatData.set(userId, []);
+  }
+
+  res.json({ message: 'User added to chatData', user: newUser });
 });
 
 router.get('/api/chats', function(req, res, next) {
-  console.log(chatData)
-  res.json(chats);
+  console.log(chatData);
+  const chatUsers = [];
+  // Iterate through chatData
+  chatData.forEach((messages, chatId) => {
+    // Assuming chatId is the user ID for simplicity; adjust accordingly
+    const user = { _id: chatId, name: `User ${chatId}` };
+    // Add the chatInfo to the array
+    chatUsers.push(user);
+  });
+  res.json(chatUsers);
 });
 
 router.get('/api/chat/:chatId', function (req, res, next) {
@@ -138,17 +161,15 @@ router.post('/api/chat/:chatId', function (req, res, next) {
 });
 
 function moveChatToTop(chatId) {
-  // Find the chat with the given ID using loose equality
-  const movedChat = chats.find(chat => chat._id == chatId);
+  // Get the chat messages from chatData
+  const chatMessages = chatData.get(chatId);
 
-  if (movedChat) {
-    // Rest of the logic
-    const chatIndex = chats.findIndex(chat => chat._id == chatId);
-    const movedChat = chats.splice(chatIndex, 1)[0];
-    chats.unshift(movedChat);
+  if (chatMessages) {
+    // Delete the chat from its current position in chatData
+    chatData.delete(chatId);
 
-    console.log('Moved chat:', movedChat);
-    console.log('Updated chats array:', chats);
+    // Set the chat back to the top in chatData
+    chatData.set(chatId, chatMessages);
   }
 }
 
