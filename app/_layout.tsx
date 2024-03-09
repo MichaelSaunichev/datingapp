@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { View, Text, Button } from 'react-native';
+import { View, Text, Button, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -14,11 +14,14 @@ interface AuthScreenProps {
   onAuthenticate: () => void;
 }
 
-// Apply the props interface to the component
 const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate }) => (
-  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-    <Text>Please log in or register</Text>
-    <Button title="Log In / Register" onPress={onAuthenticate} />
+  <View style={styles.container}>
+    <Text style={styles.heartIcon}>❤️</Text>
+    <Text style={styles.appName}>FreakFinder</Text>
+    <TouchableOpacity style={styles.button} onPress={onAuthenticate}>
+      <Text style={styles.buttonText}>Sign up with phone number</Text>
+    </TouchableOpacity>
+    {/* Add additional legal text and links as necessary */}
   </View>
 );
 
@@ -71,3 +74,44 @@ function RootLayoutNav() {
     </ThemeProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFC107', // This is a yellow color, similar to the bumble theme
+  },
+  heartIcon: {
+    fontSize: 100, // Size of the heart icon
+    marginBottom: 20,
+  },
+  logo: {
+    width: 100, // Adjust as necessary
+    height: 100, // Adjust as necessary
+    marginBottom: 20,
+  },
+  appName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 40, // Adjust the space between logo and button as necessary
+  },
+  button: {
+    backgroundColor: '#fff',
+    paddingVertical: 15,
+    paddingHorizontal: 35,
+    borderRadius: 25,
+    marginVertical: 10,
+    elevation: 2, // This adds a slight shadow on Android
+    shadowColor: 'rgba(0,0,0, .25)', // iOS shadow
+    shadowOffset: { height: 3, width: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 5,
+  },
+  buttonText: {
+    color: '#000',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+});
