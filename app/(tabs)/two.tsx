@@ -26,12 +26,12 @@ const TabTwoScreen = () => {
 
   const fetchChats = async () => {
     try {
-      const response = await fetch('http://10.144.240.30:3000/api/chats');
+      const response = await fetch('http://192.168.1.9:3000/api/chats');
       if (!response.ok) {
         throw new Error('Failed to fetch chat users');
       }
       const chatUsers = await response.json();
-      setChats(chatUsers);
+      setChats(chatUsers.reverse());
     } catch (error) {
       console.error('Error fetching chat users:', error);
     }
@@ -42,7 +42,7 @@ const TabTwoScreen = () => {
   
     try {
       // Fetch messages for the selected chat from the backend
-      const response = await fetch(`http://10.144.240.30:3000/api/chat/${chatId}`);
+      const response = await fetch(`http://192.168.1.9:3000/api/chat/${chatId}`);
   
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
@@ -76,7 +76,7 @@ const TabTwoScreen = () => {
     setMessages(updatedMessages);
     
     try {
-      const response = await fetch(`http://10.144.240.30:3000/api/chat/${chatId}`, {
+      const response = await fetch(`http://192.168.1.9:3000/api/chat/${chatId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
