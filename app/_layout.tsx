@@ -1,13 +1,26 @@
 import React from 'react';
 
+import { View, Text, Button } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useColorScheme } from '@/components/useColorScheme';
+
+interface AuthScreenProps {
+  onAuthenticate: () => void;
+}
+
+// Apply the props interface to the component
+const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate }) => (
+  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+    <Text>Please log in or register</Text>
+    <Button title="Log In / Register" onPress={onAuthenticate} />
+  </View>
+);
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -27,11 +40,7 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     if (loaded) {
@@ -39,11 +48,15 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
+  if (!loaded || error) {
+    return <View><Text>Loading or error...</Text></View>;
   }
 
-  return <RootLayoutNav />;
+  return isAuthenticated ? (
+    <RootLayoutNav />
+  ) : (
+    <AuthScreen onAuthenticate={() => setIsAuthenticated(true)} />
+  );
 }
 
 function RootLayoutNav() {
