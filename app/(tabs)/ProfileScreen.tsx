@@ -32,7 +32,7 @@ const ProfileScreen: React.FC = ({}) => {
     accountPaused: false,
     notificationsEnabled: false
   });
-  const [tempProfileState, setTempProfileState] = useState<ProfileState>({ ...profileState })
+  const [tempProfileState, setTempProfileState] = useState<ProfileState>({ ...profileState });
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
 
