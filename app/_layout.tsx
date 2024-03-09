@@ -16,7 +16,7 @@ interface AuthScreenProps {
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate }) => (
   <View style={styles.container}>
-    <Text style={styles.heartIcon}>❤️</Text>
+    <Text style={styles.icon}>🍆</Text>
     <Text style={styles.appName}>FreakFinder</Text>
     <TouchableOpacity style={styles.button} onPress={onAuthenticate}>
       <Text style={styles.buttonText}>Sign up with phone number</Text>
@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFC107', // This is a yellow color, similar to the bumble theme
   },
-  heartIcon: {
-    fontSize: 100, // Size of the heart icon
+  icon: {
+    fontSize: 100, // Size of the eggplant icon
     marginBottom: 20,
   },
   logo: {
