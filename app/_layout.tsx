@@ -144,7 +144,6 @@ const DOBInputScreen: React.FC<DOBInputScreenProps> = ({ onDOBSubmitted }) => {
         onChangeText={setDob}
         value={dob}
         placeholder="YYYY-MM-DD"
-        keyboardType="numeric"
       />
       <TouchableOpacity
         style={styles.button}
@@ -186,8 +185,6 @@ export default function RootLayout() {
   if (!loaded || error) {
     return <View><Text>Loading or error...</Text></View>;
   }
-
-  
 
   const handleAuthenticate = () => {
     setIsAuthenticated(true);
