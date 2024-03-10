@@ -11,13 +11,13 @@ interface Card {
   likesYou: number;
   accountPaused: number;
   age: number;
-  gender: 'Male' | 'Female' | 'Non-binary'
+  gender: 'Male' | 'Female' | 'Non-binary';
 }
 
 type userPreferences = {
-  datingPreferences: 'Men' | 'Women' | 'Non-binary' | 'Everyone';
+  datingPreferences: 'Men' | 'Women' | 'Everyone';
   minimumAge: number;
-  maximumAge: number
+  maximumAge: number;
 }
 
 const TabOneScreen = () => {
@@ -35,7 +35,6 @@ const TabOneScreen = () => {
 
   useFocusEffect(
     React.useCallback(() => {
-      renderCardUI();
       fetch(`http://192.168.1.9:3000/api/user/${userId}`)
       .then(response => response.json())
       .then(userData => {
@@ -51,10 +50,17 @@ const TabOneScreen = () => {
     }, [])
   );
 
+  useEffect(() => {
+    renderCardUI();
+  }, [preferences]);
+
   const renderCardUI = async () => {
     try {
-      // Fetch card data from the backend
-      const response = await fetch(`http://192.168.1.9:3000/api/cards`);
+      const { datingPreferences, minimumAge, maximumAge } = preferences;
+      console.log(datingPreferences, minimumAge, maximumAge);
+      // Fetch card data from the backend with filtering parameters
+      const response = await fetch(`http://192.168.1.9:3000/api/cards?datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
+      
       if (!response.ok) {
         throw new Error('Failed to fetch card data');
       }
@@ -171,7 +177,7 @@ const TabOneScreen = () => {
       setCurrentIndex(0);
       validIndex = 0;
     }
-
+  
     const renderedCard = renderCard(cards[validIndex]);
   
     return renderedCard;
