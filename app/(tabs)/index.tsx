@@ -1,30 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useViewRefSet } from 'react-native-reanimated/lib/typescript/reanimated2/ViewDescriptorsSet';
 
 interface Card {
   id: number;
   name: string;
   bio: string;
-  imageUrl: string;
+  profileImageUris: string[];
   likesYou: number;
+  accountPaused: number;
+  age: number;
+  gender: 'Male' | 'Female' | 'Non-binary';
+}
+
+type userPreferences = {
+  datingPreferences: 'Men' | 'Women' | 'Everyone';
+  minimumAge: number;
+  maximumAge: number;
 }
 
 const TabOneScreen = () => {
   
+  const [preferences, setPreferences] = useState<userPreferences>({
+    datingPreferences: 'Everyone',
+    minimumAge: 18,
+    maximumAge: 25
+  });
+
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [cards, setCards] = useState<Card[]>([]);
 
+  const userId = '0';
+
   useFocusEffect(
     React.useCallback(() => {
-      renderCardUI();
+      fetch(`http://192.168.1.9:3000/api/user/${userId}`)
+      .then(response => response.json())
+      .then(userData => {
+        console.log('User Data:', userData);
+        const { datingPreferences, minimumAge, maximumAge } = userData;
+        setPreferences({
+          datingPreferences: datingPreferences,
+          minimumAge: minimumAge,
+          maximumAge: maximumAge,
+        });
+      })
+      .catch(error => console.error('Error fetching user data:', error));
     }, [])
   );
 
+  useEffect(() => {
+    renderCardUI();
+  }, [preferences]);
+
   const renderCardUI = async () => {
     try {
-      // Fetch card data from the backend
-      const response = await fetch(`http://192.168.1.9:3000/api/cards`);
+      const { datingPreferences, minimumAge, maximumAge } = preferences;
+      console.log(datingPreferences, minimumAge, maximumAge);
+      // Fetch card data from the backend with filtering parameters
+      const response = await fetch(`http://192.168.1.9:3000/api/cards?datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
+      
       if (!response.ok) {
         throw new Error('Failed to fetch card data');
       }

@@ -3,25 +3,24 @@ const router = express.Router();
 const uuid = require('uuid');
 const userFunctions = require('../models/user');
 const cardFunctions = require('../models/card');
-const chatFunctions = require('../models/chat');
 const chatDataFunctions = require('../models/chatData');
 
 const users = [
-  { id: '0', name: 'User 0', age: '21', gender: 'male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 
+  { id: '0', name: 'User 0', age: 21, gender: 'Male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Men', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
-  { id: '1', name: 'User 1', age: '22', gender: 'female', bio: 'Description 1', profileImageUris: [], datingPreferences: 'Men', 
+  { id: '1', name: 'User 1', age: 22, gender: 'Female', bio: 'Description 1', profileImageUris: [], datingPreferences: 'Men', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: true },
-  { id: '2', name: 'User 2', age: '23', gender: 'male', bio: 'Description 2', profileImageUris: [], datingPreferences: 'Women', 
+  { id: '2', name: 'User 2', age: 23, gender: 'Male', bio: 'Description 2', profileImageUris: [], datingPreferences: 'Women', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
-  { id: '3', name: 'User 3', age: '23', gender: 'male', bio: 'Description 3', profileImageUris: [], datingPreferences: 'Women', 
+  { id: '3', name: 'User 3', age: 23, gender: 'Male', bio: 'Description 3', profileImageUris: [], datingPreferences: 'Women', 
+  minimumAge: 18, maximumAge: 25, accountPaused: true, notificationsEnabled: false },
+  { id: '4', name: 'User 4', age: 23, gender: 'Female', bio: 'Description 4', profileImageUris: [], datingPreferences: 'Women', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
-  { id: '4', name: 'User 4', age: '23', gender: 'female', bio: 'Description 4', profileImageUris: [], datingPreferences: 'Women', 
+  { id: '5', name: 'User 5', age: 23, gender: 'Female', bio: 'Description 5', profileImageUris: [], datingPreferences: 'Women', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
-  { id: '5', name: 'User 5', age: '23', gender: 'female', bio: 'Description 5', profileImageUris: [], datingPreferences: 'Women', 
+  { id: '6', name: 'User 6', age: 23, gender: 'Male', bio: 'Description 6', profileImageUris: [], datingPreferences: 'Women', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
-  { id: '6', name: 'User 6', age: '23', gender: 'male', bio: 'Description 6', profileImageUris: [], datingPreferences: 'Women', 
-  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
-  { id: '7', name: 'User 7', age: '23', gender: 'male', bio: 'Description 7', profileImageUris: [], datingPreferences: 'Women', 
+  { id: '7', name: 'User 7', age: 23, gender: 'Male', bio: 'Description 7', profileImageUris: [], datingPreferences: 'Women', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
 ];
 
@@ -103,21 +102,44 @@ router.delete('/api/cards/:id', (req, res) => {
 });
 
 router.get('/api/cards', function(req, res, next) {
+  // Extract user preferences from query parameters
+  const { datingPreferences, minimumAge, maximumAge } = req.query;
+
   // Create a new array combining data from cardData and users
   const combinedData = cardData.map(card => {
     const user = users.find(u => u.id === card.id);
-    return {
-      id: card.id,
-      likesYou: card.likesYou,
-      name: user.name,
-      age: user.age,
-      gender: user.gender,
-      bio: user.bio,
-      profileImageUris: user.profileImageUris
-    };
+
+    // Check if the user matches the specified preferences
+    const meetsPreferences =
+      (datingPreferences === 'Everyone') ||
+      ((datingPreferences === 'Men' && user.gender === 'Male') || 
+      (datingPreferences === 'Women' && user.gender === 'Female')) &&
+      (user.age >= minimumAge &&
+      user.age <= maximumAge) &&
+      (user.accountPaused === false);
+
+    // If the user meets preferences, include the user's data in the response
+    if (meetsPreferences) {
+      return {
+        id: card.id,
+        name: user.name,
+        bio: user.bio,
+        profileImageUris: user.profileImageUris,
+        likesYou: card.likesYou,
+        accountPaused: user.accountPaused,
+        age: user.age,
+        gender: user.gender
+      };
+    } else {
+      // If the user does not meet preferences, return null for filtering
+      return null;
+    }
   });
 
-  res.json(combinedData);
+  // Remove null values from the array (users that did not meet preferences)
+  const filteredData = combinedData.filter(data => data !== null);
+
+  res.json(filteredData);
 });
 
 // --------------------------------------------------------------------------------------

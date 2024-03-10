@@ -12,11 +12,11 @@ type ProfileState = {
   gender: 'Man' | 'Woman' | 'Non-binary';
   bio: string;
   profileImageUris: string[]; // Array of URIs for profile images
-  datingPreferences: 'Men' | 'Women' | 'Non-binary' | 'Everyone';
+  datingPreferences: 'Men' | 'Women' |'Everyone';
   minimumAge: number;
   maximumAge: number;
   accountPaused: boolean;
-  notificationsEnabled: boolean
+  notificationsEnabled: boolean;
 };
 
 const ProfileScreen: React.FC = ({}) => {
@@ -32,7 +32,7 @@ const ProfileScreen: React.FC = ({}) => {
     accountPaused: false,
     notificationsEnabled: false
   });
-  const [tempProfileState, setTempProfileState] = useState<ProfileState>({ ...profileState })
+  const [tempProfileState, setTempProfileState] = useState<ProfileState>({ ...profileState });
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
 
@@ -94,7 +94,7 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const isPreference = (value: any): value is ProfileState['datingPreferences'] => {
-    return ['Men', 'Women', 'Non-binary', 'Everyone'].includes(value);
+    return ['Men', 'Women', 'Everyone'].includes(value);
   };
 
   const handleDatingPreferenceChange = (preference: string) => {
@@ -198,10 +198,11 @@ const ProfileScreen: React.FC = ({}) => {
             <View style={styles.settingContainer}>
             <Text style={{ marginBottom: 10 }}>Dating Preferences</Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-                {['Men', 'Women', 'Non-binary', 'Everyone'].map((preference) => (
+                {['Men', 'Women', 'Everyone'].map((preference) => (
                   <TouchableOpacity
                     key={preference}
-                    style={[styles.preferenceButton, tempProfileState.datingPreferences === preference ? styles.selectedPreference : {}]}
+                    style={[styles.preferenceButton,
+                      tempProfileState.datingPreferences === preference ? styles.selectedPreference : {}]}
                     onPress={() => handleDatingPreferenceChange(preference)}
                   >
                     <Text>{preference}</Text>
