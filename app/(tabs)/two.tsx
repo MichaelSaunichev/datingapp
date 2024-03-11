@@ -16,7 +16,7 @@ const TabTwoScreen = () => {
   const [readyChat, setReadyChat] = useState<boolean>(false);
   const [userName, setUserName] = useState<string | null>(null);
   const navigation = useNavigation();
-  const userId = 0;
+  const userId = 1;
   
 
   useFocusEffect(
