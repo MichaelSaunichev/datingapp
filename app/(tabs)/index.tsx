@@ -22,12 +22,16 @@ type userPreferences = {
 
 const TabOneScreen = () => {
   
-  const [preferences, setPreferences] = useState<userPreferences | null>(null);
+  const [preferences, setPreferences] = useState<userPreferences>({
+    datingPreferences: 'Everyone',
+    minimumAge: 18,
+    maximumAge: 25
+  }); 
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [cards, setCards] = useState<Card[]>([]);
 
-  const userId = '1';
+  const userId = '2';
 
   useFocusEffect(
     React.useCallback(() => {
@@ -47,31 +51,27 @@ const TabOneScreen = () => {
   );
 
   useEffect(() => {
-    if (preferences){
-      renderCardUI();
-    }
+    renderCardUI();
   }, [preferences]);
 
   const renderCardUI = async () => {
-    if (preferences){
-      try {
-        const { datingPreferences, minimumAge, maximumAge } = preferences;
-        console.log(datingPreferences, minimumAge, maximumAge);
-        // Fetch card data from the backend with filtering parameters
-        const response = await fetch(`http://192.168.1.9:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch card data');
-        }
-    
-        const cardData = await response.json();
-
-        // Update the cards state with the fetched data
-        setCards(cardData);
-
-      } catch (error) {
-        console.error('Error fetching card data:', error);
+    try {
+      const { datingPreferences, minimumAge, maximumAge } = preferences;
+      console.log(datingPreferences, minimumAge, maximumAge);
+      // Fetch card data from the backend with filtering parameters
+      const response = await fetch(`http://192.168.1.9:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch card data');
       }
+  
+      const cardData = await response.json();
+
+      // Update the cards state with the fetched data
+      setCards(cardData);
+
+    } catch (error) {
+      console.error('Error fetching card data:', error);
     }
   };
 
