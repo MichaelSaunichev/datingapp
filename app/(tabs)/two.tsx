@@ -13,10 +13,10 @@ interface CustomMessage extends IMessage {
 const TabTwoScreen = () => {
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [chats, setChats] = useState<User[]>([]);
-
   const [messages, setMessages] = useState<CustomMessage[]>([]);
   const [ready, setReady] = useState<boolean>(false);
-  const navigation = useNavigation(); // Initialize useNavigation
+  const navigation = useNavigation();
+  const userId = 3;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -26,7 +26,7 @@ const TabTwoScreen = () => {
 
   const fetchChats = async () => {
     try {
-      const response = await fetch('http://192.168.1.9:3000/api/chats');
+      const response = await fetch(`http://192.168.1.9:3000/api/chats/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch chat users');
       }
@@ -42,7 +42,7 @@ const TabTwoScreen = () => {
   
     try {
       // Fetch messages for the selected chat from the backend
-      const response = await fetch(`http://192.168.1.9:3000/api/chat/${chatId}`);
+      const response = await fetch(`http://192.168.1.9:3000/api/chat/${userId}/${chatId}`);
   
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
@@ -76,7 +76,7 @@ const TabTwoScreen = () => {
     setMessages(updatedMessages);
     
     try {
-      const response = await fetch(`http://192.168.1.9:3000/api/chat/${chatId}`, {
+      const response = await fetch(`http://192.168.1.9:3000/api/chat/${userId}/${chatId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ const TabTwoScreen = () => {
           <GiftedChat
             messages={messages}
             onSend={(newMessages) => onSend(newMessages)}
-            user={{ _id: 0, name: 'User 0' }}
+            user={{ _id: userId, name: 'User 0' }}
             inverted = {false}
           />
         </View>
