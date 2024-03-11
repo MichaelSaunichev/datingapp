@@ -22,16 +22,12 @@ type userPreferences = {
 
 const TabOneScreen = () => {
   
-  const [preferences, setPreferences] = useState<userPreferences>({
-    datingPreferences: 'Everyone',
-    minimumAge: 18,
-    maximumAge: 25
-  });
+  const [preferences, setPreferences] = useState<userPreferences | null>(null);
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [cards, setCards] = useState<Card[]>([]);
 
-  const userId = '0';
+  const userId = '1';
 
   useFocusEffect(
     React.useCallback(() => {
@@ -51,33 +47,37 @@ const TabOneScreen = () => {
   );
 
   useEffect(() => {
-    renderCardUI();
+    if (preferences){
+      renderCardUI();
+    }
   }, [preferences]);
 
   const renderCardUI = async () => {
-    try {
-      const { datingPreferences, minimumAge, maximumAge } = preferences;
-      console.log(datingPreferences, minimumAge, maximumAge);
-      // Fetch card data from the backend with filtering parameters
-      const response = await fetch(`http://192.168.1.9:3000/api/cards?datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch card data');
+    if (preferences){
+      try {
+        const { datingPreferences, minimumAge, maximumAge } = preferences;
+        console.log(datingPreferences, minimumAge, maximumAge);
+        // Fetch card data from the backend with filtering parameters
+        const response = await fetch(`http://192.168.1.9:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch card data');
+        }
+    
+        const cardData = await response.json();
+
+        // Update the cards state with the fetched data
+        setCards(cardData);
+
+      } catch (error) {
+        console.error('Error fetching card data:', error);
       }
-  
-      const cardData = await response.json();
-
-      // Update the cards state with the fetched data
-      setCards(cardData);
-
-    } catch (error) {
-      console.error('Error fetching card data:', error);
     }
   };
 
   const removeCard = async (card: Card) => {
     try {
-      const response = await fetch(`http://192.168.1.9:3000/api/cards/${card.id}`, {
+      const response = await fetch(`http://192.168.1.9:3000/api/cards/${userId}/${card.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -94,29 +94,38 @@ const TabOneScreen = () => {
     }
   };
 
-  const addChat = async (card: Card) => {
+  const addChat = async (userId: string, chatAddId: number) => {
     try {
-      // Extract relevant properties from the card
-      const { id, name } = card;
-  
-      // Create an object with id and name properties
-      const user = { _id: id, name: name };
-  
-      const response = await fetch('http://192.168.1.9:3000/api/addchat', {
-        method: 'POST',
+      const response = await fetch(`http://192.168.1.9:3000/api/addchat/${userId}/${chatAddId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(user),
       });
   
       if (!response.ok) {
         throw new Error('Failed to add user to chats');
       }
-  
-      console.log('User added to chats:', user);
+
     } catch (error) {
       console.error('Error adding user to chats:', error);
+    }
+  };
+
+  const addLike = async (likedUser: number) => {
+    try {
+      const response = await fetch(`http://192.168.1.9:3000/api/addlike/${userId}/${likedUser}`, {
+        method: 'PUT',  // Use PUT method for updating
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to add like');
+      }
+    } catch (error) {
+      console.error('Error adding like:', error);
     }
   };
 
@@ -128,7 +137,7 @@ const TabOneScreen = () => {
   
     if (currentCard.likesYou === 1) {
       try {
-        addChat(currentCard);
+        addChat(userId, currentCard.id);
         await removeCard(currentCard).then(() => {
           renderCardUI();
         });
@@ -136,7 +145,14 @@ const TabOneScreen = () => {
         console.error('Error adding user to chats or removing card:', error);
       }
     } else {
-      setCurrentIndex((prevIndex) => (prevIndex + 1));
+      try {
+        addLike(currentCard.id);
+        await removeCard(currentCard).then(() => {
+          renderCardUI();
+        });
+      } catch (error) {
+        console.error('Error removing card:', error);
+      }
     }
   };
 
