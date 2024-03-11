@@ -23,11 +23,10 @@ type userPreferences = {
 const TabOneScreen = () => {
   
   const [preferences, setPreferences] = useState<userPreferences | null>(null);
-
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [cards, setCards] = useState<Card[]>([]);
 
-  const userId = '1';
+  const userId = '2';
 
   useFocusEffect(
     React.useCallback(() => {
@@ -87,8 +86,10 @@ const TabOneScreen = () => {
       if (!response.ok) {
         throw new Error('Failed to remove card');
       }
+
+      const responseData = await response.json();
+      console.log(responseData.message);
   
-      console.log('Card removed successfully');
     } catch (error) {
       console.error('Error removing card:', error);
     }

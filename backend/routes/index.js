@@ -98,9 +98,9 @@ router.delete('/api/cards/:userId/:cardId', (req, res) => {
     // If the card is found, remove it from the array
     if (indexToRemove !== -1) {
       cardData[userId].splice(indexToRemove, 1);
-      res.json({ success: true });
+      res.json({ success: true, message: 'Card removed successfully' });
     } else {
-      res.status(404).json({ success: false, message: 'Card not found for the specified user ID' });
+      res.json({ success: false, message: 'Card not found for the specified user ID' });
     }
   } else {
     res.status(404).json({ success: false, message: 'Card data not found for the specified user ID' });
@@ -193,13 +193,23 @@ router.put('/api/addchat/:userId/:newUserId', (req, res) => {
 router.get('/api/chats/:userId', function(req, res, next) {
   const userId = req.params.userId;
   const chatUsers = [];
+
   // Iterate through chatData
-  chatDataForUser = chatData[userId] || [];
+  const chatDataForUser = chatData[userId] || [];
+
   chatDataForUser.forEach((messages, chatId) => {
-    // Assuming chatId is the user ID for simplicity; adjust accordingly
-    const user = { _id: chatId, name: `User ${chatId}` };
-    // Add the chatInfo to the array
-    chatUsers.push(user);
+    // Find the corresponding user in the 'users' array based on the chatId
+    const correspondingUser = users.find(user => user.id === chatId);
+
+    // Check if the user is found
+    if (correspondingUser) {
+      const user = {
+        _id: chatId,
+        name: correspondingUser.name,
+      };
+      // Add the chatInfo to the array
+      chatUsers.push(user);
+    }
   });
   res.json(chatUsers);
 });
