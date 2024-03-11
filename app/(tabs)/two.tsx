@@ -9,19 +9,24 @@ interface CustomMessage extends IMessage {
   user: User;
 }
 
-
 const TabTwoScreen = () => {
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [chats, setChats] = useState<User[]>([]);
   const [messages, setMessages] = useState<CustomMessage[]>([]);
-  const [ready, setReady] = useState<boolean>(false);
+  const [readyChat, setReadyChat] = useState<boolean>(false);
+  const [userName, setUserName] = useState<string | null>(null);
   const navigation = useNavigation();
-  const userId = 3;
+  const userId = 0;
+  
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchChats();
-    }, [])
+      const fetchData = async () => {
+        await fetchChats();
+        await fetchUserData();
+      };
+      fetchData();
+    }, [userId])
   );
 
   const fetchChats = async () => {
@@ -34,6 +39,19 @@ const TabTwoScreen = () => {
       setChats(chatUsers.reverse());
     } catch (error) {
       console.error('Error fetching chat users:', error);
+    }
+  };
+
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch(`http://192.168.1.9:3000/api/user/${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+      const userData = await response.json();
+      setUserName(userData.name);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
     }
   };
 
@@ -57,7 +75,7 @@ const TabTwoScreen = () => {
       // Handle the error, e.g., display a message to the user
     }
     finally {
-      setReady(true);
+      setReadyChat(true);
     }
   };
 
@@ -103,12 +121,12 @@ const TabTwoScreen = () => {
   );
 
   const renderChatScreen = () => {
-    if (selectedChat !== null && ready) {
+    if (selectedChat !== null && readyChat ) {
       return (
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: 10 }}>
             <TouchableOpacity
-              onPress={() => {setSelectedChat(null); setMessages([]); setReady(false)}}
+              onPress={() => {setSelectedChat(null); setMessages([]); setReadyChat(false)}}
               style={{
                 backgroundColor: 'white',
                 borderRadius: 8,
@@ -123,7 +141,7 @@ const TabTwoScreen = () => {
           <GiftedChat
             messages={messages}
             onSend={(newMessages) => onSend(newMessages)}
-            user={{ _id: userId, name: 'User 0' }}
+            user={{ _id: userId, name: userName ?? 'DefaultName' }}
             inverted = {false}
           />
         </View>
