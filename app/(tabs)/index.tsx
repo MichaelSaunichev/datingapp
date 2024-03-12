@@ -27,7 +27,7 @@ const TabOneScreen = () => {
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState<Boolean>(false);
 
-  const userId = '1';
+  const userId = '2';
 
   useFocusEffect(
     React.useCallback(() => {
@@ -189,6 +189,15 @@ const TabOneScreen = () => {
         {/* Customize how to display the card data */}
         <Text>{card.name}</Text>
         <Text>{card.bio}</Text>
+        {/* Render profile images */}
+        {/* Scrollable container for profile images */}
+        <ScrollView horizontal>
+          <View style={styles.imageContainer}>
+            {card.profileImageUris.map((uri, index) => (
+              <Image key={index} source={{ uri }} style={styles.profileImage} />
+            ))}
+          </View>
+        </ScrollView>
         {/* ... (other card data) */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={onDislike}>
@@ -238,6 +247,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%', // Take up the whole screen width
+  },
+  imageContainer: {
+    marginTop: 10,
+  },
+  profileImage: {
+    width: 150, // Adjust the size as needed
+    height: 150, // Adjust the size as needed
+    borderRadius: 8, // Adjust the border radius as needed
+    marginVertical: 5, // Adjust the vertical margin as needed
   },
   card: {
     borderRadius: 8,
