@@ -25,8 +25,9 @@ const TabOneScreen = () => {
   const [preferences, setPreferences] = useState<userPreferences | null>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [cards, setCards] = useState<Card[]>([]);
+  const [loading, setLoading] = useState<Boolean>(false);
 
-  const userId = '2';
+  const userId = '1';
 
   useFocusEffect(
     React.useCallback(() => {
@@ -116,7 +117,7 @@ const TabOneScreen = () => {
   const addLike = async (likedUser: number) => {
     try {
       const response = await fetch(`http://192.168.1.9:3000/api/addlike/${userId}/${likedUser}`, {
-        method: 'PUT',  // Use PUT method for updating
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -131,9 +132,13 @@ const TabOneScreen = () => {
   };
 
   const onLike = async () => {
+    if (loading){
+      return
+    }
+    setLoading(true);
+
     // Get the current card
     const currentCard = cards[currentIndex];
-  
     console.log('Liked:', currentCard);
   
     if (currentCard.likesYou === 1) {
@@ -144,6 +149,8 @@ const TabOneScreen = () => {
         });
       } catch (error) {
         console.error('Error adding user to chats or removing card:', error);
+      } finally {
+        setLoading(false);
       }
     } else {
       try {
@@ -153,14 +160,27 @@ const TabOneScreen = () => {
         });
       } catch (error) {
         console.error('Error removing card:', error);
+      } finally {
+        setLoading(false);
       }
     }
   };
 
   const onDislike = async () => {
-    const currentCard = cards[currentIndex];
-    console.log('Disliked:', currentCard);
-    setCurrentIndex((prevIndex) => (prevIndex + 1));
+    if (loading) {
+      return;
+    }
+    setLoading(true);
+  
+    try {
+      const currentCard = cards[currentIndex];
+      console.log('Disliked:', currentCard);
+      setCurrentIndex((prevIndex) => (prevIndex + 1));
+    } catch (error) {
+      console.error('Error disliking card:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderCard = (card: Card) => (
