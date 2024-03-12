@@ -22,25 +22,12 @@ const TabTwoScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       const fetchData = async () => {
-        await fetchChats();
         await fetchUserData();
+        await fetchChats();
       };
       fetchData();
     }, [userId])
   );
-
-  const fetchChats = async () => {
-    try {
-      const response = await fetch(`http://192.168.1.9:3000/api/chats/${userId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch chat users');
-      }
-      const chatUsers = await response.json();
-      setChats(chatUsers.reverse());
-    } catch (error) {
-      console.error('Error fetching chat users:', error);
-    }
-  };
 
   const fetchUserData = async () => {
     try {
@@ -52,6 +39,19 @@ const TabTwoScreen = () => {
       setUserName(userData.name);
     } catch (error) {
       console.error('Error fetching user data:', error);
+    }
+  };
+
+  const fetchChats = async () => {
+    try {
+      const response = await fetch(`http://192.168.1.9:3000/api/chats/${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch chat users');
+      }
+      const chatUsers = await response.json();
+      setChats(chatUsers.reverse());
+    } catch (error) {
+      console.error('Error fetching chat users:', error);
     }
   };
 
@@ -126,7 +126,7 @@ const TabTwoScreen = () => {
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: 10 }}>
             <TouchableOpacity
-              onPress={() => {setSelectedChat(null); setMessages([]); setReadyChat(false)}}
+              onPress={() => {setMessages([]); setReadyChat(false); setSelectedChat(null)}}
               style={{
                 backgroundColor: 'white',
                 borderRadius: 8,
