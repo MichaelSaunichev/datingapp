@@ -36,7 +36,7 @@ const ProfileScreen: React.FC = ({}) => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
 
-  const userId = '2'; // Replace with the actual user ID
+  const userId = '3'; // Replace with the actual user ID
   
 
   useEffect(() => {
