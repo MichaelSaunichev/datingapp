@@ -26,7 +26,7 @@ const TabOneScreen = () => {
   const [card, setCard] = useState<Card>();
   const [loading, setLoading] = useState<Boolean>(false);
 
-  const userId = '3';
+  const userId = '1';
 
   useFocusEffect(
     React.useCallback(() => {
@@ -132,10 +132,9 @@ const TabOneScreen = () => {
 
   const onLike = async () => {
     if (loading){
+      console.log("loading");
       return
     }
-    setLoading(true);
-    // Get the current card
     const currentCard = card;
     console.log('Liked:', currentCard);
     if (currentCard != undefined){
@@ -146,7 +145,7 @@ const TabOneScreen = () => {
             renderCardUI();
           });
         } catch (error) {
-          console.error('Error adding user to chats or removing card:', error);
+          console.error('Error liked back:', error);
         } finally {
           setLoading(false);
         }
@@ -157,7 +156,7 @@ const TabOneScreen = () => {
             renderCardUI();
           });
         } catch (error) {
-          console.error('Error removing card:', error);
+          console.error('Error not liked back:', error);
         } finally {
           setLoading(false);
         }
@@ -167,13 +166,13 @@ const TabOneScreen = () => {
 
   const onDislike = async () => {
     if (loading) {
+      console.log("loading");
       return;
     }
-    setLoading(true);
   
     try {
       const currentCard = card;
-  
+      console.log('Disliked:', currentCard);
       await fetch('http://192.168.1.9:3000/api/incrementIndex', {
         method: 'POST',
         headers: {
@@ -181,9 +180,7 @@ const TabOneScreen = () => {
         },
         body: JSON.stringify({ userId: userId }),
       });
-  
       renderCardUI();
-      console.log('Disliked:', currentCard);
     } catch (error) {
       console.error('Error disliking card:', error);
     } finally {
@@ -209,10 +206,10 @@ const TabOneScreen = () => {
           </ScrollView>
           {/* ... (other card data) */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={onDislike}>
+            <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onDislike(); }}>
               <Text style={styles.buttonText}>Dislike</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={onLike}>
+            <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onLike(); }}>
               <Text style={styles.buttonText}>Like</Text>
             </TouchableOpacity>
           </View>

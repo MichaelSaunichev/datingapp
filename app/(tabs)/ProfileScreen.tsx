@@ -35,8 +35,9 @@ const ProfileScreen: React.FC = ({}) => {
   const [tempProfileState, setTempProfileState] = useState<ProfileState>({ ...profileState });
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
-  const userId = '3'; // Replace with the actual user ID
+  const userId = '3';
   
 
   useEffect(() => {
@@ -110,10 +111,12 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const handleImageUpload = async () => {
+    setIsImageUploading(true);
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
   
     if (permissionResult.granted === false) {
       alert("Please allow access to your camera roll in Settings.");
+      setIsImageUploading(false);
       return;
     }
   
@@ -131,6 +134,10 @@ const ProfileScreen: React.FC = ({}) => {
         ...prevState,
         profileImageUris: [...prevState.profileImageUris, newUri],
       }));
+      setIsImageUploading(false);
+    }
+    else{
+      setIsImageUploading(false);
     }
   };
 
@@ -256,7 +263,6 @@ const ProfileScreen: React.FC = ({}) => {
               />
             </View>
 
-
             <TouchableOpacity onPress={saveChanges} style={styles.saveChangesButton}>
               <Text style={styles.buttonText}>Save Changes</Text>
             </TouchableOpacity>
@@ -320,14 +326,22 @@ const ProfileScreen: React.FC = ({}) => {
                     <Text>No images selected</Text>
                   )}
                 </View>
-                <TouchableOpacity onPress={saveChanges} style={styles.saveChangesButton}>
+                <TouchableOpacity
+                  onPress={saveChanges}
+                  style={[styles.saveChangesButton, { opacity: isImageUploading ? 0.5 : 1 }]}
+                  disabled={isImageUploading}
+                >
                   <Text style={styles.buttonText}>Save Changes</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => {
+                <TouchableOpacity
+                  onPress={() => {
                     setIsEditModalVisible(false);
                     setTempProfileState(profileState);
-                  }} style={styles.cancelButton}>
+                  }}
+                  style={[styles.cancelButton, { opacity: isImageUploading ? 0.5 : 1 }]}
+                  disabled={isImageUploading}
+                >
                   <Text style={styles.buttonText}>Cancel</Text>
                 </TouchableOpacity>
               </ScrollView>
