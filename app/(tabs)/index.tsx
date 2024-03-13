@@ -23,11 +23,10 @@ type userPreferences = {
 const TabOneScreen = () => {
   
   const [preferences, setPreferences] = useState<userPreferences | null>(null);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [cards, setCards] = useState<Card[]>([]);
+  const [card, setCard] = useState<Card>();
   const [loading, setLoading] = useState<Boolean>(false);
 
-  const userId = '2';
+  const userId = '3';
 
   useFocusEffect(
     React.useCallback(() => {
@@ -67,7 +66,7 @@ const TabOneScreen = () => {
         const cardData = await response.json();
 
         // Update the cards state with the fetched data
-        setCards(cardData);
+        setCard(cardData);
 
       } catch (error) {
         console.error('Error fetching card data:', error);
@@ -136,32 +135,32 @@ const TabOneScreen = () => {
       return
     }
     setLoading(true);
-
     // Get the current card
-    const currentCard = cards[currentIndex];
+    const currentCard = card;
     console.log('Liked:', currentCard);
-  
-    if (currentCard.likesYou === 1) {
-      try {
-        addChat(userId, currentCard.id);
-        await removeCard(currentCard).then(() => {
-          renderCardUI();
-        });
-      } catch (error) {
-        console.error('Error adding user to chats or removing card:', error);
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      try {
-        addLike(currentCard.id);
-        await removeCard(currentCard).then(() => {
-          renderCardUI();
-        });
-      } catch (error) {
-        console.error('Error removing card:', error);
-      } finally {
-        setLoading(false);
+    if (currentCard != undefined){
+      if (currentCard.likesYou === 1) {
+        try {
+          addChat(userId, currentCard.id);
+          await removeCard(currentCard).then(() => {
+            renderCardUI();
+          });
+        } catch (error) {
+          console.error('Error adding user to chats or removing card:', error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        try {
+          addLike(currentCard.id);
+          await removeCard(currentCard).then(() => {
+            renderCardUI();
+          });
+        } catch (error) {
+          console.error('Error removing card:', error);
+        } finally {
+          setLoading(false);
+        }
       }
     }
   };
@@ -173,9 +172,18 @@ const TabOneScreen = () => {
     setLoading(true);
   
     try {
-      const currentCard = cards[currentIndex];
+      const currentCard = card;
+  
+      await fetch('http://192.168.1.9:3000/api/incrementIndex', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: userId }),
+      });
+  
+      renderCardUI();
       console.log('Disliked:', currentCard);
-      setCurrentIndex((prevIndex) => (prevIndex + 1));
     } catch (error) {
       console.error('Error disliking card:', error);
     } finally {
@@ -183,49 +191,43 @@ const TabOneScreen = () => {
     }
   };
 
-  const renderCard = (card: Card) => (
+  const renderCard = (card: Card | null) => (
     <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled>
-      <View style={styles.card}>
-        {/* Customize how to display the card data */}
-        <Text>{card.name}</Text>
-        <Text>{card.bio}</Text>
-        {/* Render profile images */}
-        {/* Scrollable container for profile images */}
-        <ScrollView horizontal>
-          <View style={styles.imageContainer}>
-            {card.profileImageUris.map((uri, index) => (
-              <Image key={index} source={{ uri }} style={styles.profileImage} />
-            ))}
+      {card ? (
+        <View style={styles.card}>
+          {/* Customize how to display the card data */}
+          <Text>{card.name}</Text>
+          <Text>{card.bio}</Text>
+          {/* Render profile images */}
+          {/* Scrollable container for profile images */}
+          <ScrollView horizontal>
+            <View style={styles.imageContainer}>
+              {card.profileImageUris.map((uri, index) => (
+                <Image key={index} source={{ uri }} style={styles.profileImage} />
+              ))}
+            </View>
+          </ScrollView>
+          {/* ... (other card data) */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={onDislike}>
+              <Text style={styles.buttonText}>Dislike</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={onLike}>
+              <Text style={styles.buttonText}>Like</Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
-        {/* ... (other card data) */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={onDislike}>
-            <Text style={styles.buttonText}>Dislike</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={onLike}>
-            <Text style={styles.buttonText}>Like</Text>
-          </TouchableOpacity>
         </View>
-      </View>
+      ) : (
+        <Text>No more cards</Text>
+      )}
     </ScrollView>
   );
 
   const getRenderedCard = () => {
-    if (cards.length === 0) {
+    if (card === undefined) {
       return null;
     }
-  
-    let validIndex = currentIndex;
-    
-    // Reset to 0 if index exceeds the length of cards array
-    if (validIndex >= cards.length) {
-      setCurrentIndex(0);
-      validIndex = 0;
-    }
-  
-    const renderedCard = renderCard(cards[validIndex]);
-  
+    const renderedCard = renderCard(card);
     return renderedCard;
   };
 
@@ -252,8 +254,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   profileImage: {
-    width: 150, // Adjust the size as needed
-    height: 150, // Adjust the size as needed
+    width: 250, // Adjust the size as needed
+    height: 250, // Adjust the size as needed
     borderRadius: 8, // Adjust the border radius as needed
     marginVertical: 5, // Adjust the vertical margin as needed
   },

@@ -4,18 +4,19 @@ const uuid = require('uuid');
 const userFunctions = require('../models/user');
 const cardFunctions = require('../models/card');
 const chatDataFunctions = require('../models/chatData');
+const { render } = require('../app');
 
 const users = [
   { id: '0', name: 'User 0', age: 20, gender: 'Male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 
-  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
   { id: '1', name: 'User 1', age: 21, gender: 'Female', bio: 'Description 1', profileImageUris: [], datingPreferences: 'Everyone', 
-  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: true },
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: true, renderIndex: 0 },
   { id: '2', name: 'User 2', age: 22, gender: 'Male', bio: 'Description 2', profileImageUris: [], datingPreferences: 'Everyone', 
-  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
   { id: '3', name: 'User 3', age: 23, gender: 'Male', bio: 'Description 3', profileImageUris: [], datingPreferences: 'Everyone', 
-  minimumAge: 18, maximumAge: 25, accountPaused: true, notificationsEnabled: false },
+  minimumAge: 18, maximumAge: 25, accountPaused: true, notificationsEnabled: false, renderIndex: 0 },
   { id: '4', name: 'User 4', age: 24, gender: 'Female', bio: 'Description 4', profileImageUris: [], datingPreferences: 'Everyone', 
-  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false },
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
 ];
 
 const cardData = {
@@ -90,6 +91,7 @@ router.post('/api/user/:userId/update', (req, res) => {
 
 router.delete('/api/cards/:userId/:cardId', (req, res) => {
   const { userId, cardId } = req.params;
+  const userIndex = users.findIndex(user => user.id === userId);
   // Check if the user ID exists in cardData
   if (cardData.hasOwnProperty(userId)) {
     // Find the index of the card with the given ID for the specified user
@@ -98,6 +100,12 @@ router.delete('/api/cards/:userId/:cardId', (req, res) => {
     // If the card is found, remove it from the array
     if (indexToRemove !== -1) {
       cardData[userId].splice(indexToRemove, 1);
+      if (indexToRemove < users[userIndex].renderIndex) {
+        users[userIndex].renderIndex -= 1;
+      }
+      if (users[userIndex].renderIndex >= cardData[userId].length) {
+        users[userIndex].renderIndex = 0;
+      }
       res.json({ success: true, message: 'Card removed successfully' });
     } else {
       res.json({ success: false, message: 'Card not found for the specified user ID' });
@@ -109,49 +117,83 @@ router.delete('/api/cards/:userId/:cardId', (req, res) => {
 
 router.get('/api/cards', function (req, res, next) {
   const { userId, datingPreferences, minimumAge, maximumAge } = req.query;
+  // Retrieve user cards data for the specified user ID
+  const userCards = cardData[userId] || [];
 
-  // Retrieve card data for the specified user ID
-  const userCardData = cardData[userId] || [];
+  if (userCards.length === 0) {
+    return res.json(null); // User has no cards
+  }
 
-  const combinedData = userCardData.map(card => {
-    const user = users.find(u => u.id === card.id);
+  let currentIndex = users.find(u => u.id === userId).renderIndex;
+  const originalIndex = currentIndex;
+  let nextCard = null;
 
-    // Check if the user matches the specified preferences
+  while (true) {
+    const card = userCards[currentIndex];
+
+    const likedUserId = card.id;
+    const likedUser = users.find(u => u.id === likedUserId);
+
+    // Check if the liked user matches the specified preferences
     const meetsPreferences =
       (datingPreferences === 'Everyone') ||
-      (user.gender === 'Non-binary') ||
-      ((datingPreferences === 'Men' && user.gender === 'Male') || 
-      (datingPreferences === 'Women' && user.gender === 'Female')) &&
-      (user.age >= minimumAge &&
-      user.age <= maximumAge) &&
-      (user.accountPaused === false);
+      (likedUser.gender === 'Non-binary') ||
+      ((datingPreferences === 'Men' && likedUser.gender === 'Male') ||
+        (datingPreferences === 'Women' && likedUser.gender === 'Female')) &&
+      (likedUser.age >= minimumAge && likedUser.age <= maximumAge) &&
+      (likedUser.accountPaused === false);
 
-    // If the user meets preferences, include the user's data in the response
     if (meetsPreferences) {
-      return {
-        id: card.id,
-        name: user.name,
-        bio: user.bio,
-        profileImageUris: user.profileImageUris,
+      nextCard = {
+        id: likedUserId,
+        name: likedUser.name,
+        bio: likedUser.bio,
+        profileImageUris: likedUser.profileImageUris,
         likesYou: card.likesYou,
-        accountPaused: user.accountPaused,
-        age: user.age,
-        gender: user.gender
+        accountPaused: likedUser.accountPaused,
+        age: likedUser.age,
+        gender: likedUser.gender
       };
-    } else {
-      // If the user does not meet preferences, return null for filtering
-      return null;
-    }
-  });
-  // Remove null values from the array (users that did not meet preferences)
-  const filteredData = combinedData.filter(data => data !== null);
 
-  res.json(filteredData);
+      // Update the renderIndex property, wrapping around if necessary
+      users.find(u => u.id === userId).renderIndex = currentIndex;
+      return res.json(nextCard);
+    }
+
+    // If the current card doesn't meet preferences, move to the next index
+    currentIndex += 1;
+    // Wrap the index to 0 if it reaches the end of the array
+    if (currentIndex === userCards.length) {
+      currentIndex = 0;
+    }
+
+    // If completed one loop, return null
+    if (currentIndex === originalIndex) {
+      return res.json(null);
+    }
+  }
+});
+
+const incrementIndex = (userId) => {
+  const user = users.find(u => u.id === userId);
+  if (user) {
+    user.renderIndex = (user.renderIndex + 1) % cardData[userId].length;
+  }
+};
+
+router.post('/api/incrementIndex', (req, res) => {
+  const { userId } = req.body;
+
+  // Increment the renderIndex
+  incrementIndex(userId);
+
+  res.status(200).json({ success: true });
 });
 
 router.put('/api/addlike/:userId/:likedUser', (req, res) => {
   const userId = req.params.userId;
   const likedUser = req.params.likedUser;
+  console.log("liked", likedUser);
 
   // Find the user in the likedUser array with the specified userId
   const likedUserData = cardData[likedUser];
