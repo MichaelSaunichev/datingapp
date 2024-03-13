@@ -94,15 +94,19 @@ router.delete('/api/cards/:userId/:cardId', (req, res) => {
   const userIndex = users.findIndex(user => user.id === userId);
   // Check if the user ID exists in cardData
   if (cardData.hasOwnProperty(userId)) {
-    // Find the index of the card with the given ID for the specified user
+    // Find index of the card with the given ID for the specified user
     const indexToRemove = cardData[userId].findIndex(card => card.id === cardId);
 
-    // If the card is found, remove it from the array
+    // If the card is found remove it from the array
     if (indexToRemove !== -1) {
       cardData[userId].splice(indexToRemove, 1);
-      if (indexToRemove < users[userIndex].renderIndex) {
-        users[userIndex].renderIndex -= 1;
-      }
+
+      // Implementation for blocking users
+      //if (indexToRemove < users[userIndex].renderIndex) {
+      //  users[userIndex].renderIndex -= 1;
+      //}
+
+      // Wrap if past the last index
       if (users[userIndex].renderIndex >= cardData[userId].length) {
         users[userIndex].renderIndex = 0;
       }
@@ -131,31 +135,30 @@ router.get('/api/cards', function (req, res, next) {
   while (true) {
     const card = userCards[currentIndex];
 
-    const likedUserId = card.id;
-    const likedUser = users.find(u => u.id === likedUserId);
+    const checkUserId = card.id;
+    const checkUser = users.find(u => u.id === checkUserId);
 
-    // Check if the liked user matches the specified preferences
     const meetsPreferences =
       (datingPreferences === 'Everyone') ||
-      (likedUser.gender === 'Non-binary') ||
-      ((datingPreferences === 'Men' && likedUser.gender === 'Male') ||
-        (datingPreferences === 'Women' && likedUser.gender === 'Female')) &&
-      (likedUser.age >= minimumAge && likedUser.age <= maximumAge) &&
-      (likedUser.accountPaused === false);
+      (checkUser.gender === 'Non-binary') ||
+      ((datingPreferences === 'Men' && checkUser.gender === 'Male') ||
+        (datingPreferences === 'Women' && checkUser.gender === 'Female')) &&
+      (checkUser.age >= minimumAge && checkUser.age <= maximumAge) &&
+      (checkUser.accountPaused === false);
 
     if (meetsPreferences) {
       nextCard = {
-        id: likedUserId,
-        name: likedUser.name,
-        bio: likedUser.bio,
-        profileImageUris: likedUser.profileImageUris,
+        id: checkUserId,
+        name: checkUser.name,
+        bio: checkUser.bio,
+        profileImageUris: checkUser.profileImageUris,
         likesYou: card.likesYou,
-        accountPaused: likedUser.accountPaused,
-        age: likedUser.age,
-        gender: likedUser.gender
+        accountPaused: checkUser.accountPaused,
+        age: checkUser.age,
+        gender: checkUser.gender
       };
 
-      // Update the renderIndex property, wrapping around if necessary
+      // Update renderIndex
       users.find(u => u.id === userId).renderIndex = currentIndex;
       return res.json(nextCard);
     }
@@ -169,7 +172,7 @@ router.get('/api/cards', function (req, res, next) {
 
     // If completed one loop, return null
     if (currentIndex === originalIndex) {
-      return res.json(null);
+      return res.json(nextCard);
     }
   }
 });
