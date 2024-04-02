@@ -26,11 +26,11 @@ const TabOneScreen = () => {
   const [card, setCard] = useState<Card>();
   const [loading, setLoading] = useState<Boolean>(false);
 
-  const userId = '1';
+  const userId = '3';
 
   useFocusEffect(
     React.useCallback(() => {
-      fetch(`http://192.168.1.9:3000/api/user/${userId}`)
+      fetch(`http://192.168.1.22:3000/api/user/${userId}`)
       .then(response => response.json())
       .then(userData => {
         console.log('User Data:', userData);
@@ -57,7 +57,7 @@ const TabOneScreen = () => {
         const { datingPreferences, minimumAge, maximumAge } = preferences;
         console.log(datingPreferences, minimumAge, maximumAge);
         // Fetch card data from the backend with filtering parameters
-        const response = await fetch(`http://192.168.1.9:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
+        const response = await fetch(`http://192.168.1.22:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch card data');
@@ -76,7 +76,7 @@ const TabOneScreen = () => {
 
   const removeCard = async (card: Card) => {
     try {
-      const response = await fetch(`http://192.168.1.9:3000/api/cards/${userId}/${card.id}`, {
+      const response = await fetch(`http://192.168.1.22:3000/api/cards/${userId}/${card.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ const TabOneScreen = () => {
 
   const addChat = async (userId: string, chatAddId: number) => {
     try {
-      const response = await fetch(`http://192.168.1.9:3000/api/addchat/${userId}/${chatAddId}`, {
+      const response = await fetch(`http://192.168.1.22:3000/api/addchat/${userId}/${chatAddId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ const TabOneScreen = () => {
 
   const addLike = async (likedUser: number) => {
     try {
-      const response = await fetch(`http://192.168.1.9:3000/api/addlike/${userId}/${likedUser}`, {
+      const response = await fetch(`http://192.168.1.22:3000/api/addlike/${userId}/${likedUser}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -173,7 +173,7 @@ const TabOneScreen = () => {
     try {
       const currentCard = card;
       console.log('Disliked:', currentCard);
-      await fetch('http://192.168.1.9:3000/api/incrementIndex', {
+      await fetch('http://192.168.1.22:3000/api/incrementIndex', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
