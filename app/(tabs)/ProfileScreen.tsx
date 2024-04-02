@@ -37,14 +37,14 @@ const ProfileScreen: React.FC = ({}) => {
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
 
-  const userId = '3';
+  const userId = '1';
   
 
   useEffect(() => {
     console.log('Fetching user data for userId:', userId);
   
     // Fetch user data when the component mounts
-    fetch(`http://192.168.1.9:3000/api/user/${userId}`)
+    fetch(`http://192.168.1.22:3000/api/user/${userId}`)
       .then(response => response.json())
       .then(userData => {
         console.log('User Data:', userData);
@@ -56,7 +56,7 @@ const ProfileScreen: React.FC = ({}) => {
   
   const updateUserData = () => {
     // Send a request to update user data
-    fetch(`http://192.168.1.9:3000/api/user/${userId}/update`, {
+    fetch(`http://192.168.1.22:3000/api/user/${userId}/update`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

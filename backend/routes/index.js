@@ -101,11 +101,6 @@ router.delete('/api/cards/:userId/:cardId', (req, res) => {
     if (indexToRemove !== -1) {
       cardData[userId].splice(indexToRemove, 1);
 
-      // Implementation for blocking users
-      //if (indexToRemove < users[userIndex].renderIndex) {
-      //  users[userIndex].renderIndex -= 1;
-      //}
-
       // Wrap if past the last index
       if (users[userIndex].renderIndex >= cardData[userId].length) {
         users[userIndex].renderIndex = 0;
@@ -235,6 +230,42 @@ router.put('/api/addchat/:userId/:newUserId', (req, res) => {
   res.status(200).send('Users added to chatData');
 });
 
+router.delete('/api/block/:userId1/:userId2', (req, res) => {
+  const userId1 = req.params.userId1;
+  const userId2 = req.params.userId2;
+
+  // Remove chat data for the first user
+  if (chatData.hasOwnProperty(userId1) && chatData[userId1].has(userId2)) {
+    chatData[userId1].delete(userId2);
+  }
+
+  // Remove chat data for the second user
+  if (chatData.hasOwnProperty(userId2) && chatData[userId2].has(userId1)) {
+    chatData[userId2].delete(userId1);
+  }
+
+  res.status(200).send('Chats removed for both users');
+});
+
+router.delete('/api/unmatch/:userId1/:userId2', (req, res) => {
+  const userId1 = req.params.userId1;
+  const userId2 = req.params.userId2;
+
+  // Remove chat data for the first user
+  if (chatData.hasOwnProperty(userId1) && chatData[userId1].has(userId2)) {
+    chatData[userId1].delete(userId2);
+  }
+
+  // Remove chat data for the second user
+  if (chatData.hasOwnProperty(userId2) && chatData[userId2].has(userId1)) {
+    chatData[userId2].delete(userId1);
+  }
+
+  // Implement adding back cards for both users
+
+  res.status(200).send('Chats removed for both users');
+});
+
 router.get('/api/chats/:userId', function(req, res, next) {
   const userId = req.params.userId;
   const chatUsers = [];
@@ -248,9 +279,16 @@ router.get('/api/chats/:userId', function(req, res, next) {
 
     // Check if the user is found
     if (correspondingUser) {
+      let profileImageUri;
+      // Check if profile images are available for the user
+      if (correspondingUser.profileImageUris && correspondingUser.profileImageUris.length > 0) {
+        // If profile images are available, take the first one
+        profileImageUri = correspondingUser.profileImageUris[0];
+      }
       const user = {
         _id: chatId,
         name: correspondingUser.name,
+        profileImageUri: profileImageUri
       };
       // Add the chatInfo to the array
       chatUsers.push(user);
