@@ -247,6 +247,24 @@ router.delete('/api/block/:userId1/:userId2', (req, res) => {
   res.status(200).send('Chats removed for both users');
 });
 
+function addCard(userId, unmatchedUserId) {
+  const userIndex = users.findIndex(user => user.id === userId);
+  const renderIndex = userIndex !== -1 ? users[userIndex].renderIndex : -1;
+
+  if (cardData.hasOwnProperty(userId) && !cardData[userId].some(user => user.id === unmatchedUserId)) {
+    const userToAdd = { id: unmatchedUserId, likesYou: 0 };
+    if (renderIndex !== -1) {
+      cardData[userId].splice(renderIndex, 0, userToAdd);
+    } else {
+      cardData[userId].push(userToAdd);
+    }
+  }
+
+  if (userIndex !== -1 && cardData.hasOwnProperty(userId) && cardData[userId].length > 1) {
+    users[userIndex].renderIndex++;
+  }
+}
+
 router.delete('/api/unmatch/:userId1/:userId2', (req, res) => {
   const userId1 = req.params.userId1;
   const userId2 = req.params.userId2;
@@ -262,6 +280,18 @@ router.delete('/api/unmatch/:userId1/:userId2', (req, res) => {
   }
 
   // Implement adding back cards for both users
+
+  // Find the renderIndex of userId1 and userId2
+  const userIndex1 = users.findIndex(user => user.id === userId1);
+  const renderIndex1 = userIndex1 !== -1 ? users[userIndex1].renderIndex : -1;
+
+  const userIndex2 = users.findIndex(user => user.id === userId2);
+  const renderIndex2 = userIndex2 !== -1 ? users[userIndex2].renderIndex : -1;
+
+  addCard(userId1, userId2);
+  addCard(userId2, userId1);
+
+  console.log("card data:", cardData);
 
   res.status(200).send('Chats removed for both users');
 });

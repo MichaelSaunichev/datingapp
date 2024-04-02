@@ -20,7 +20,7 @@ const TabTwoScreen = () => {
 
   const navigation = useNavigation();
 
-  const userId = 1;
+  const userId = 0;
   
 
   useFocusEffect(
