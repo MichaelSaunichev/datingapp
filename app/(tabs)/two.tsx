@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { FlatList, TouchableOpacity, Text, View, Image, Button, Modal, StyleSheet } from 'react-native';
 import { GiftedChat, IMessage, User } from 'react-native-gifted-chat';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
+import { ScrollView } from 'react-native';
 
 
 interface CustomMessage extends IMessage {
@@ -13,14 +14,16 @@ const TabTwoScreen = () => {
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [chats, setChats] = useState<{ name: string; profileImageUri?: string; _id: string }[]>([]);
   const [messages, setMessages] = useState<CustomMessage[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [readyChat, setReadyChat] = useState<boolean>(false);
   const [userName, setUserName] = useState<string | null>(null);
 
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modal1Visible, setmodal1Visible] = useState(false);
+  const [modal2Visible, setmodal2Visible] = useState(false);
 
   const navigation = useNavigation();
 
-  const userId = 0;
+  const userId = 1;
   
 
   useFocusEffect(
@@ -70,10 +73,12 @@ const TabTwoScreen = () => {
         throw new Error('Failed to fetch messages');
       }
   
-      const messages = await response.json();
+      const {messages, userProfile} = await response.json();
       // Update the state with the fetched messages without reversing
       setMessages(messages);
+      setUserProfile(userProfile);
       console.log('messages:', messages);
+      console.log("userProfile:", userProfile);
     } catch (error) {
       console.error('Error loading messages:', error);
       // Handle the error, e.g., display a message to the user
@@ -164,26 +169,26 @@ const TabTwoScreen = () => {
           />
         )}
         <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'white', flex: 1 }}>{item.name}</Text>
-        <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.manageButton}>
+        <TouchableOpacity onPress={() => setmodal1Visible(true)} style={styles.manageButton}>
           <Text style={styles.manageButtonText}>Manage User</Text>
         </TouchableOpacity>
       </View>
       <Modal
         animationType="slide"
         transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        visible={modal1Visible}
+        onRequestClose={() => setmodal1Visible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Manage User</Text>
-            <TouchableOpacity onPress={() => { handleUnmatch(item._id); setModalVisible(false); }} style={styles.unmatchButton}>
+            <TouchableOpacity onPress={() => { handleUnmatch(item._id); setmodal1Visible(false); }} style={styles.unmatchButton}>
               <Text style={styles.actionButtonText}>Unmatch</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { handleBlock(item._id); setModalVisible(false); }} style={styles.blockButton}>
+            <TouchableOpacity onPress={() => { handleBlock(item._id); setmodal1Visible(false); }} style={styles.blockButton}>
               <Text style={styles.actionButtonText}>Block</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.cancelButton}>
+            <TouchableOpacity onPress={() => setmodal1Visible(false)} style={styles.cancelButton}>
               <Text style={styles.actionButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -196,9 +201,9 @@ const TabTwoScreen = () => {
     if (selectedChat !== null && readyChat ) {
       return (
         <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: 10 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: 15 }}>
             <TouchableOpacity
-              onPress={() => {setMessages([]); setReadyChat(false); setSelectedChat(null)}}
+              onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); }} // Reset userProfile state
               style={{
                 backgroundColor: 'white',
                 borderRadius: 8,
@@ -209,6 +214,55 @@ const TabTwoScreen = () => {
             >
               <Text style={{ color: 'black', fontSize: 14 }}>Back</Text>
             </TouchableOpacity>
+            <View style={{ position: 'absolute', top: 7, left: '50%', marginLeft: -10 }}>
+              <TouchableOpacity onPress={() => setmodal2Visible(true)}>
+                {userProfile && userProfile.profileImageUris.length > 0 && (
+                  <Image
+                    source={{ uri: userProfile.profileImageUris[0] }}
+                    style={{ width: 50, height: 50, borderRadius: 50 }}
+                  />
+                )}
+              </TouchableOpacity>
+            </View>
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={modal2Visible}
+              onRequestClose={() => setmodal2Visible(false)}
+            >
+              <View style={[styles.modalContent, { width: '100%' }]}>
+                <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled>
+                  <View style={[styles.modalContent, { marginTop: 50, marginBottom: 50, width: '100%' }]}>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{userProfile.name}, {userProfile.age}</Text>
+                    {/* Render the first profile image */}
+                    <View style={{ alignItems: 'center' }}>
+                    {userProfile.profileImageUris.length > 0 && (
+                      <Image
+                        key={userProfile.profileImageUris[0]}
+                        source={{ uri: userProfile.profileImageUris[0] }}
+                        style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
+                      />
+                    )}
+                    </View>
+                    {/* Render the bio after the first picture */}
+                    <Text style={{ fontSize: 14, marginTop: 10, textAlign: 'center' }}>{userProfile.bio}</Text>
+                    {/* Render additional profile pictures */}
+                    <View style={{ alignItems: 'center' }}>
+                      {userProfile.profileImageUris.slice(1).map((uri: string, index: number) => (
+                        <Image
+                          key={uri}
+                          source={{ uri }}
+                          style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
+                        />
+                      ))}
+                    </View>
+                    <TouchableOpacity onPress={() => setmodal2Visible(false)} style={styles.cancelButton}>
+                      <Text style={styles.actionButtonText}>Close</Text>
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+              </View>
+            </Modal>
           </View>
           <GiftedChat
             messages={messages}
@@ -234,7 +288,7 @@ const TabTwoScreen = () => {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: 'rgba(0, 0, 0, 0)',
     },
     modalContent: {
       backgroundColor: 'white',

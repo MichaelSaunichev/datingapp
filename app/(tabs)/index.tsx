@@ -189,35 +189,45 @@ const TabOneScreen = () => {
   };
 
   const renderCard = (card: Card | null) => (
-    <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled>
-      {card ? (
-        <View style={styles.card}>
-          {/* Customize how to display the card data */}
-          <Text>{card.name}</Text>
-          <Text>{card.bio}</Text>
-          {/* Render profile images */}
-          {/* Scrollable container for profile images */}
-          <ScrollView horizontal>
-            <View style={styles.imageContainer}>
-              {card.profileImageUris.map((uri, index) => (
-                <Image key={index} source={{ uri }} style={styles.profileImage} />
+    <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: '100%', height: '100%' }}>
+      <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled>
+        {card ? (
+          <View style={styles.card}>
+            {/* Customize how to display the card data */}
+            <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{card.name}, {card.age}</Text>
+            <View style={{ alignItems: 'center' }}>
+              {card.profileImageUris.length > 0 && (
+                <Image
+                  key={card.profileImageUris[0]}
+                  source={{ uri: card.profileImageUris[0] }}
+                  style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
+                />
+              )}
+            </View>
+            <Text style={{ fontSize: 14, marginTop: 10 }}>{card.bio}</Text>
+            <View style={{ alignItems: 'center' }}>
+              {card.profileImageUris.slice(1).map((uri: string, index: number) => (
+                <Image
+                  key={uri}
+                  source={{ uri }}
+                  style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
+                />
               ))}
             </View>
-          </ScrollView>
-          {/* ... (other card data) */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onDislike(); }}>
-              <Text style={styles.buttonText}>Dislike</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onLike(); }}>
-              <Text style={styles.buttonText}>Like</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onDislike(); }}>
+                <Text style={styles.buttonText}>Dislike</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onLike(); }}>
+                <Text style={styles.buttonText}>Like</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      ) : (
-        <Text>No more cards</Text>
-      )}
-    </ScrollView>
+        ) : (
+          <Text>No more cards</Text>
+        )}
+      </ScrollView>
+    </View>
   );
 
   const getRenderedCard = () => {
