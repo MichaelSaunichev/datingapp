@@ -333,7 +333,8 @@ router.get('/api/chat/:userId/:chatId', function (req, res, next) {
 
   chatDataForUser = chatData[userId] || [];
   const messages = chatDataForUser.get(chatId) || [];
-  res.json(messages);
+  const userProfile = users.find(user => user.id === chatId);
+  res.json({messages, userProfile});
 });
 
 /* POST a new message to a chat. */

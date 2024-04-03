@@ -37,7 +37,7 @@ const ProfileScreen: React.FC = ({}) => {
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
 
-  const userId = '1';
+  const userId = '0';
   
 
   useEffect(() => {
