@@ -7,13 +7,13 @@ const chatDataFunctions = require('../models/chatData');
 const { render } = require('../app');
 
 const users = [
-  { id: '0', name: 'John', age: 20, gender: 'Male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 
+  { id: '0', name: 'Sean', age: 20, gender: 'Male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
   { id: '1', name: 'Stacy', age: 21, gender: 'Female', bio: 'Description 1', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: true, renderIndex: 0 },
   { id: '2', name: 'Chad', age: 22, gender: 'Male', bio: 'Description 2', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
-  { id: '3', name: 'Tom', age: 23, gender: 'Male', bio: 'Description 3', profileImageUris: [], datingPreferences: 'Everyone', 
+  { id: '3', name: 'Diego', age: 23, gender: 'Male', bio: 'Description 3', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: true, notificationsEnabled: false, renderIndex: 0 },
   { id: '4', name: 'Emma', age: 24, gender: 'Female', bio: 'Description 4', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
@@ -116,6 +116,7 @@ router.delete('/api/cards/:userId/:cardId', (req, res) => {
 
 router.get('/api/cards', function (req, res, next) {
   const { userId, datingPreferences, minimumAge, maximumAge } = req.query;
+  console.log("datingpreference:", datingPreferences);
   // Retrieve user cards data for the specified user ID
   const userCards = cardData[userId] || [];
 
@@ -134,10 +135,12 @@ router.get('/api/cards', function (req, res, next) {
     const checkUser = users.find(u => u.id === checkUserId);
 
     const meetsPreferences =
+      (
       (datingPreferences === 'Everyone') ||
       (checkUser.gender === 'Non-binary') ||
       ((datingPreferences === 'Men' && checkUser.gender === 'Male') ||
-        (datingPreferences === 'Women' && checkUser.gender === 'Female')) &&
+        (datingPreferences === 'Women' && checkUser.gender === 'Female')) 
+      ) &&
       (checkUser.age >= minimumAge && checkUser.age <= maximumAge) &&
       (checkUser.accountPaused === false);
 
@@ -160,6 +163,7 @@ router.get('/api/cards', function (req, res, next) {
 
     // If the current card doesn't meet preferences, move to the next index
     currentIndex += 1;
+    console.log("index:",currentIndex);
     // Wrap the index to 0 if it reaches the end of the array
     if (currentIndex === userCards.length) {
       currentIndex = 0;
