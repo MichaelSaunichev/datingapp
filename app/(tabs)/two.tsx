@@ -66,7 +66,6 @@ const TabTwoScreen = () => {
     setSelectedChat(chatId);
   
     try {
-      // Fetch messages for the selected chat from the backend
       const response = await fetch(`http://192.168.1.22:3000/api/chat/${userId}/${chatId}`);
   
       if (!response.ok) {
@@ -74,14 +73,12 @@ const TabTwoScreen = () => {
       }
   
       const {messages, userProfile} = await response.json();
-      // Update the state with the fetched messages without reversing
       setMessages(messages);
       setUserProfile(userProfile);
       console.log('messages:', messages);
       console.log("userProfile:", userProfile);
     } catch (error) {
       console.error('Error loading messages:', error);
-      // Handle the error, e.g., display a message to the user
     }
     finally {
       setReadyChat(true);
@@ -89,14 +86,11 @@ const TabTwoScreen = () => {
   };
 
   const onSend = async (newMessages: CustomMessage[] = []) => {
-    // Assuming you're using the selectedChat as the chatId
     const chatId = selectedChat?.toString();
     if (!chatId || newMessages.length === 0) {
-      // Exit early if chatId is null or there are no new messages
       return;
     }
   
-    // Send the last message instead of the first one
     const lastNewMessage = newMessages[newMessages.length - 1];
   
     const updatedMessages = [...messages, lastNewMessage];
@@ -203,13 +197,13 @@ const TabTwoScreen = () => {
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: 15 }}>
             <TouchableOpacity
-              onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); }} // Reset userProfile state
+              onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); }}
               style={{
                 backgroundColor: 'white',
                 borderRadius: 8,
                 paddingVertical: 6,
                 paddingHorizontal: 12,
-                marginRight: 10, // Add some right margin for spacing
+                marginRight: 10,
               }}
             >
               <Text style={{ color: 'black', fontSize: 14 }}>Back</Text>
@@ -231,7 +225,7 @@ const TabTwoScreen = () => {
               onRequestClose={() => setmodal2Visible(false)}
             >
               <View style={[styles.modalContent, { width: '100%' }]}>
-                <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled>
+                <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
                   <View style={[styles.modalContent, { marginTop: 50, marginBottom: 50, width: '100%' }]}>
                     <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{userProfile.name}, {userProfile.age}</Text>
                     {/* Render the first profile image */}
@@ -291,10 +285,10 @@ const TabTwoScreen = () => {
       backgroundColor: 'rgba(0, 0, 0, 0)',
     },
     modalContent: {
-      backgroundColor: 'white',
+      backgroundColor: '#FFC107',
       padding: 20,
       borderRadius: 10,
-      width: '80%', // Adjust the width as needed
+      width: '80%',
     },
     modalTitle: {
       fontSize: 18,

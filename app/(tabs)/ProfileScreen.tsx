@@ -4,6 +4,8 @@ import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
 import { Link } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
+import ImageCropPicker from 'react-native-image-crop-picker';
 import {NavigationContainer} from '@react-navigation/native';
 
 type ProfileState = {
@@ -36,6 +38,7 @@ const ProfileScreen: React.FC = ({}) => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const userId = '0';
   
@@ -76,6 +79,7 @@ const ProfileScreen: React.FC = ({}) => {
       setProfileState({
         ...tempProfileState
       });
+      setIsDeleting(false)
       updateUserData();
       setIsSettingsModalVisible(false)
       setIsEditModalVisible(false)
@@ -123,7 +127,6 @@ const ProfileScreen: React.FC = ({}) => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 5],
       quality: 1,
     });
   
@@ -230,7 +233,6 @@ const ProfileScreen: React.FC = ({}) => {
                 maximumTrackTintColor="green"
                 thumbTintColor="green"
                 onValueChange={(value) => {
-                  console.log('Slider value:', value);
                   setTempProfileState((prevState) => ({
                     ...prevState,
                     minimumAge: value,
@@ -299,8 +301,8 @@ const ProfileScreen: React.FC = ({}) => {
                   multiline
                   value={tempProfileState.bio}
                   onChangeText={(text) => {
-                    const maxLines = 1; // Set your desired maximum number of lines
-                    const maxCharacters = 200; // Set your desired maximum number of characters
+                    const maxLines = 1;
+                    const maxCharacters = 200;
 
                     const lines = text.split('\n');
                     if (lines.length <= maxLines && text.length <= maxCharacters) {
@@ -308,19 +310,40 @@ const ProfileScreen: React.FC = ({}) => {
                     }
                   }}
                 />
+                <Text style={styles.editProfileText}>Images:</Text>
                 <View style={styles.editProfileContainer}>
-                  <Text style={styles.editProfileText}>Images:</Text>
-                  <TouchableOpacity onPress={handleImageUpload} style={styles.addImageButton}>
-                    <Text style={styles.buttonText}>Add Image</Text>
-                  </TouchableOpacity>
+                  {!isDeleting ? (
+                    <>
+                      <TouchableOpacity onPress={handleImageUpload} style={styles.addImageButton}>
+                        <Text style={styles.buttonText}>Add Image</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => {setIsDeleting(true)}} style={styles.deleteImageButton}>
+                        <Text style={styles.buttonText}>Delete Image</Text>
+                      </TouchableOpacity>
+                    </>
+                    
+                  ) : (
+                    <TouchableOpacity onPress={() => {setIsDeleting(false)}} style={styles.stopDeletingButton}>
+                      <Text style={styles.buttonText}>Done</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 <View style={styles.imagePreviewContainer}>
                   {tempProfileState.profileImageUris.length > 0 ? (
                     tempProfileState.profileImageUris.map((uri, index) => (
-                      <TouchableOpacity key={index} onPress={() => deleteImage(index)}>
-                        <Image source={{ uri }} style={styles.thumbnail} />
-                      </TouchableOpacity>
+                      <View key={index}>
+                        {isDeleting ? (
+                          <TouchableOpacity onPress={() => deleteImage(index)}>
+                            <Image source={{ uri }} style={styles.thumbnail} />
+                            <TouchableOpacity style={styles.closeButton} onPress={() => deleteImage(index)}>
+                              <Text style={styles.closeButtonText}>x</Text>
+                            </TouchableOpacity>
+                          </TouchableOpacity>
+                        ) : (
+                          <Image source={{ uri }} style={styles.thumbnail} />
+                        )}
+                      </View>
                     ))
                   ) : (
                     <Text>No images selected</Text>
@@ -336,6 +359,7 @@ const ProfileScreen: React.FC = ({}) => {
 
                 <TouchableOpacity
                   onPress={() => {
+                    setIsDeleting(false);
                     setIsEditModalVisible(false);
                     setTempProfileState(profileState);
                   }}
@@ -516,6 +540,35 @@ const styles = StyleSheet.create({
     backgroundColor: 'orange', 
     padding: 10,
     borderRadius: 5,
+  },
+  deleteImageButton: {
+    marginTop: 10, 
+    backgroundColor: 'orange', 
+    padding: 10,
+    borderRadius: 5,
+  },
+  stopDeletingButton: {
+    marginTop: 10, 
+    backgroundColor: 'orange', 
+    padding: 10,
+    borderRadius: 5,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 30,
+    backgroundColor: 'grey',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingLeft: 1,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontSize: 30,
+    lineHeight: 30,
   },
 
   saveChangesButton: {
