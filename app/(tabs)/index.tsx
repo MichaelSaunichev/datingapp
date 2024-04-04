@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useViewRefSet } from 'react-native-reanimated/lib/typescript/reanimated2/ViewDescriptorsSet';
 
 interface Card {
@@ -26,7 +27,7 @@ const TabOneScreen = () => {
   const [card, setCard] = useState<Card>();
   const [loading, setLoading] = useState<Boolean>(false);
 
-  const userId = '1';
+  const userId = '3';
 
   useFocusEffect(
     React.useCallback(() => {
@@ -189,8 +190,8 @@ const TabOneScreen = () => {
   };
 
   const renderCard = (card: Card | null) => (
-    <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: '100%', height: '100%' }}>
-      <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled>
+    <View style={{ backgroundColor: '#C3E362', padding: 20, borderRadius: 10, width: '100%', height: '100%' }}>
+      <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled showsVerticalScrollIndicator={false}>
         {card ? (
           <View style={styles.card}>
             {/* Customize how to display the card data */}
@@ -214,19 +215,19 @@ const TabOneScreen = () => {
                 />
               ))}
             </View>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onDislike(); }}>
-                <Text style={styles.buttonText}>Dislike</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onLike(); }}>
-                <Text style={styles.buttonText}>Like</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         ) : (
-          <Text>No more cards</Text>
+          <Text>No more users</Text>
         )}
       </ScrollView>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onDislike(); }}>
+          <FontAwesome name="times" size={24} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onLike(); }}>
+          <FontAwesome name="heart" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -255,26 +256,26 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%', // Take up the whole screen width
+    width: '100%',
   },
   imageContainer: {
     marginTop: 10,
   },
   profileImage: {
-    width: 250, // Adjust the size as needed
-    height: 250, // Adjust the size as needed
-    borderRadius: 8, // Adjust the border radius as needed
-    marginVertical: 5, // Adjust the vertical margin as needed
+    width: 250,
+    height: 250,
+    borderRadius: 8,
+    marginVertical: 5,
   },
   card: {
     borderRadius: 8,
     borderWidth: 2,
     borderColor: '#E8E8E8',
-    backgroundColor: 'white',
+    backgroundColor: '#FFC107',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    width: '100%', // Adjust the width based on your design
+    width: '100%',
     height: '100%',
   },
   buttonContainer: {
