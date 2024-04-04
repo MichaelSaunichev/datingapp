@@ -13,7 +13,7 @@ type ProfileState = {
   age: number;
   gender: 'Man' | 'Woman' | 'Non-binary';
   bio: string;
-  profileImageUris: string[]; // Array of URIs for profile images
+  profileImageUris: string[];
   datingPreferences: 'Men' | 'Women' |'Everyone';
   minimumAge: number;
   maximumAge: number;
@@ -40,17 +40,14 @@ const ProfileScreen: React.FC = ({}) => {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const userId = '0';
+  const userId = '3';
   
 
   useEffect(() => {
-    console.log('Fetching user data for userId:', userId);
-  
     // Fetch user data when the component mounts
     fetch(`http://192.168.1.22:3000/api/user/${userId}`)
       .then(response => response.json())
       .then(userData => {
-        console.log('User Data:', userData);
         setProfileState(userData);
         setTempProfileState(userData);
       })
@@ -103,7 +100,6 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const handleDatingPreferenceChange = (preference: string) => {
-    console.log(preference);
     if (isPreference(preference)) {
       setTempProfileState((prevState) => ({
         ...prevState,
@@ -129,8 +125,6 @@ const ProfileScreen: React.FC = ({}) => {
       allowsEditing: true,
       quality: 1,
     });
-  
-    console.log(result);
     if (!result.canceled) {
       const newUri = result.assets[0].uri;
       setTempProfileState((prevState) => ({
@@ -151,13 +145,9 @@ const ProfileScreen: React.FC = ({}) => {
         source={{ uri: profileState.profileImageUris[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
         style={styles.profileImage}
       />
-      <View style={styles.textContainer}>
+      <View style={styles.textContainerName}>
         {/*name*/}
-        <Text style={styles.nameText}>{profileState.name}</Text>
-      </View>
-      <View style={styles.textContainer}>
-        {/*bio*/}
-        <Text style={styles.bioText}>{profileState.bio}</Text>
+        <Text style={styles.nameText}>{profileState.name}, {profileState.age}</Text>
       </View>
       <View style={styles.buttonAndLabelContainer}>
         {/* Settings Button Group */}
@@ -229,9 +219,9 @@ const ProfileScreen: React.FC = ({}) => {
                 minimumValue={18}
                 maximumValue={25}
                 step={1}
-                minimumTrackTintColor="red"
-                maximumTrackTintColor="green"
-                thumbTintColor="green"
+                minimumTrackTintColor="#FF6F61"
+                maximumTrackTintColor="#4CAF50"
+                thumbTintColor="#4CAF50"
                 onValueChange={(value) => {
                   setTempProfileState((prevState) => ({
                     ...prevState,
@@ -250,11 +240,10 @@ const ProfileScreen: React.FC = ({}) => {
                 minimumValue={18}
                 maximumValue={25}
                 step={1}
-                minimumTrackTintColor="green"
-                maximumTrackTintColor="red"
-                thumbTintColor="green"
+                minimumTrackTintColor="#4CAF50"
+                maximumTrackTintColor="#FF6F61"
+                thumbTintColor="#4CAF50"
                 onValueChange={(value) => {
-                  console.log('Slider value:', value);
                   setTempProfileState((prevState) => ({
                     ...prevState,
                     maximumAge: value,
@@ -380,32 +369,30 @@ const styles = StyleSheet.create({
   profileContainer: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-    marginTop: 0,
+    paddingVertical: '5%', // Use percentage-based padding for top and bottom
+    paddingHorizontal: 10, // Use fixed padding for left and right
+    backgroundColor: '#FFF8E1',
   },
   profileImage: {
     marginTop: 40,
     width: 200,
     height: 200,
     borderRadius: 150,
-    marginBottom: 10,
   },
-  textContainer: {
+  textContainerName: {
     flex: 0,
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 0,
-    backgroundColor: '#f0f0f0',
-    marginTop: 10,
+    padding: 10,
+    backgroundColor: 'rgba(255, 255, 225, 0)',
+    marginTop: '2%',
   },
   buttonAndLabelContainer: {
     width: '100%', 
     flexDirection: 'row',
     justifyContent: 'space-around', 
     alignItems: 'center',
-    marginBottom: 50, 
+    marginTop: '50%',
   },
   buttonGroup: {
     alignItems: 'center',
@@ -415,7 +402,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#e91e63',
+    backgroundColor: '#ff6090',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 5,
@@ -444,7 +431,7 @@ const styles = StyleSheet.create({
     margin: 20,
     width: '90%',
     height: '90%',
-    backgroundColor: "white",
+    backgroundColor: '#FFDAB9',
     borderRadius: 20,
     padding: 35,
     alignItems: "center",
@@ -466,7 +453,7 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#888888',
     padding: 10,
   },
   imagePreviewContainer: {
@@ -507,7 +494,7 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: 'white',
+    color: 'black',
     fontSize: 16,
     textAlign: 'center',
   },
@@ -515,18 +502,17 @@ const styles = StyleSheet.create({
   preferenceButton: {
     padding: 8,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#888888',
     borderRadius: 5,
   },
   selectedPreference: {
-    backgroundColor: '#007bff',
-    borderColor: '#007bff',
+    backgroundColor: 'lightblue',
     color: '#ffffff',
   },
   logOutButton: {
     width: '100%',
     marginTop: 10, 
-    backgroundColor: 'red', 
+    backgroundColor: '#FF6F61', 
     padding: 10,
     borderRadius: 5,
   },
@@ -537,19 +523,19 @@ const styles = StyleSheet.create({
   },
   addImageButton: {
     marginTop: 10, 
-    backgroundColor: 'orange', 
+    backgroundColor: '#FFFACD', 
     padding: 10,
     borderRadius: 5,
   },
   deleteImageButton: {
     marginTop: 10, 
-    backgroundColor: 'orange', 
+    backgroundColor: '#FFFACD', 
     padding: 10,
     borderRadius: 5,
   },
   stopDeletingButton: {
     marginTop: 10, 
-    backgroundColor: 'orange', 
+    backgroundColor: '#FFFACD', 
     padding: 10,
     borderRadius: 5,
   },
@@ -560,7 +546,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 30,
-    backgroundColor: 'grey',
+    backgroundColor: '#888888',
     justifyContent: 'center',
     alignItems: 'center',
     paddingLeft: 1,
@@ -574,7 +560,7 @@ const styles = StyleSheet.create({
   saveChangesButton: {
     width: '100%',
     marginTop: 10, 
-    backgroundColor: 'green', 
+    backgroundColor: '#4CAF50', 
     padding: 10,
     borderRadius: 5,
   },
@@ -582,7 +568,7 @@ const styles = StyleSheet.create({
   cancelButton: {
     width: '100%',
     marginTop: 10, 
-    backgroundColor: 'grey', 
+    backgroundColor: '#888888', 
     padding: 10,
     borderRadius: 5,
   },

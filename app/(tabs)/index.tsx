@@ -27,14 +27,13 @@ const TabOneScreen = () => {
   const [card, setCard] = useState<Card>();
   const [loading, setLoading] = useState<Boolean>(false);
 
-  const userId = '3';
+  const userId = '2';
 
   useFocusEffect(
     React.useCallback(() => {
       fetch(`http://192.168.1.22:3000/api/user/${userId}`)
       .then(response => response.json())
       .then(userData => {
-        console.log('User Data:', userData);
         const { datingPreferences, minimumAge, maximumAge } = userData;
         setPreferences({
           datingPreferences: datingPreferences,
@@ -56,7 +55,6 @@ const TabOneScreen = () => {
     if (preferences){
       try {
         const { datingPreferences, minimumAge, maximumAge } = preferences;
-        console.log(datingPreferences, minimumAge, maximumAge);
         // Fetch card data from the backend with filtering parameters
         const response = await fetch(`http://192.168.1.22:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
         
@@ -87,10 +85,8 @@ const TabOneScreen = () => {
       if (!response.ok) {
         throw new Error('Failed to remove card');
       }
-
-      const responseData = await response.json();
-      console.log(responseData.message);
-  
+      //const responseData = await response.json();
+      //console.log(responseData.message);
     } catch (error) {
       console.error('Error removing card:', error);
     }
@@ -163,6 +159,9 @@ const TabOneScreen = () => {
         }
       }
     }
+    else{
+      setLoading(false);
+    }
   };
 
   const onDislike = async () => {
@@ -190,28 +189,28 @@ const TabOneScreen = () => {
   };
 
   const renderCard = (card: Card | null) => (
-    <View style={{ backgroundColor: '#C3E362', padding: 20, borderRadius: 10, width: '100%', height: '100%' }}>
+    <View style={{ backgroundColor: '#FFF8E1', padding: 20, borderRadius: 10, width: '100%', height: '100%' }}>
       <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled showsVerticalScrollIndicator={false}>
         {card ? (
           <View style={styles.card}>
             {/* Customize how to display the card data */}
-            <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{card.name}, {card.age}</Text>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center', width:'80%' }}>{card.name}, {card.age}</Text>
             <View style={{ alignItems: 'center' }}>
               {card.profileImageUris.length > 0 && (
                 <Image
                   key={card.profileImageUris[0]}
                   source={{ uri: card.profileImageUris[0] }}
-                  style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
+                  style={styles.profileImage}
                 />
               )}
             </View>
-            <Text style={{ fontSize: 14, marginTop: 10 }}>{card.bio}</Text>
+            <Text style={{ fontSize: 14, marginTop: 0, textAlign: 'center', width:'80%' }}>{card.bio}</Text>
             <View style={{ alignItems: 'center' }}>
               {card.profileImageUris.slice(1).map((uri: string, index: number) => (
                 <Image
                   key={uri}
                   source={{ uri }}
-                  style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
+                  style={styles.profileImage}
                 />
               ))}
             </View>
@@ -221,10 +220,10 @@ const TabOneScreen = () => {
         )}
       </ScrollView>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onDislike(); }}>
+        <TouchableOpacity style={[styles.button, { backgroundColor: '#FF6F61' }]} onPress={() => { setLoading(true); onDislike(); }}>
           <FontAwesome name="times" size={24} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, { backgroundColor: 'grey' }]} onPress={() => { setLoading(true); onLike(); }}>
+        <TouchableOpacity style={[styles.button, { backgroundColor: '#4CAF50' }]} onPress={() => { setLoading(true); onLike(); }}>
           <FontAwesome name="heart" size={24} color="white" />
         </TouchableOpacity>
       </View>
@@ -262,16 +261,16 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   profileImage: {
-    width: 250,
-    height: 250,
-    borderRadius: 8,
-    marginVertical: 5,
+    width: '70%',
+    aspectRatio: 1,
+    borderRadius: 10,
+    marginVertical: 10,
   },
   card: {
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#E8E8E8',
-    backgroundColor: '#FFC107',
+    borderColor: '#666666',
+    backgroundColor: '#FFF8E1',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,

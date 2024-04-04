@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { FlatList, TouchableOpacity, Text, View, Image, Button, Modal, StyleSheet } from 'react-native';
+import { FlatList, TouchableOpacity, Text, View, Image, Button, Modal, StyleSheet, ImageBackground } from 'react-native';
 import { GiftedChat, IMessage, User } from 'react-native-gifted-chat';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
+import { useNavigation } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
 
 
@@ -23,7 +23,7 @@ const TabTwoScreen = () => {
 
   const navigation = useNavigation();
 
-  const userId = 1;
+  const userId = 2;
   
 
   useFocusEffect(
@@ -75,8 +75,6 @@ const TabTwoScreen = () => {
       const {messages, userProfile} = await response.json();
       setMessages(messages);
       setUserProfile(userProfile);
-      console.log('messages:', messages);
-      console.log("userProfile:", userProfile);
     } catch (error) {
       console.error('Error loading messages:', error);
     }
@@ -155,14 +153,14 @@ const TabTwoScreen = () => {
 
   const renderChats = ({ item }: { item: { name: string; profileImageUri?: string; _id: string } }) => (
     <TouchableOpacity onPress={() => onChatSelect(Number(item._id))}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#ccc' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#888888' }}>
         {item.profileImageUri && (
           <Image
             source={{ uri: item.profileImageUri }}
             style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
           />
         )}
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'white', flex: 1 }}>{item.name}</Text>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black', flex: 1 }}>{item.name}</Text>
         <TouchableOpacity onPress={() => setmodal1Visible(true)} style={styles.manageButton}>
           <Text style={styles.manageButtonText}>Manage User</Text>
         </TouchableOpacity>
@@ -194,19 +192,19 @@ const TabTwoScreen = () => {
   const renderChatScreen = () => {
     if (selectedChat !== null && readyChat ) {
       return (
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 , backgroundColor: '#FFF8E1'}}>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: 15 }}>
             <TouchableOpacity
               onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); }}
               style={{
-                backgroundColor: 'white',
-                borderRadius: 8,
-                paddingVertical: 6,
-                paddingHorizontal: 12,
+                backgroundColor: '#888888',
+                borderRadius: 5,
+                paddingVertical: 8,
+                paddingHorizontal: 16,
                 marginRight: 10,
               }}
             >
-              <Text style={{ color: 'black', fontSize: 14 }}>Back</Text>
+              <Text style={{ color: 'white', fontSize: 14 }}>Back</Text>
             </TouchableOpacity>
             <View style={{ position: 'absolute', top: 7, left: '50%', marginLeft: -10 }}>
               <TouchableOpacity onPress={() => setmodal2Visible(true)}>
@@ -262,6 +260,21 @@ const TabTwoScreen = () => {
             messages={messages}
             onSend={(newMessages) => onSend(newMessages)}
             user={{ _id: userId, name: userName ?? 'DefaultName' }}
+            //renderBubble={(props) => (
+            //  <View
+            //    {...props}
+            //    style={{
+            //      backgroundColor: props.position === 'right' ? 'lightblue' : 'green',
+            //      borderRadius: 10,
+            //      padding: 10,
+            //      maxWidth: '90%',
+            //      ...props.containerStyle,
+            //    }}
+            //  >
+            //    {/* Render the message content within the View */}
+            //    <Text>{props.currentMessage.text}</Text>
+            //  </View>
+            //)}
             inverted = {false}
           />
         </View>
@@ -272,6 +285,7 @@ const TabTwoScreen = () => {
           data={chats}
           renderItem={renderChats}
           keyExtractor={(item) => item._id.toString()}
+          style={{ backgroundColor: '#FFF8E1' }}
         />
       );
     }
@@ -285,7 +299,7 @@ const TabTwoScreen = () => {
       backgroundColor: 'rgba(0, 0, 0, 0)',
     },
     modalContent: {
-      backgroundColor: '#FFC107',
+      backgroundColor: '#FFDAB9',
       padding: 20,
       borderRadius: 10,
       width: '80%',
@@ -296,35 +310,35 @@ const TabTwoScreen = () => {
       textAlign: 'center',
     },
     manageButton: {
-      backgroundColor: '#e91e63',
+      backgroundColor: '#ff6090',
       padding: 10,
       borderRadius: 5,
       marginRight: 10,
     },
     manageButtonText: {
-      color: 'white',
+      color: 'black',
       fontSize: 16,
     },
     unmatchButton: {
-      backgroundColor: 'orange',
+      backgroundColor: '#FFFACD',
       padding: 10,
       borderRadius: 5,
       marginTop: 10,
     },
     blockButton: {
-      backgroundColor: 'red',
+      backgroundColor: '#FF6F61',
       padding: 10,
       borderRadius: 5,
       marginTop: 10,
     },
     cancelButton: {
-      backgroundColor: 'grey',
+      backgroundColor: '#888888',
       padding: 10,
       borderRadius: 5,
       marginTop: 10,
     },
     actionButtonText: {
-      color: 'white',
+      color: 'black',
       fontSize: 16,
     },
   });

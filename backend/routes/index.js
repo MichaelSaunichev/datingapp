@@ -7,13 +7,13 @@ const chatDataFunctions = require('../models/chatData');
 const { render } = require('../app');
 
 const users = [
-  { id: '0', name: 'John', age: 20, gender: 'Male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 
+  { id: '0', name: 'Sean', age: 20, gender: 'Male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
   { id: '1', name: 'Stacy', age: 21, gender: 'Female', bio: 'Description 1', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: true, renderIndex: 0 },
   { id: '2', name: 'Chad', age: 22, gender: 'Male', bio: 'Description 2', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
-  { id: '3', name: 'Tom', age: 23, gender: 'Male', bio: 'Description 3', profileImageUris: [], datingPreferences: 'Everyone', 
+  { id: '3', name: 'Diego', age: 23, gender: 'Male', bio: 'Description 3', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: true, notificationsEnabled: false, renderIndex: 0 },
   { id: '4', name: 'Emma', age: 24, gender: 'Female', bio: 'Description 4', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
