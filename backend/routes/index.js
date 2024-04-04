@@ -116,6 +116,7 @@ router.delete('/api/cards/:userId/:cardId', (req, res) => {
 
 router.get('/api/cards', function (req, res, next) {
   const { userId, datingPreferences, minimumAge, maximumAge } = req.query;
+  console.log("datingpreference:", datingPreferences);
   // Retrieve user cards data for the specified user ID
   const userCards = cardData[userId] || [];
 
@@ -134,10 +135,12 @@ router.get('/api/cards', function (req, res, next) {
     const checkUser = users.find(u => u.id === checkUserId);
 
     const meetsPreferences =
+      (
       (datingPreferences === 'Everyone') ||
       (checkUser.gender === 'Non-binary') ||
       ((datingPreferences === 'Men' && checkUser.gender === 'Male') ||
-        (datingPreferences === 'Women' && checkUser.gender === 'Female')) &&
+        (datingPreferences === 'Women' && checkUser.gender === 'Female')) 
+      ) &&
       (checkUser.age >= minimumAge && checkUser.age <= maximumAge) &&
       (checkUser.accountPaused === false);
 
@@ -160,6 +163,7 @@ router.get('/api/cards', function (req, res, next) {
 
     // If the current card doesn't meet preferences, move to the next index
     currentIndex += 1;
+    console.log("index:",currentIndex);
     // Wrap the index to 0 if it reaches the end of the array
     if (currentIndex === userCards.length) {
       currentIndex = 0;

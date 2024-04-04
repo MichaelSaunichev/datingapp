@@ -222,7 +222,7 @@ const TabTwoScreen = () => {
               visible={modal2Visible}
               onRequestClose={() => setmodal2Visible(false)}
             >
-              <View style={[styles.modalContent, { width: '100%' }]}>
+              <View style={[styles.modalContent, { width: '100%', height: '100%' }]}>
                 <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
                   <View style={[styles.modalContent, { marginTop: 50, marginBottom: 50, width: '100%' }]}>
                     <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{userProfile.name}, {userProfile.age}</Text>
@@ -248,11 +248,11 @@ const TabTwoScreen = () => {
                         />
                       ))}
                     </View>
-                    <TouchableOpacity onPress={() => setmodal2Visible(false)} style={styles.cancelButton}>
-                      <Text style={styles.actionButtonText}>Close</Text>
-                    </TouchableOpacity>
                   </View>
                 </ScrollView>
+                <TouchableOpacity onPress={() => setmodal2Visible(false)} style={styles.cancelButtonProfile}>
+                  <Text style={styles.actionButtonText}>Close</Text>
+                </TouchableOpacity>
               </View>
             </Modal>
           </View>
@@ -337,9 +337,18 @@ const TabTwoScreen = () => {
       borderRadius: 5,
       marginTop: 10,
     },
+    cancelButtonProfile: {
+      backgroundColor: '#888888',
+      padding: 10,
+      borderRadius: 5,
+      marginTop: 10,
+      width:'50%',
+      alignSelf: 'center',
+    },
     actionButtonText: {
       color: 'black',
       fontSize: 16,
+      textAlign: 'center',
     },
   });
 

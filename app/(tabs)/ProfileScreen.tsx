@@ -451,6 +451,7 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
+    marginTop:10,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#888888',
@@ -489,7 +490,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 10,
     flexWrap: 'wrap',
   },
 
@@ -517,7 +517,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   editProfileText: {
-    marginBottom: 10, 
     marginLeft: 0,
     fontSize: 18,
   },

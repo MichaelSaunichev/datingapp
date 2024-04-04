@@ -27,7 +27,7 @@ const TabOneScreen = () => {
   const [card, setCard] = useState<Card>();
   const [loading, setLoading] = useState<Boolean>(false);
 
-  const userId = '2';
+  const userId = '0';
 
   useFocusEffect(
     React.useCallback(() => {
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 2,
     borderColor: '#666666',
-    backgroundColor: '#FFF8E1',
+    backgroundColor: '#FFDAB9',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
