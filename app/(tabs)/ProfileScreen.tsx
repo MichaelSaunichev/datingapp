@@ -40,7 +40,7 @@ const ProfileScreen: React.FC = ({}) => {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const userId = '0';
+  const userId = '4';
   
 
   useEffect(() => {

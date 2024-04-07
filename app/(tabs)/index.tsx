@@ -27,7 +27,7 @@ const TabOneScreen = () => {
   const [card, setCard] = useState<Card>();
   const [loading, setLoading] = useState<Boolean>(false);
 
-  const userId = '3';
+  const userId = '4';
 
   useFocusEffect(
     React.useCallback(() => {

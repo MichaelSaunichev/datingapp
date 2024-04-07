@@ -16,7 +16,7 @@ const users = [
   { id: '2', name: 'Chad', age: 22, gender: 'Male', bio: 'Description 2', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
   { id: '3', name: 'Diego', age: 23, gender: 'Male', bio: 'Description 3', profileImageUris: [], datingPreferences: 'Everyone', 
-  minimumAge: 18, maximumAge: 25, accountPaused: true, notificationsEnabled: false, renderIndex: 0 },
+  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
   { id: '4', name: 'Emma', age: 24, gender: 'Female', bio: 'Description 4', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
 ];

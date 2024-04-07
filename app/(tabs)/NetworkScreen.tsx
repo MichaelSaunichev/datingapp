@@ -11,7 +11,7 @@ const NetworkScreen = () => {
     const [profileImageUris, setProfileImageUris] = useState<{ [userId: string]: string }>({});
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [selectedUser, setSelectedUser] = useState<any>(null);
-    const userId = '1';
+    const userId = '4';
 
     useEffect(() => {
         fetchMessages();
