@@ -24,7 +24,6 @@ const TabTwoScreen = () => {
   const navigation = useNavigation();
 
   const userId = 2;
-  
 
   useFocusEffect(
     React.useCallback(() => {
@@ -154,12 +153,10 @@ const TabTwoScreen = () => {
   const renderChats = ({ item }: { item: { name: string; profileImageUri?: string; _id: string } }) => (
     <TouchableOpacity onPress={() => onChatSelect(Number(item._id))}>
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#888888' }}>
-        {item.profileImageUri && (
-          <Image
-            source={{ uri: item.profileImageUri }}
-            style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
-          />
-        )}
+        <Image
+          source={{ uri: item.profileImageUri || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+          style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
+        />
         <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black', flex: 1 }}>{item.name}</Text>
         <TouchableOpacity onPress={() => setmodal1Visible(true)} style={styles.manageButton}>
           <Text style={styles.manageButtonText}>Manage User</Text>
@@ -172,7 +169,7 @@ const TabTwoScreen = () => {
         onRequestClose={() => setmodal1Visible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View style={styles.modalContentManage}>
             <Text style={styles.modalTitle}>Manage User</Text>
             <TouchableOpacity onPress={() => { handleUnmatch(item._id); setmodal1Visible(false); }} style={styles.unmatchButton}>
               <Text style={styles.actionButtonText}>Unmatch</Text>
@@ -208,9 +205,9 @@ const TabTwoScreen = () => {
             </TouchableOpacity>
             <View style={{ position: 'absolute', top: 7, left: '50%', marginLeft: -10 }}>
               <TouchableOpacity onPress={() => setmodal2Visible(true)}>
-                {userProfile && userProfile.profileImageUris.length > 0 && (
+                {userProfile && (
                   <Image
-                    source={{ uri: userProfile.profileImageUris[0] }}
+                    source={{ uri: userProfile.profileImageUris[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
                     style={{ width: 50, height: 50, borderRadius: 50 }}
                   />
                 )}
@@ -222,9 +219,9 @@ const TabTwoScreen = () => {
               visible={modal2Visible}
               onRequestClose={() => setmodal2Visible(false)}
             >
-              <View style={[styles.modalContent, { width: '100%', height: '100%' }]}>
-                <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-                  <View style={[styles.modalContent, { marginTop: 50, marginBottom: 50, width: '100%' }]}>
+              <View style={styles.centeredView}>
+                <View style={styles.modalContent}>
+                  <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
                     <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{userProfile.name}, {userProfile.age}</Text>
                     {/* Render the first profile image */}
                     <View style={{ alignItems: 'center' }}>
@@ -248,18 +245,20 @@ const TabTwoScreen = () => {
                         />
                       ))}
                     </View>
+                  </ScrollView>
+                  <View style={styles.buttonContainer}>
+                    <TouchableOpacity onPress={() => setmodal2Visible(false)} style={styles.cancelButtonProfile}>
+                      <Text style={styles.actionButtonText}>Close</Text>
+                    </TouchableOpacity>
                   </View>
-                </ScrollView>
-                <TouchableOpacity onPress={() => setmodal2Visible(false)} style={styles.cancelButtonProfile}>
-                  <Text style={styles.actionButtonText}>Close</Text>
-                </TouchableOpacity>
+                </View>
               </View>
             </Modal>
           </View>
           <GiftedChat
             messages={messages}
             onSend={(newMessages) => onSend(newMessages)}
-            user={{ _id: userId, name: userName ?? 'DefaultName' }}
+            user={{ _id: userId}}
             //renderBubble={(props) => (
             //  <View
             //    {...props}
@@ -275,6 +274,28 @@ const TabTwoScreen = () => {
             //    <Text>{props.currentMessage.text}</Text>
             //  </View>
             //)}
+            renderAvatar={(props) => {
+              if (props.currentMessage?.user?._id === userId) {
+                return null;
+              } else {
+                // Render profile picture
+                return (
+                  <TouchableOpacity onPress={() => setmodal2Visible(true)}>
+                    <View style={styles.avatarContainer}>
+                      <Image
+                        style={styles.avatar}
+                        source={{
+                          uri: userProfile && userProfile.profileImageUris.length > 0
+                            ? userProfile.profileImageUris[0]
+                            : 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image'
+                        }}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                );
+              }
+            }}
+            
             inverted = {false}
           />
         </View>
@@ -298,16 +319,45 @@ const TabTwoScreen = () => {
       alignItems: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0)',
     },
-    modalContent: {
+    centeredView: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 20
+    },
+    modalContentManage: {
       backgroundColor: '#FFDAB9',
       padding: 20,
       borderRadius: 10,
       width: '80%',
     },
+    
+    modalContent: {
+        margin: 20,
+        width: '90%',
+        height: '90%',
+        backgroundColor: '#FFDAB9',
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+    },
     modalTitle: {
       fontSize: 18,
       marginBottom: 20,
       textAlign: 'center',
+    },
+    buttonContainer: {
+      width: '100%',
+      alignItems: 'center',
+      marginBottom: -15,
     },
     manageButton: {
       backgroundColor: '#ff6090',
@@ -349,6 +399,16 @@ const TabTwoScreen = () => {
       color: 'black',
       fontSize: 16,
       textAlign: 'center',
+    },
+    avatarContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 5,
+    },
+    avatar: {
+      width: 36,
+      height: 36,
+      borderRadius: 20,
     },
   });
 

@@ -40,7 +40,7 @@ const ProfileScreen: React.FC = ({}) => {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const userId = '3';
+  const userId = '0';
   
 
   useEffect(() => {
@@ -338,26 +338,28 @@ const ProfileScreen: React.FC = ({}) => {
                     <Text>No images selected</Text>
                   )}
                 </View>
-                <TouchableOpacity
-                  onPress={saveChanges}
-                  style={[styles.saveChangesButton, { opacity: isImageUploading ? 0.5 : 1 }]}
-                  disabled={isImageUploading}
-                >
-                  <Text style={styles.buttonText}>Save Changes</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => {
-                    setIsDeleting(false);
-                    setIsEditModalVisible(false);
-                    setTempProfileState(profileState);
-                  }}
-                  style={[styles.cancelButton, { opacity: isImageUploading ? 0.5 : 1 }]}
-                  disabled={isImageUploading}
-                >
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
               </ScrollView>
+              <View style = {styles.buttonContainer}>
+                <TouchableOpacity
+                    onPress={saveChanges}
+                    style={[styles.saveChangesButton, { opacity: isImageUploading ? 0.5 : 1 }]}
+                    disabled={isImageUploading}
+                  >
+                    <Text style={styles.buttonText}>Save Changes</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      setIsDeleting(false);
+                      setIsEditModalVisible(false);
+                      setTempProfileState(profileState);
+                    }}
+                    style={[styles.cancelButton, { opacity: isImageUploading ? 0.5 : 1 }]}
+                    disabled={isImageUploading}
+                  >
+                    <Text style={styles.buttonText}>Cancel</Text>
+                  </TouchableOpacity>
+              </View>
             </View>
           </View>
       </Modal>
@@ -369,8 +371,8 @@ const styles = StyleSheet.create({
   profileContainer: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: '5%', // Use percentage-based padding for top and bottom
-    paddingHorizontal: 10, // Use fixed padding for left and right
+    paddingVertical: '5%',
+    paddingHorizontal: 10,
     backgroundColor: '#FFF8E1',
   },
   profileImage: {
@@ -416,6 +418,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 20
   },
+  
   nameText: {
     fontSize: 22,
     fontWeight: 'bold',
@@ -449,6 +452,12 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 10,
   },
+  buttonContainer: {
+    width: '100%',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: -15,
+  },
   input: {
     width: '100%',
     marginTop:10,
@@ -469,8 +478,8 @@ const styles = StyleSheet.create({
     margin: 5,
   },
   thumbnail: {
-    width: 200,
-    height: 200,
+    width: 250,
+    height: 250,
     margin: 5,
   },
   modalTitle: {
@@ -506,7 +515,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   selectedPreference: {
-    backgroundColor: 'lightblue',
+    backgroundColor: '#FFF8E1',
     color: '#ffffff',
   },
   logOutButton: {

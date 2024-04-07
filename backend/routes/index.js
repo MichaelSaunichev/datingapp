@@ -6,6 +6,8 @@ const cardFunctions = require('../models/card');
 const chatDataFunctions = require('../models/chatData');
 const { render } = require('../app');
 
+const globalChat = []
+
 const users = [
   { id: '0', name: 'Sean', age: 20, gender: 'Male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 
   minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
@@ -58,6 +60,17 @@ const chatData = {
 
 // --------------------------------------------------------------------------------------
 // User
+router.get('/api/uri/:userId', (req, res) => {
+  const { userId } = req.params;
+  const user = users.find(u => u.id === userId);
+
+  if (user) {
+    const { profileImageUris } = user;
+    res.json(profileImageUris || []);
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+});
 
 // Get user by ID
 router.get('/api/user/:userId', (req, res) => {
@@ -295,8 +308,6 @@ router.delete('/api/unmatch/:userId1/:userId2', (req, res) => {
   addCard(userId1, userId2);
   addCard(userId2, userId1);
 
-  console.log("card data:", cardData);
-
   res.status(200).send('Chats removed for both users');
 });
 
@@ -377,6 +388,21 @@ function moveChatToTop(userId,chatId) {
     chatData[userId].set(chatId, chatMessages);
   }
 }
+
+// --------------------------------------------------------------------------------------
+// global chat
+
+router.post('/api/globalchat', function (req, res, next) {
+  const newMessage = req.body;
+  globalChat.push(newMessage);
+
+  res.json({ success: true, message: 'Message added successfully' });
+});
+
+router.get('/api/globalchat', function (req, res, next){
+  chat = globalChat || [];
+  res.json(chat);
+});
 
 // --------------------------------------------------------------------------------------
 

@@ -27,7 +27,7 @@ const TabOneScreen = () => {
   const [card, setCard] = useState<Card>();
   const [loading, setLoading] = useState<Boolean>(false);
 
-  const userId = '0';
+  const userId = '3';
 
   useFocusEffect(
     React.useCallback(() => {
@@ -189,7 +189,7 @@ const TabOneScreen = () => {
   };
 
   const renderCard = (card: Card | null) => (
-    <View style={{ backgroundColor: '#FFF8E1', padding: 20, borderRadius: 10, width: '100%', height: '100%' }}>
+    <View style={{ backgroundColor: '#FFF8E1', padding: 20, width: '100%', height: '100%' }}>
       <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled showsVerticalScrollIndicator={false}>
         {card ? (
           <View style={styles.card}>
@@ -219,6 +219,7 @@ const TabOneScreen = () => {
           <Text>No more users</Text>
         )}
       </ScrollView>
+      {card && (
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={[styles.button, { backgroundColor: '#FF6F61' }]} onPress={() => { setLoading(true); onDislike(); }}>
           <FontAwesome name="times" size={24} color="white" />
@@ -227,6 +228,7 @@ const TabOneScreen = () => {
           <FontAwesome name="heart" size={24} color="white" />
         </TouchableOpacity>
       </View>
+      )}
     </View>
   );
 
@@ -257,9 +259,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
-  imageContainer: {
-    marginTop: 10,
-  },
   profileImage: {
     width: '70%',
     aspectRatio: 1,
@@ -278,6 +277,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   buttonContainer: {
+    width: '100%',
     flexDirection: 'row',
     marginTop: 10,
   },

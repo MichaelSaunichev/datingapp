@@ -56,13 +56,19 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="NetworkScreen"
+        options={{
+          title: 'Social',
+          tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="ProfileScreen"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
         }}
       />
-
     </Tabs>
   );
 }
