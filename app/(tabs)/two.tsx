@@ -23,7 +23,7 @@ const TabTwoScreen = () => {
 
   const navigation = useNavigation();
 
-  const userId = 2;
+  const userId = 0;
 
   useFocusEffect(
     React.useCallback(() => {
