@@ -40,7 +40,7 @@ const ProfileScreen: React.FC = ({}) => {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const userId = '4';
+  const userId = '1';
   
 
   useEffect(() => {
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   selectedPreference: {
-    backgroundColor: '#FFF8E1',
+    backgroundColor: 'white',
     color: '#ffffff',
   },
   logOutButton: {
@@ -531,19 +531,19 @@ const styles = StyleSheet.create({
   },
   addImageButton: {
     marginTop: 10, 
-    backgroundColor: '#FFFACD', 
+    backgroundColor: '#ff6090', 
     padding: 10,
     borderRadius: 5,
   },
   deleteImageButton: {
     marginTop: 10, 
-    backgroundColor: '#FFFACD', 
+    backgroundColor: '#ff6090', 
     padding: 10,
     borderRadius: 5,
   },
   stopDeletingButton: {
     marginTop: 10, 
-    backgroundColor: '#FFFACD', 
+    backgroundColor: '#ff6090', 
     padding: 10,
     borderRadius: 5,
   },
