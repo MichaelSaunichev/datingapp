@@ -51,6 +51,21 @@ const TabTwoScreen = () => {
     }
   };
 
+  const loadEarlierMessages = async () => {
+    try {
+      const response = await fetch(`http://192.168.1.8:3000/api/chat/${userId}/${selectedChat}?limit=10&offset=${messages.length}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch earlier messages');
+      }
+      const { messages: earlierMessages } = await response.json();
+  
+      // Update state with the newly loaded messages
+      setMessages(previousMessages => earlierMessages.concat(previousMessages));
+    } catch (error) {
+      console.error('Error loading earlier messages:', error);
+    }
+  };
+
   const fetchChats = async () => {
     try {
       const response = await fetch(`http://192.168.1.8:3000/api/chats/${userId}`);
@@ -235,7 +250,7 @@ const TabTwoScreen = () => {
                 marginRight: 10,
               }}
             >
-              <Text style={{ color: 'white', fontSize: 14 }}>Back</Text>
+              <Text style={{ color: 'black', fontSize: 16 }}>Back</Text>
             </TouchableOpacity>
             <View style={{ position: 'absolute', top: 7, left: '50%', marginLeft: -10 }}>
               <TouchableOpacity onPress={() => setmodal2Visible(true)}>
@@ -291,6 +306,8 @@ const TabTwoScreen = () => {
           </View>
           <GiftedChat
             //listViewProps={{ref: scrollViewRef, onContentSizeChange: () => scrollToBottom(),}}
+            loadEarlier={true}
+            onLoadEarlier={loadEarlierMessages}
             scrollToBottom
             scrollToBottomComponent={scrollToBottomComponent}
             alwaysShowSend
