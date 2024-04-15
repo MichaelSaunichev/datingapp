@@ -25,10 +25,8 @@ const NetworkScreen  = () => {
     const scrollViewRef = useRef<ScrollView>(null);
     const [showChat, setShowChat] = useState<boolean>(false);
 
-
-
     useEffect(() => {
-        fetchMessages();
+        fetchMessages(10);
     }, []);
 
     useEffect(() => {
@@ -54,19 +52,34 @@ const NetworkScreen  = () => {
         }
     };
 
-    const fetchMessages = async () => {
+    const fetchMessages = async (limit: number) => {
         try {
-            // Make a fetch request to your backend server to retrieve messages
-            const response = await fetch(`http://192.168.1.8:3000/api/globalchat`);
+            const response = await fetch(`http://192.168.1.8:3000/api/globalchat?limit=${limit}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch global chat');
             }
-            const fetchedMessages = await response.json();
-            setMessages(fetchedMessages);
+            const { messages, total } = await response.json();
+            setMessages(messages);
         } catch (error) {
             console.error('Error fetching messages:', error);
         }
     };
+
+    const loadEarlierMessages = async () => {
+        try {
+            const response = await fetch(`http://192.168.1.8:3000/api/globalchat?limit=10&offset=${messages.length}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch earlier messages');
+            }
+            const { messages: earlierMessages } = await response.json();
+            
+            // Update state with the newly loaded messages
+            setMessages(previousMessages => GiftedChat.prepend(previousMessages, earlierMessages, false));
+        } catch (error) {
+            console.error('Error loading earlier messages:', error);
+        }
+    };
+
 
     const handleLikeToggle = async (message: CustomMessage) => {
         try {
@@ -209,6 +222,8 @@ const NetworkScreen  = () => {
                     </View>
                 </TouchableWithoutFeedback>
                 <GiftedChat
+                    loadEarlier={true}
+                    onLoadEarlier={loadEarlierMessages}
                     scrollToBottom
                     scrollToBottomComponent={scrollToBottomComponent}
                     alwaysShowSend
@@ -466,10 +481,11 @@ const NetworkScreen  = () => {
                 </Modal>
             </View>
     ) : (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: "#FFDAB9"  }}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: "#FFF8E1"  }}>
             <TouchableOpacity style={styles.actionButton} onPress={() => setShowChat(true)}>
-                <Text style={{ color: 'black', fontSize: 20 }}>Global Chat</Text>
+                <Text style={{ color: 'black', fontSize: 20 }}>Enter Global Chat</Text>
             </TouchableOpacity>
+            <Text style={{fontStyle: 'italic', color: '#777'}}>Please be respectful to others in the chat.</Text>
         </View>
 
     )}
@@ -620,7 +636,6 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
         marginLeft: 10
     },
-    
 })
 
 export default NetworkScreen;
