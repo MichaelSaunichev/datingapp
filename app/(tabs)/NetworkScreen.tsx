@@ -26,7 +26,7 @@ const NetworkScreen  = () => {
     const [showChat, setShowChat] = useState<boolean>(false);
 
     useEffect(() => {
-        fetchMessages(10);
+        fetchMessages();
     }, []);
 
     useEffect(() => {
@@ -52,9 +52,9 @@ const NetworkScreen  = () => {
         }
     };
 
-    const fetchMessages = async (limit: number) => {
+    const fetchMessages = async () => {
         try {
-            const response = await fetch(`http://192.168.1.8:3000/api/globalchat?limit=${limit}`);
+            const response = await fetch(`http://192.168.1.8:3000/api/globalchat`);
             if (!response.ok) {
                 throw new Error('Failed to fetch global chat');
             }
@@ -67,7 +67,7 @@ const NetworkScreen  = () => {
 
     const loadEarlierMessages = async () => {
         try {
-            const response = await fetch(`http://192.168.1.8:3000/api/globalchat?limit=10&offset=${messages.length}`);
+            const response = await fetch(`http://192.168.1.8:3000/api/globalchat?limit=20&offset=${messages.length}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch earlier messages');
             }
@@ -299,27 +299,27 @@ const NetworkScreen  = () => {
                                             </View>
                                         )}
                                         <View style={{ flex: 1, marginLeft: 8 }}>
-                                            <View style={{ flex: 1 }}>
-                                                <View style={{ backgroundColor: (currentMessage as CustomMessage).isAnonymous ? '#CCCCCC' : (originalProps.position === 'right' ? 'lightblue' : 'lightgreen'), borderRadius: 10, padding: 10, maxWidth: '80%', alignSelf: originalProps.position === 'right' ? 'flex-end' : 'flex-start' }}>
-                                                    <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black' }}>{currentMessage.text}</Text>
-                                                    <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black', fontSize: 10 }}>{messageTime}</Text>
+                                            <View style={{ flexDirection: 'row', justifyContent: originalProps.position === 'right' ? 'flex-end' : 'flex-start', alignItems: 'flex-start' }}>
+                                                <View style={{ maxWidth: '80%' }}>
+                                                    <View style={{ backgroundColor: (currentMessage as CustomMessage).isAnonymous ? '#CCCCCC' : (originalProps.position === 'right' ? 'lightblue' : 'lightgreen'), borderRadius: 10, padding: 10 }}>
+                                                        <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black' }}>{currentMessage.text}</Text>
+                                                        <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black', fontSize: 10 }}>{messageTime}</Text>
+                                                    </View>
+                                                    {(currentMessage as CustomMessage).likes && ((currentMessage as CustomMessage).likes?.length ?? 0) > 0 && (
+                                                        <View style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, alignSelf: originalProps.position === 'right' ? 'flex-end' : 'flex-start', marginTop: 0 }}>
+                                                            <Text style={{ color: 'white', fontSize: 12 }}> {(currentMessage as CustomMessage).likes?.length ?? 0} {(currentMessage as CustomMessage).likes?.length === 1 ? 'Like' : 'Likes'} </Text>
+                                                        </View>
+                                                    )}
                                                 </View>
+                                                {!isCurrentUser && (
+                                                <TouchableOpacity onPress={() => handleLikeToggle(currentMessage as CustomMessage)} style={{alignSelf: 'center', paddingLeft: 8 }}>
+                                                    <View style={styles.likeButton}>
+                                                        <FontAwesome name={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'heart' : 'heart-o'} size={24} color={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'red' : 'red'} />
+                                                    </View>
+                                                </TouchableOpacity>
+                                                )}
                                             </View>
-                                            {(currentMessage as CustomMessage).likes && ((currentMessage as CustomMessage).likes?.length ?? 0) > 0 && (
-                                                <View style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, marginLeft: originalProps.position === 'right' ? 0 : 0, marginRight: originalProps.position === 'right' ? 0 : 0, alignSelf: originalProps.position === 'right' ? 'flex-end' : 'flex-start' }}>
-                                                    <Text style={{ color: 'white', fontSize: 12 }}> {(currentMessage as CustomMessage).likes?.length ?? 0} {(currentMessage as CustomMessage).likes?.length === 1 ? 'Like' : 'Likes'} </Text>
-                                                </View>
-                                            )}
-                                            
-                                            
                                         </View>
-                                        {!isCurrentUser && (
-                                            <TouchableOpacity onPress={() => handleLikeToggle(currentMessage as CustomMessage)}>
-                                                <View style={[styles.likeButton, { backgroundColor: (currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'red' : 'white' }]}>
-                                                    <FontAwesome name={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'heart' : 'heart-o'} size={24} color={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'white' : 'red'} />
-                                                </View>
-                                            </TouchableOpacity>
-                                        )}
 
                                         {isCurrentUser && (
                                             <View>
@@ -360,28 +360,29 @@ const NetworkScreen  = () => {
                                         })}
                                     </Text>
                                 )}
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1, paddingHorizontal: 10}}>
-                                    
-                                    {!isCurrentUser && (<View style={{ width: 36, height: 36, marginRight: 8 }} />)}
-                                    <View style={{ flex: 1 }}>
-                                        <View style={{ backgroundColor: (currentMessage as CustomMessage).isAnonymous ? '#CCCCCC' : (originalProps.position === 'right' ? 'lightblue' : 'lightgreen'), borderRadius: 10, padding: 10, maxWidth: '80%', alignSelf: originalProps.position === 'right' ? 'flex-end' : 'flex-start' }}>
-                                            <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black' }}>{currentMessage.text}</Text>
-                                            <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black', fontSize: 10 }}>{messageTime}</Text>
-                                        </View>
-                                        {(currentMessage as CustomMessage).likes && ((currentMessage as CustomMessage).likes?.length ?? 0) > 0 && (
-                                            <View style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, marginLeft: originalProps.position === 'right' ? 0 : 0, marginRight: originalProps.position === 'right' ? 0 : 0, alignSelf: originalProps.position === 'right' ? 'flex-end' : 'flex-start' }}>
-                                                <Text style={{ color: 'white', fontSize: 12 }}> {(currentMessage as CustomMessage).likes?.length ?? 0} {(currentMessage as CustomMessage).likes?.length === 1 ? 'Like' : 'Likes'} </Text>
+                                <View style={{ flex: 1, marginLeft: 8, marginBottom: 1 }}>
+                                    <View style={{ flexDirection: 'row', justifyContent: originalProps.position === 'right' ? 'flex-end' : 'flex-start', alignItems: 'flex-start' }}>
+                                        {!isCurrentUser && (<View style={{ width: 46, height: 38 }} />)}
+                                        <View style={{ maxWidth: '80%' }}>
+                                            <View style={{ backgroundColor: (currentMessage as CustomMessage).isAnonymous ? '#CCCCCC' : (originalProps.position === 'right' ? 'lightblue' : 'lightgreen'), borderRadius: 10, padding: 10 }}>
+                                                <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black' }}>{currentMessage.text}</Text>
+                                                <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black', fontSize: 10 }}>{messageTime}</Text>
                                             </View>
-                                        )}
-                                    </View>
-                                    {!isCurrentUser && (
-                                            <TouchableOpacity onPress={() => handleLikeToggle(currentMessage as CustomMessage)}>
-                                                <View style={[styles.likeButton, { backgroundColor: (currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'red' : 'white' }]}>
-                                                    <FontAwesome name={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'heart' : 'heart-o'} size={24} color={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'white' : 'red'} />
+                                            {(currentMessage as CustomMessage).likes && ((currentMessage as CustomMessage).likes?.length ?? 0) > 0 && (
+                                                <View style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, alignSelf: originalProps.position === 'right' ? 'flex-end' : 'flex-start', marginTop: 0 }}>
+                                                    <Text style={{ color: 'white', fontSize: 12 }}> {(currentMessage as CustomMessage).likes?.length ?? 0} {(currentMessage as CustomMessage).likes?.length === 1 ? 'Like' : 'Likes'} </Text>
                                                 </View>
-                                            </TouchableOpacity>
+                                            )}
+                                        </View>
+                                        {!isCurrentUser && (
+                                        <TouchableOpacity onPress={() => handleLikeToggle(currentMessage as CustomMessage)} style={{alignSelf: 'center', paddingLeft: 8 }}>
+                                            <View style={styles.likeButton}>
+                                                <FontAwesome name={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'heart' : 'heart-o'} size={24} color={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'red' : 'red'} />
+                                            </View>
+                                        </TouchableOpacity>
                                         )}
-                                    {isCurrentUser && (<View style={{ width: 36, height: 36, marginRight: 8 }} />)}
+                                        {isCurrentUser && (<View style={{ width: 54, height: 38}} />)}
+                                    </View>
                                 </View>
                             </View>
                         );
