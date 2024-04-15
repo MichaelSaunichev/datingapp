@@ -45,7 +45,7 @@ const ProfileScreen: React.FC = ({}) => {
 
   useEffect(() => {
     // Fetch user data when the component mounts
-    fetch(`http://192.168.1.22:3000/api/user/${userId}`)
+    fetch(`http://192.168.1.8:3000/api/user/${userId}`)
       .then(response => response.json())
       .then(userData => {
         setProfileState(userData);
@@ -56,7 +56,7 @@ const ProfileScreen: React.FC = ({}) => {
   
   const updateUserData = () => {
     // Send a request to update user data
-    fetch(`http://192.168.1.22:3000/api/user/${userId}/update`, {
+    fetch(`http://192.168.1.8:3000/api/user/${userId}/update`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
