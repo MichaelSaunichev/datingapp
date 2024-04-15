@@ -330,10 +330,13 @@ router.get('/api/chats/:userId', function(req, res, next) {
         // If profile images are available, take the first one
         profileImageUri = correspondingUser.profileImageUris[0];
       }
+      const firstMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+
       const user = {
         _id: chatId,
         name: correspondingUser.name,
-        profileImageUri: profileImageUri
+        profileImageUri: profileImageUri,
+        firstMessage: firstMessage ? firstMessage.text : null,
       };
       // Add the chatInfo to the array
       chatUsers.push(user);
@@ -345,7 +348,7 @@ router.get('/api/chats/:userId', function(req, res, next) {
 router.get('/api/chat/:userId/:chatId', function (req, res, next) {
   const userId = req.params.userId;
   const chatId = req.params.chatId;
-  const limit = req.query.limit || 10;
+  const limit = req.query.limit || 20;
   const offset = req.query.offset || 0;
 
   const chatDataForUser = chatData[userId] || [];
@@ -409,7 +412,7 @@ router.post('/api/globalchat', function (req, res, next) {
 });
 
 router.get('/api/globalchat', function (req, res, next) {
-  const limit = req.query.limit || 10;
+  const limit = req.query.limit || 20;
   const offset = req.query.offset || 0;
 
   const startIndex = Math.max(globalChat.length - offset - limit, 0);

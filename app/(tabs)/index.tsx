@@ -29,7 +29,7 @@ const TabOneScreen = () => {
   const [loadingMatched, setLoadingMatched] = useState<Boolean>(false);
   const [matched, setMatched] = useState<Boolean>(false);
 
-  const userId = '2';
+const userId = '4';
 
   useFocusEffect(
     React.useCallback(() => {

@@ -26,7 +26,8 @@ const TabTwoScreen = () => {
 
   const navigation = useNavigation();
 
-  const userId = 3;
+
+  const userId = 2;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -53,7 +54,7 @@ const TabTwoScreen = () => {
 
   const loadEarlierMessages = async () => {
     try {
-      const response = await fetch(`http://192.168.1.8:3000/api/chat/${userId}/${selectedChat}?limit=10&offset=${messages.length}`);
+      const response = await fetch(`http://192.168.1.8:3000/api/chat/${userId}/${selectedChat}?limit=20&offset=${messages.length}`);
       if (!response.ok) {
         throw new Error('Failed to fetch earlier messages');
       }
@@ -73,6 +74,7 @@ const TabTwoScreen = () => {
         throw new Error('Failed to fetch chat users');
       }
       const chatUsers = await response.json();
+      console.log("chatUsers:", chatUsers);
       setChats(chatUsers.reverse());
     } catch (error) {
       console.error('Error fetching chat users:', error);
@@ -199,39 +201,18 @@ const TabTwoScreen = () => {
       );
   };
 
-  const renderChats = ({ item }: { item: { name: string; profileImageUri?: string; _id: string } }) => (
+  const renderChats = ({ item }: { item: { name: string; profileImageUri?: string; _id: string, firstMessage: string } }) => (
     <TouchableOpacity onPress={() => onChatSelect(Number(item._id))}>
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#888888' }}>
         <Image
           source={{ uri: item.profileImageUri || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
           style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
         />
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black', flex: 1 }}>{item.name}</Text>
-        <TouchableOpacity onPress={() => setmodal1Visible(true)} style={styles.manageButton}>
-          <Text style={styles.manageButtonText}>Manage User</Text>
-        </TouchableOpacity>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black' }}>{item.name}</Text>
+        <Text numberOfLines={2} style={{ fontSize: 14, color: '#555', marginLeft: 10, marginTop: 5, flexShrink: 1 }}>
+          {item.firstMessage ? (item.firstMessage.length > 100 ? item.firstMessage.slice(0, 100) + '...' : item.firstMessage) : ''}
+        </Text>
       </View>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modal1Visible}
-        onRequestClose={() => setmodal1Visible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContentManage}>
-            <Text style={styles.modalTitle}>Manage User</Text>
-            <TouchableOpacity onPress={() => { handleUnmatch(item._id); setmodal1Visible(false); }} style={styles.unmatchButton}>
-              <Text style={styles.actionButtonText}>Unmatch</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => { handleBlock(item._id); setmodal1Visible(false); }} style={styles.blockButton}>
-              <Text style={styles.actionButtonText}>Block</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setmodal1Visible(false)} style={styles.cancelButton}>
-              <Text style={styles.actionButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </TouchableOpacity>
   );
 
@@ -247,7 +228,6 @@ const TabTwoScreen = () => {
                 borderRadius: 5,
                 paddingVertical: 8,
                 paddingHorizontal: 14,
-                marginRight: 10,
               }}
             >
               <Text style={{ color: 'black', fontSize: 16 }}>Back</Text>
@@ -262,6 +242,32 @@ const TabTwoScreen = () => {
                 )}
               </TouchableOpacity>
             </View>
+            <View style={{ position: 'absolute', top: 15, right: '1.5%' }}>
+              <TouchableOpacity onPress={() => setmodal1Visible(true)} style={styles.manageButton}>
+                <MaterialCommunityIcons name="cog" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={modal1Visible}
+              onRequestClose={() => setmodal1Visible(false)}
+            >
+              <View style={styles.modalContainer}>
+                <View style={styles.modalContentManage}>
+                  <Text style={styles.modalTitle}>Manage User</Text>
+                  <TouchableOpacity onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); handleUnmatch(selectedChat.toString()); setmodal1Visible(false); }} style={styles.unmatchButton}>
+                    <Text style={styles.actionButtonText}>Unmatch</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); handleBlock(selectedChat.toString()); setmodal1Visible(false); }} style={styles.blockButton}>
+                    <Text style={styles.actionButtonText}>Block</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setmodal1Visible(false)} style={styles.cancelButton}>
+                    <Text style={styles.actionButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
             <Modal
               animationType="slide"
               transparent={true}
@@ -402,8 +408,9 @@ const TabTwoScreen = () => {
     },
     manageButton: {
       backgroundColor: '#ff6090',
-      padding: 10,
-      borderRadius: 5,
+      paddingVertical: 8,
+      paddingHorizontal: 8,
+      borderRadius: 25,
       marginRight: 10,
     },
     manageButtonText: {
