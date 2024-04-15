@@ -26,15 +26,16 @@ const TabOneScreen = () => {
   const [preferences, setPreferences] = useState<userPreferences | null>(null);
   const [card, setCard] = useState<Card>();
   const [loading, setLoading] = useState<Boolean>(false);
+  const [loadingMatched, setLoadingMatched] = useState<Boolean>(false);
   const [matched, setMatched] = useState<Boolean>(false);
 
-  const userId = '1';
+  const userId = '3';
 
   useFocusEffect(
     React.useCallback(() => {
       setLoading(false);
       setMatched(false);
-      fetch(`http://192.168.1.22:3000/api/user/${userId}`)
+      fetch(`http://192.168.1.8:3000/api/user/${userId}`)
       .then(response => response.json())
       .then(userData => {
         const { datingPreferences, minimumAge, maximumAge } = userData;
@@ -55,11 +56,16 @@ const TabOneScreen = () => {
   }, [preferences]);
 
   const renderCardUI = async () => {
+    if (loadingMatched){
+      console.log("loading Matched");
+      return
+    }
+
     if (preferences){
       try {
         const { datingPreferences, minimumAge, maximumAge } = preferences;
         // Fetch card data from the backend with filtering parameters
-        const response = await fetch(`http://192.168.1.22:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
+        const response = await fetch(`http://192.168.1.8:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch card data');
@@ -72,13 +78,16 @@ const TabOneScreen = () => {
 
       } catch (error) {
         console.error('Error fetching card data:', error);
-      }
+      } finally{
+          setLoadingMatched(false);
+          setMatched(false);
+        }
     }
   };
 
   const removeCard = async (card: Card) => {
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/cards/${userId}/${card.id}`, {
+      const response = await fetch(`http://192.168.1.8:3000/api/cards/${userId}/${card.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -97,7 +106,7 @@ const TabOneScreen = () => {
 
   const addChat = async (userId: string, chatAddId: number) => {
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/addchat/${userId}/${chatAddId}`, {
+      const response = await fetch(`http://192.168.1.8:3000/api/addchat/${userId}/${chatAddId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +124,7 @@ const TabOneScreen = () => {
 
   const addLike = async (likedUser: number) => {
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/addlike/${userId}/${likedUser}`, {
+      const response = await fetch(`http://192.168.1.8:3000/api/addlike/${userId}/${likedUser}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -176,7 +185,7 @@ const TabOneScreen = () => {
     try {
       const currentCard = card;
       console.log('Disliked:', currentCard);
-      await fetch('http://192.168.1.22:3000/api/incrementIndex', {
+      await fetch('http://192.168.1.8:3000/api/incrementIndex', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -234,7 +243,7 @@ const TabOneScreen = () => {
       )}
       {matched && (
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.button, { backgroundColor: '#3498db', marginTop: 10 }]} onPress={() => { renderCardUI(); setMatched(false) } }>
+          <TouchableOpacity style={[styles.button, { backgroundColor: '#3498db', marginTop: 10 }]} onPress={() => { setLoadingMatched(true); renderCardUI() } }>
             <Text style={styles.buttonText}>Next</Text>
           </TouchableOpacity>
         </View>

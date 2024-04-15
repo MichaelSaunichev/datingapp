@@ -404,6 +404,23 @@ router.get('/api/globalchat', function (req, res, next){
   res.json(chat);
 });
 
+router.post('/api/globalchat/:messageId/like', function(req, res, next) {
+  const messageId = req.params.messageId;
+  const { likes } = req.body;
+
+  // Find the message by its ID in the global chat array
+  const messageIndex = globalChat.findIndex(message => message._id === messageId);
+
+  if (messageIndex !== -1) {
+    // Update the likes for the message
+    globalChat[messageIndex].likes = likes;
+
+    res.json({ success: true, message: 'Like status updated successfully' });
+  } else {
+    res.status(404).json({ success: false, message: 'Message not found' });
+  }
+});
+
 // --------------------------------------------------------------------------------------
 
 /* GET home page. */

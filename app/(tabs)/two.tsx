@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlatList, TouchableOpacity, Text, View, Image, Button, Modal, StyleSheet, ImageBackground } from 'react-native';
-import { GiftedChat, IMessage, User } from 'react-native-gifted-chat';
+import { GiftedChat, IMessage, User, Send } from 'react-native-gifted-chat';
 import { useNavigation } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 
 interface CustomMessage extends IMessage {
@@ -20,10 +22,11 @@ const TabTwoScreen = () => {
 
   const [modal1Visible, setmodal1Visible] = useState(false);
   const [modal2Visible, setmodal2Visible] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const navigation = useNavigation();
 
-  const userId = 0;
+  const userId = 3;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -37,7 +40,7 @@ const TabTwoScreen = () => {
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/user/${userId}`);
+      const response = await fetch(`http://192.168.1.8:3000/api/user/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch user data');
       }
@@ -50,7 +53,7 @@ const TabTwoScreen = () => {
 
   const fetchChats = async () => {
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/chats/${userId}`);
+      const response = await fetch(`http://192.168.1.8:3000/api/chats/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch chat users');
       }
@@ -65,7 +68,7 @@ const TabTwoScreen = () => {
     setSelectedChat(chatId);
   
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/chat/${userId}/${chatId}`);
+      const response = await fetch(`http://192.168.1.8:3000/api/chat/${userId}/${chatId}`);
   
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
@@ -94,7 +97,7 @@ const TabTwoScreen = () => {
     setMessages(updatedMessages);
     
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/chat/${userId}/${chatId}`, {
+      const response = await fetch(`http://192.168.1.8:3000/api/chat/${userId}/${chatId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +117,7 @@ const TabTwoScreen = () => {
 
   const handleUnmatch = async (userId2: string) => {
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/unmatch/${userId}/${userId2}`, {
+      const response = await fetch(`http://192.168.1.8:3000/api/unmatch/${userId}/${userId2}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +136,7 @@ const TabTwoScreen = () => {
 
   const handleBlock = async (userId2: string) => {
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/block/${userId}/${userId2}`, {
+      const response = await fetch(`http://192.168.1.8:3000/api/block/${userId}/${userId2}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -148,6 +151,37 @@ const TabTwoScreen = () => {
     } finally{
       fetchChats();
     }
+  };
+  const scrollToBottomComponent = () => {
+      return (
+          <FontAwesome name="angle-double-down" size={24} color="#333" />
+      )
+  };
+
+  const scrollToBottom = () => {
+      if (scrollViewRef && scrollViewRef.current) {
+          scrollViewRef.current.scrollToEnd({ animated: true });
+      }
+  };
+
+  interface RenderSendProps {
+    text?: string;
+    onSend: (messages: IMessage[]) => void;
+  }
+
+  const renderSend = (props: RenderSendProps) => {
+      return (
+          <Send {...props}>
+              <View>
+                  <MaterialCommunityIcons
+                  name="send-circle"
+                  style={{marginBottom: 5, marginRight: 5}}
+                  size={32}
+                  color="#2e64e5"
+                  />
+              </View>
+          </Send>
+      );
   };
 
   const renderChats = ({ item }: { item: { name: string; profileImageUri?: string; _id: string } }) => (
@@ -197,7 +231,7 @@ const TabTwoScreen = () => {
                 backgroundColor: '#888888',
                 borderRadius: 5,
                 paddingVertical: 8,
-                paddingHorizontal: 16,
+                paddingHorizontal: 14,
                 marginRight: 10,
               }}
             >
@@ -256,24 +290,14 @@ const TabTwoScreen = () => {
             </Modal>
           </View>
           <GiftedChat
+            //listViewProps={{ref: scrollViewRef, onContentSizeChange: () => scrollToBottom(),}}
+            scrollToBottom
+            scrollToBottomComponent={scrollToBottomComponent}
+            alwaysShowSend
+            renderSend={renderSend}
             messages={messages}
             onSend={(newMessages) => onSend(newMessages)}
             user={{ _id: userId}}
-            //renderBubble={(props) => (
-            //  <View
-            //    {...props}
-            //    style={{
-            //      backgroundColor: props.position === 'right' ? 'lightblue' : 'green',
-            //      borderRadius: 10,
-            //      padding: 10,
-            //      maxWidth: '90%',
-            //      ...props.containerStyle,
-            //    }}
-            //  >
-            //    {/* Render the message content within the View */}
-            //    <Text>{props.currentMessage.text}</Text>
-            //  </View>
-            //)}
             renderAvatar={(props) => {
               if (props.currentMessage?.user?._id === userId) {
                 return null;
