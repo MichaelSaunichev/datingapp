@@ -15,6 +15,8 @@
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
     "@react-native-community/slider": "^4.4.2",
+    "@react-native-firebase/app": "^19.1.2",
+    "@react-native-firebase/auth": "^19.1.2",
     "@react-native-picker/picker": "2.6.1",
     "@react-navigation/native": "^6.1.10",
     "@react-navigation/stack": "^6.3.21",
@@ -38,6 +40,7 @@
     "react-native-gesture-handler": "~2.14.0",
     "react-native-gifted-chat": "^2.4.0",
     "react-native-image-crop-picker": "^0.40.3",
+    "react-native-keyboard-aware-scrollview": "^2.1.0",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-modal-selector": "^2.1.2",
     "react-native-range-slider": "^0.1.2",
@@ -46,7 +49,10 @@
     "react-native-screens": "~3.29.0",
     "react-native-swipeable": "^0.6.0",
     "react-native-swipeable-cards": "^1.1.23",
-    "react-native-web": "~0.19.6"
+    "react-native-vector-icons": "^10.0.3",
+    "react-native-web": "~0.19.6",
+    "secure-random": "^1.1.2",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

@@ -5,7 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors');
 const port = 3000;
-const ip = '192.168.1.22';
+const ip = '192.168.1.8';
 
 
 var indexRouter = require('./routes/index');

@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlatList, TouchableOpacity, Text, View, Image, Button, Modal, StyleSheet, ImageBackground } from 'react-native';
-import { GiftedChat, IMessage, User } from 'react-native-gifted-chat';
+import { GiftedChat, IMessage, User, Send } from 'react-native-gifted-chat';
 import { useNavigation } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 
 interface CustomMessage extends IMessage {
@@ -20,8 +22,10 @@ const TabTwoScreen = () => {
 
   const [modal1Visible, setmodal1Visible] = useState(false);
   const [modal2Visible, setmodal2Visible] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const navigation = useNavigation();
+
 
   const userId = 2;
 
@@ -37,7 +41,7 @@ const TabTwoScreen = () => {
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/user/${userId}`);
+      const response = await fetch(`http://192.168.1.8:3000/api/user/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch user data');
       }
@@ -48,13 +52,29 @@ const TabTwoScreen = () => {
     }
   };
 
+  const loadEarlierMessages = async () => {
+    try {
+      const response = await fetch(`http://192.168.1.8:3000/api/chat/${userId}/${selectedChat}?limit=20&offset=${messages.length}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch earlier messages');
+      }
+      const { messages: earlierMessages } = await response.json();
+  
+      // Update state with the newly loaded messages
+      setMessages(previousMessages => earlierMessages.concat(previousMessages));
+    } catch (error) {
+      console.error('Error loading earlier messages:', error);
+    }
+  };
+
   const fetchChats = async () => {
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/chats/${userId}`);
+      const response = await fetch(`http://192.168.1.8:3000/api/chats/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch chat users');
       }
       const chatUsers = await response.json();
+      console.log("chatUsers:", chatUsers);
       setChats(chatUsers.reverse());
     } catch (error) {
       console.error('Error fetching chat users:', error);
@@ -65,7 +85,7 @@ const TabTwoScreen = () => {
     setSelectedChat(chatId);
   
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/chat/${userId}/${chatId}`);
+      const response = await fetch(`http://192.168.1.8:3000/api/chat/${userId}/${chatId}`);
   
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
@@ -94,7 +114,7 @@ const TabTwoScreen = () => {
     setMessages(updatedMessages);
     
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/chat/${userId}/${chatId}`, {
+      const response = await fetch(`http://192.168.1.8:3000/api/chat/${userId}/${chatId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +134,7 @@ const TabTwoScreen = () => {
 
   const handleUnmatch = async (userId2: string) => {
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/unmatch/${userId}/${userId2}`, {
+      const response = await fetch(`http://192.168.1.8:3000/api/unmatch/${userId}/${userId2}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +153,7 @@ const TabTwoScreen = () => {
 
   const handleBlock = async (userId2: string) => {
     try {
-      const response = await fetch(`http://192.168.1.22:3000/api/block/${userId}/${userId2}`, {
+      const response = await fetch(`http://192.168.1.8:3000/api/block/${userId}/${userId2}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -149,40 +169,50 @@ const TabTwoScreen = () => {
       fetchChats();
     }
   };
+  const scrollToBottomComponent = () => {
+      return (
+          <FontAwesome name="angle-double-down" size={24} color="#333" />
+      )
+  };
 
-  const renderChats = ({ item }: { item: { name: string; profileImageUri?: string; _id: string } }) => (
+  const scrollToBottom = () => {
+      if (scrollViewRef && scrollViewRef.current) {
+          scrollViewRef.current.scrollToEnd({ animated: true });
+      }
+  };
+
+  interface RenderSendProps {
+    text?: string;
+    onSend: (messages: IMessage[]) => void;
+  }
+
+  const renderSend = (props: RenderSendProps) => {
+      return (
+          <Send {...props}>
+              <View>
+                  <MaterialCommunityIcons
+                  name="send-circle"
+                  style={{marginBottom: 5, marginRight: 5}}
+                  size={32}
+                  color="#2e64e5"
+                  />
+              </View>
+          </Send>
+      );
+  };
+
+  const renderChats = ({ item }: { item: { name: string; profileImageUri?: string; _id: string, firstMessage: string } }) => (
     <TouchableOpacity onPress={() => onChatSelect(Number(item._id))}>
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#888888' }}>
         <Image
           source={{ uri: item.profileImageUri || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
           style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
         />
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black', flex: 1 }}>{item.name}</Text>
-        <TouchableOpacity onPress={() => setmodal1Visible(true)} style={styles.manageButton}>
-          <Text style={styles.manageButtonText}>Manage User</Text>
-        </TouchableOpacity>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black' }}>{item.name}</Text>
+        <Text numberOfLines={2} style={{ fontSize: 14, color: '#555', marginLeft: 10, marginTop: 5, flexShrink: 1 }}>
+          {item.firstMessage ? (item.firstMessage.length > 100 ? item.firstMessage.slice(0, 100) + '...' : item.firstMessage) : ''}
+        </Text>
       </View>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modal1Visible}
-        onRequestClose={() => setmodal1Visible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContentManage}>
-            <Text style={styles.modalTitle}>Manage User</Text>
-            <TouchableOpacity onPress={() => { handleUnmatch(item._id); setmodal1Visible(false); }} style={styles.unmatchButton}>
-              <Text style={styles.actionButtonText}>Unmatch</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => { handleBlock(item._id); setmodal1Visible(false); }} style={styles.blockButton}>
-              <Text style={styles.actionButtonText}>Block</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setmodal1Visible(false)} style={styles.cancelButton}>
-              <Text style={styles.actionButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </TouchableOpacity>
   );
 
@@ -197,11 +227,10 @@ const TabTwoScreen = () => {
                 backgroundColor: '#888888',
                 borderRadius: 5,
                 paddingVertical: 8,
-                paddingHorizontal: 16,
-                marginRight: 10,
+                paddingHorizontal: 14,
               }}
             >
-              <Text style={{ color: 'white', fontSize: 14 }}>Back</Text>
+              <Text style={{ color: 'black', fontSize: 16 }}>Back</Text>
             </TouchableOpacity>
             <View style={{ position: 'absolute', top: 7, left: '50%', marginLeft: -10 }}>
               <TouchableOpacity onPress={() => setmodal2Visible(true)}>
@@ -213,6 +242,32 @@ const TabTwoScreen = () => {
                 )}
               </TouchableOpacity>
             </View>
+            <View style={{ position: 'absolute', top: 15, right: '1.5%' }}>
+              <TouchableOpacity onPress={() => setmodal1Visible(true)} style={styles.manageButton}>
+                <MaterialCommunityIcons name="cog" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={modal1Visible}
+              onRequestClose={() => setmodal1Visible(false)}
+            >
+              <View style={styles.modalContainer}>
+                <View style={styles.modalContentManage}>
+                  <Text style={styles.modalTitle}>Manage User</Text>
+                  <TouchableOpacity onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); handleUnmatch(selectedChat.toString()); setmodal1Visible(false); }} style={styles.unmatchButton}>
+                    <Text style={styles.actionButtonText}>Unmatch</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); handleBlock(selectedChat.toString()); setmodal1Visible(false); }} style={styles.blockButton}>
+                    <Text style={styles.actionButtonText}>Block</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setmodal1Visible(false)} style={styles.cancelButton}>
+                    <Text style={styles.actionButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
             <Modal
               animationType="slide"
               transparent={true}
@@ -256,24 +311,16 @@ const TabTwoScreen = () => {
             </Modal>
           </View>
           <GiftedChat
+            //listViewProps={{ref: scrollViewRef, onContentSizeChange: () => scrollToBottom(),}}
+            loadEarlier={true}
+            onLoadEarlier={loadEarlierMessages}
+            scrollToBottom
+            scrollToBottomComponent={scrollToBottomComponent}
+            alwaysShowSend
+            renderSend={renderSend}
             messages={messages}
             onSend={(newMessages) => onSend(newMessages)}
             user={{ _id: userId}}
-            //renderBubble={(props) => (
-            //  <View
-            //    {...props}
-            //    style={{
-            //      backgroundColor: props.position === 'right' ? 'lightblue' : 'green',
-            //      borderRadius: 10,
-            //      padding: 10,
-            //      maxWidth: '90%',
-            //      ...props.containerStyle,
-            //    }}
-            //  >
-            //    {/* Render the message content within the View */}
-            //    <Text>{props.currentMessage.text}</Text>
-            //  </View>
-            //)}
             renderAvatar={(props) => {
               if (props.currentMessage?.user?._id === userId) {
                 return null;
@@ -361,8 +408,9 @@ const TabTwoScreen = () => {
     },
     manageButton: {
       backgroundColor: '#ff6090',
-      padding: 10,
-      borderRadius: 5,
+      paddingVertical: 8,
+      paddingHorizontal: 8,
+      borderRadius: 25,
       marginRight: 10,
     },
     manageButtonText: {

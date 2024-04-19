@@ -330,10 +330,13 @@ router.get('/api/chats/:userId', function(req, res, next) {
         // If profile images are available, take the first one
         profileImageUri = correspondingUser.profileImageUris[0];
       }
+      const firstMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+
       const user = {
         _id: chatId,
         name: correspondingUser.name,
-        profileImageUri: profileImageUri
+        profileImageUri: profileImageUri,
+        firstMessage: firstMessage ? firstMessage.text : null,
       };
       // Add the chatInfo to the array
       chatUsers.push(user);
@@ -345,11 +348,20 @@ router.get('/api/chats/:userId', function(req, res, next) {
 router.get('/api/chat/:userId/:chatId', function (req, res, next) {
   const userId = req.params.userId;
   const chatId = req.params.chatId;
+  const limit = req.query.limit || 20;
+  const offset = req.query.offset || 0;
 
-  chatDataForUser = chatData[userId] || [];
+  const chatDataForUser = chatData[userId] || [];
   const messages = chatDataForUser.get(chatId) || [];
+
+  const startIndex = Math.max(messages.length - offset - limit, 0);
+  const endIndex = Math.min(messages.length - offset, messages.length);
+
+  const chat = messages.slice(startIndex, endIndex);
+
   const userProfile = users.find(user => user.id === chatId);
-  res.json({messages, userProfile});
+
+  res.json({ messages: chat, userProfile });
 });
 
 /* POST a new message to a chat. */
@@ -399,9 +411,33 @@ router.post('/api/globalchat', function (req, res, next) {
   res.json({ success: true, message: 'Message added successfully' });
 });
 
-router.get('/api/globalchat', function (req, res, next){
-  chat = globalChat || [];
-  res.json(chat);
+router.get('/api/globalchat', function (req, res, next) {
+  const limit = req.query.limit || 20;
+  const offset = req.query.offset || 0;
+
+  const startIndex = Math.max(globalChat.length - offset - limit, 0);
+  const endIndex = Math.min(globalChat.length - offset, globalChat.length); 
+
+  const chat = globalChat.slice(startIndex, endIndex);
+
+  res.json({ messages: chat, total: globalChat.length });
+});
+
+router.post('/api/globalchat/:messageId/like', function(req, res, next) {
+  const messageId = req.params.messageId;
+  const { likes } = req.body;
+
+  // Find the message by its ID in the global chat array
+  const messageIndex = globalChat.findIndex(message => message._id === messageId);
+
+  if (messageIndex !== -1) {
+    // Update the likes for the message
+    globalChat[messageIndex].likes = likes;
+
+    res.json({ success: true, message: 'Like status updated successfully' });
+  } else {
+    res.status(404).json({ success: false, message: 'Message not found' });
+  }
 });
 
 // --------------------------------------------------------------------------------------
