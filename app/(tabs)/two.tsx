@@ -7,6 +7,7 @@ import { ScrollView } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
+//Messages
 
 interface CustomMessage extends IMessage {
   user: User;
