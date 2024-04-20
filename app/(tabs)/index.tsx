@@ -35,7 +35,7 @@ const userId = '4';
     React.useCallback(() => {
       setLoading(false);
       setMatched(false);
-      fetch(`http://192.168.1.8:3000/api/user/${userId}`)
+      fetch(`http://192.168.1.17:3000/api/user/${userId}`)
       .then(response => response.json())
       .then(userData => {
         const { datingPreferences, minimumAge, maximumAge } = userData;
@@ -65,7 +65,7 @@ const userId = '4';
       try {
         const { datingPreferences, minimumAge, maximumAge } = preferences;
         // Fetch card data from the backend with filtering parameters
-        const response = await fetch(`http://192.168.1.8:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
+        const response = await fetch(`http://192.168.1.17:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch card data');
@@ -87,7 +87,7 @@ const userId = '4';
 
   const removeCard = async (card: Card) => {
     try {
-      const response = await fetch(`http://192.168.1.8:3000/api/cards/${userId}/${card.id}`, {
+      const response = await fetch(`http://192.168.1.17:3000/api/cards/${userId}/${card.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ const userId = '4';
 
   const addChat = async (userId: string, chatAddId: number) => {
     try {
-      const response = await fetch(`http://192.168.1.8:3000/api/addchat/${userId}/${chatAddId}`, {
+      const response = await fetch(`http://192.168.1.17:3000/api/addchat/${userId}/${chatAddId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -124,7 +124,7 @@ const userId = '4';
 
   const addLike = async (likedUser: number) => {
     try {
-      const response = await fetch(`http://192.168.1.8:3000/api/addlike/${userId}/${likedUser}`, {
+      const response = await fetch(`http://192.168.1.17:3000/api/addlike/${userId}/${likedUser}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -185,7 +185,7 @@ const userId = '4';
     try {
       const currentCard = card;
       console.log('Disliked:', currentCard);
-      await fetch('http://192.168.1.8:3000/api/incrementIndex', {
+      await fetch('http://192.168.1.17:3000/api/incrementIndex', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
