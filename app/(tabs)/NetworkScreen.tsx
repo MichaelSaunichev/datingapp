@@ -16,7 +16,7 @@ const NetworkScreen  = () => {
     const [temporaryAnonymousMode, setTemporaryAnonymousMode] = useState<boolean>(false);
     const [isAnonymousMode, setIsAnonymousMode] = useState<boolean>(false);
     const [messages, setMessages] = useState<CustomMessage[]>([]);
-    const [profileImageUris, setProfileImageUris] = useState<{ [userId: string]: string }>({});
+    const [pictures, setPictures] = useState<{ [userId: string]: string }>({});
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [modal2Visible, setModal2Visible] = useState<boolean>(false);
     const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -30,7 +30,7 @@ const NetworkScreen  = () => {
     }, []);
 
     useEffect(() => {
-        const userIdsToFetch = messages.map((message) => message.user?._id).filter((id) => id && id !== userId && !profileImageUris[id]);
+        const userIdsToFetch = messages.map((message) => message.user?._id).filter((id) => id && id !== userId && !pictures[id]);
         fetchProfileImageUris(userIdsToFetch.map(String))
     }, [messages]);
 
@@ -41,10 +41,10 @@ const NetworkScreen  = () => {
                 if (!response.ok) {
                     throw new Error(`Failed to fetch profile image for user ${userId}`);
                 }
-                const profileImageUris = await response.json();
-                setProfileImageUris((prevProfileImageUris) => ({
+                const pictures = await response.json();
+                setPictures((prevProfileImageUris) => ({
                     ...prevProfileImageUris,
-                    [userId]: profileImageUris[0] || '',
+                    [userId]: pictures[0] || '',
                 }));
             }
         } catch (error) {
@@ -238,7 +238,7 @@ const NetworkScreen  = () => {
                             return null;
                         }
                         const user = currentMessage.user;
-                        const userAvatarUri = user?._id && profileImageUris[user._id];
+                        const userAvatarUri = user?._id && pictures[user._id];
                     
                         const isAnonymous = currentMessage && (currentMessage as CustomMessage).isAnonymous;
                     
@@ -402,10 +402,10 @@ const NetworkScreen  = () => {
                                     <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{selectedUser.name}, {selectedUser.age}</Text>
                                     {/* Render the first profile image */}
                                     <View style={{ alignItems: 'center' }}>
-                                    {selectedUser.profileImageUris.length > 0 && (
+                                    {selectedUser.pictures.length > 0 && (
                                         <Image
-                                        key={selectedUser.profileImageUris[0]}
-                                        source={{ uri: selectedUser.profileImageUris[0] }}
+                                        key={selectedUser.pictures[0]}
+                                        source={{ uri: selectedUser.pictures[0] }}
                                         style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
                                         />
                                     )}
@@ -414,7 +414,7 @@ const NetworkScreen  = () => {
                                     <Text style={{ fontSize: 14, marginTop: 10, textAlign: 'center' }}>{selectedUser.bio}</Text>
                                     {/* Render additional profile pictures */}
                                     <View style={{ alignItems: 'center' }}>
-                                        {selectedUser.profileImageUris.slice(1).map((uri: string, index: number) => (
+                                        {selectedUser.pictures.slice(1).map((uri: string, index: number) => (
                                         <Image
                                             key={uri}
                                             source={{ uri }}

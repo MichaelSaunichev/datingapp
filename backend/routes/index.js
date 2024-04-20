@@ -9,16 +9,16 @@ const { render } = require('../app');
 const globalChat = []
 
 const users = [
-  { id: '0', name: 'Sean', age: 20, gender: 'Male', bio: 'Description 0', profileImageUris: [], datingPreferences: 'Everyone', 
-  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
-  { id: '1', name: 'Stacy', age: 21, gender: 'Female', bio: 'Description 1', profileImageUris: [], datingPreferences: 'Everyone', 
-  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: true, renderIndex: 0 },
-  { id: '2', name: 'Chad', age: 22, gender: 'Male', bio: 'Description 2', profileImageUris: [], datingPreferences: 'Everyone', 
-  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
-  { id: '3', name: 'Diego', age: 23, gender: 'Male', bio: 'Description 3', profileImageUris: [], datingPreferences: 'Everyone', 
-  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
-  { id: '4', name: 'Emma', age: 24, gender: 'Female', bio: 'Description 4', profileImageUris: [], datingPreferences: 'Everyone', 
-  minimumAge: 18, maximumAge: 25, accountPaused: false, notificationsEnabled: false, renderIndex: 0 },
+  { id: '0', name: 'Sean', age: 20, gender: 'Male', bio: 'Description 0', pictures: [], datingPreferences: 'Everyone', 
+  accountPaused: false, renderIndex: 0 },
+  { id: '1', name: 'Stacy', age: 21, gender: 'Female', bio: 'Description 1', pictures: [], datingPreferences: 'Everyone', 
+  accountPaused: false, renderIndex: 0 },
+  { id: '2', name: 'Chad', age: 22, gender: 'Male', bio: 'Description 2', pictures: [], datingPreferences: 'Everyone', 
+  accountPaused: false, renderIndex: 0 },
+  { id: '3', name: 'Diego', age: 23, gender: 'Male', bio: 'Description 3', pictures: [], datingPreferences: 'Everyone', 
+  accountPaused: false, renderIndex: 0 },
+  { id: '4', name: 'Emma', age: 24, gender: 'Female', bio: 'Description 4', pictures: [], datingPreferences: 'Everyone', 
+  accountPaused: false, renderIndex: 0 },
 ];
 
 const cardData = {
@@ -60,16 +60,33 @@ const chatData = {
 
 // --------------------------------------------------------------------------------------
 // User
-router.get('/api/uri/:userId', (req, res) => {
-  const { userId } = req.params;
-  const user = users.find(u => u.id === userId);
 
-  if (user) {
-    const { profileImageUris } = user;
-    res.json(profileImageUris || []);
-  } else {
-    res.status(404).json({ message: 'User not found' });
-  }
+function generateUserId() {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+router.post('/api/user/create', (req, res) => {
+  const { bio, dob, gender, name, pictures, preference } = req.body;
+
+  const userId = generateUserId();
+
+  const newUser = {
+    id: userId,
+    name,
+    dob,
+    gender,
+    bio,
+    pictures,
+    preference,
+    accountPaused: false,
+    renderIndex: 0
+  };
+
+  users.push(newUser);
+
+  console.log("users:",users);
+
+  res.status(201).json(newUser);
 });
 
 // Get user by ID
@@ -128,7 +145,7 @@ router.delete('/api/cards/:userId/:cardId', (req, res) => {
 });
 
 router.get('/api/cards', function (req, res, next) {
-  const { userId, datingPreferences, minimumAge, maximumAge } = req.query;
+  const { userId, datingPreferences } = req.query;
   console.log("datingpreference:", datingPreferences);
   // Retrieve user cards data for the specified user ID
   const userCards = cardData[userId] || [];
@@ -148,21 +165,17 @@ router.get('/api/cards', function (req, res, next) {
     const checkUser = users.find(u => u.id === checkUserId);
 
     const meetsPreferences =
-      (
       (datingPreferences === 'Everyone') ||
       (checkUser.gender === 'Non-binary') ||
       ((datingPreferences === 'Men' && checkUser.gender === 'Male') ||
         (datingPreferences === 'Women' && checkUser.gender === 'Female')) 
-      ) &&
-      (checkUser.age >= minimumAge && checkUser.age <= maximumAge) &&
-      (checkUser.accountPaused === false);
-
+    console.log("meets:", meetsPreferences);
     if (meetsPreferences) {
       nextCard = {
         id: checkUserId,
         name: checkUser.name,
         bio: checkUser.bio,
-        profileImageUris: checkUser.profileImageUris,
+        pictures: checkUser.pictures,
         likesYou: card.likesYou,
         accountPaused: checkUser.accountPaused,
         age: checkUser.age,
@@ -324,18 +337,18 @@ router.get('/api/chats/:userId', function(req, res, next) {
 
     // Check if the user is found
     if (correspondingUser) {
-      let profileImageUri;
+      let picture;
       // Check if profile images are available for the user
-      if (correspondingUser.profileImageUris && correspondingUser.profileImageUris.length > 0) {
+      if (correspondingUser.pictures && correspondingUser.pictures.length > 0) {
         // If profile images are available, take the first one
-        profileImageUri = correspondingUser.profileImageUris[0];
+        picture = correspondingUser.pictures[0];
       }
       const firstMessage = messages.length > 0 ? messages[messages.length - 1] : null;
 
       const user = {
         _id: chatId,
         name: correspondingUser.name,
-        profileImageUri: profileImageUri,
+        picture: picture,
         firstMessage: firstMessage ? firstMessage.text : null,
       };
       // Add the chatInfo to the array

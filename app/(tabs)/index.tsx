@@ -8,7 +8,7 @@ interface Card {
   id: number;
   name: string;
   bio: string;
-  profileImageUris: string[];
+  pictures: string[];
   likesYou: number;
   accountPaused: number;
   age: number;
@@ -17,8 +17,6 @@ interface Card {
 
 type userPreferences = {
   datingPreferences: 'Men' | 'Women' | 'Everyone';
-  minimumAge: number;
-  maximumAge: number;
 }
 
 const TabOneScreen = () => {
@@ -38,11 +36,9 @@ const userId = '4';
       fetch(`http://192.168.1.17:3000/api/user/${userId}`)
       .then(response => response.json())
       .then(userData => {
-        const { datingPreferences, minimumAge, maximumAge } = userData;
+        const { datingPreferences } = userData;
         setPreferences({
           datingPreferences: datingPreferences,
-          minimumAge: minimumAge,
-          maximumAge: maximumAge,
         });
       })
       .catch(error => console.error('Error fetching user data:', error));
@@ -63,9 +59,9 @@ const userId = '4';
 
     if (preferences){
       try {
-        const { datingPreferences, minimumAge, maximumAge } = preferences;
+        const { datingPreferences } = preferences;
         // Fetch card data from the backend with filtering parameters
-        const response = await fetch(`http://192.168.1.17:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&minimumAge=${minimumAge}&maximumAge=${maximumAge}`);
+        const response = await fetch(`http://192.168.1.17:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch card data');
@@ -208,17 +204,17 @@ const userId = '4';
           <View style={styles.card}>
             <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center', width:'80%' }}>{card.name}, {card.age}</Text>
             <View style={{ alignItems: 'center' }}>
-              {card.profileImageUris.length > 0 && (
+              {card.pictures.length > 0 && (
                 <Image
-                  key={card.profileImageUris[0]}
-                  source={{ uri: card.profileImageUris[0] }}
+                  key={card.pictures[0]}
+                  source={{ uri: card.pictures[0] }}
                   style={styles.profileImage}
                 />
               )}
             </View>
             <Text style={{ fontSize: 14, marginTop: 0, textAlign: 'center', width:'80%' }}>{card.bio}</Text>
             <View style={{ alignItems: 'center' }}>
-              {card.profileImageUris.slice(1).map((uri: string, index: number) => (
+              {card.pictures.slice(1).map((uri: string, index: number) => (
                 <Image
                   key={uri}
                   source={{ uri }}
