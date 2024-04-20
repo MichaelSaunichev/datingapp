@@ -16,7 +16,7 @@ const CreateProfile = () => {
       bio: ''
     });
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [imageUri, setImageUri] = useState(null);
+    const [imageUris, setImageUris] = useState([]);
   
     const setPreference = (preference) => setProfile(prevState => ({ ...prevState, preference }));
     // Function to get the style for the gender button based on the current selection
@@ -28,52 +28,53 @@ const CreateProfile = () => {
 };
 
   
-    const uploadPicture = async () => {
-      let result;
-      try {
-        result = await launchImageLibraryAsync({
-          mediaTypes: MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [4, 3],
-          quality: 1,
-        });
-      } catch (error) {
-        console.error("Error selecting image:", error);
-        return;
-      }
+const uploadPicture = async () => {
+    let result;
+    try {
+      result = await launchImageLibraryAsync({
+        mediaTypes: MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+    } catch (error) {
+      console.error("Error selecting image:", error);
+      return;
+    }
   
-      if (!result.canceled) {
-        try {
-          const uri = result.assets[0].uri;
-          console.log("Image URI:", uri);
-          setImageUri(uri); // Set the image URI
-          
-          // Fetch the image blob
-          const response = await fetch(uri);
-          const blob = await response.blob();
-    
-          // Get a reference to the Firebase storage location
-          const storage = getStorage();
-          const storageRef = ref(storage, `pictures/${Date.now()}`);
-    
-          // Upload the image blob to Firebase Storage
-          await uploadBytes(storageRef, blob);
-    
-          // Get the download URL of the uploaded image
-          const imageUrl = await getDownloadURL(storageRef);
-    
-          // Update profile state with the image URL
-          setProfile(prevProfile => ({
-            ...prevProfile,
-            pictures: [...prevProfile.pictures, imageUrl]
-          }));
-    
-        } catch (error) {
-          console.error("Error uploading image:", error);
-          alert("Failed to upload image: " + error.message);
-        }
+    if (!result.canceled) {
+      try {
+        const uri = result.assets[0].uri;
+        console.log("Image URI:", uri);
+  
+        // Fetch the image blob
+        const response = await fetch(uri);
+        const blob = await response.blob();
+  
+        // Get a reference to the Firebase storage location
+        const storage = getStorage();
+        const storageRef = ref(storage, `pictures/${Date.now()}`);
+  
+        // Upload the image blob to Firebase Storage
+        await uploadBytes(storageRef, blob);
+  
+        // Get the download URL of the uploaded image
+        const imageUrl = await getDownloadURL(storageRef);
+  
+        // Update profile state with the image URL
+        setImageUris([...imageUris, imageUrl]); // Add new image URL to array
+        setProfile(prevProfile => ({
+          ...prevProfile,
+          pictures: [...prevProfile.pictures, imageUrl]
+        }));
+  
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        alert("Failed to upload image: " + error.message);
       }
-    };
+    }
+  };
+  
   
     const onChangeDate = (event, selectedDate) => {
       setShowDatePicker(Platform.OS === 'ios');
@@ -156,13 +157,16 @@ const CreateProfile = () => {
               </TouchableOpacity>
             </View>
           {/* Image Display */}
-          {imageUri && (
-            <Image
-              source={{ uri: imageUri }}
-              style={styles.uploadedImage}
-              resizeMode="contain"
-            />
-          )}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {imageUris.map((uri, index) => (
+        <Image
+            key={index}
+            source={{ uri }}
+            style={styles.uploadedImage}
+            resizeMode="contain"
+        />
+        ))}
+        </View>
           {/* Image Upload Button */}
           <TouchableOpacity style={styles.button} onPress={uploadPicture}>
             <Text style={styles.buttonText}>Upload Picture</Text>
@@ -238,10 +242,9 @@ const CreateProfile = () => {
       fontSize: 16,
     },
     uploadedImage: {
-      width: 200,
-      height: 200,
-      borderRadius: 100,
-      alignSelf: 'center',
-      marginTop: 10,
+        width: 100, // Smaller width
+        height: 100, // Smaller height
+        borderRadius: 0, // Adjust as needed
+        margin: 5, // Space between images
     }
   });
