@@ -1,42 +1,48 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TextInput, TouchableOpacity, KeyboardAvoidingView, StyleSheet, Platform } from 'react-native';
+import { View, Text, Image, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, StyleSheet, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from '@firebase/storage';
 
 const CreateProfile = () => {
-  const navigation = useNavigation();
-  const [profile, setProfile] = useState({
-    name: '',
-    dob: new Date(),
-    gender: '',
-    preference: '',
-    pictures: [],
-    bio: ''
-  });
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [imageUri, setImageUri] = useState(null);
-
-
-  const setPreference = (preference) => setProfile(prevState => ({ ...prevState, preference }));
-  const setGender = (gender) => setProfile(prevState => ({ ...prevState, gender }));
-
-  const uploadPicture = async () => {
-    let result;
-  try {
-    result = await launchImageLibraryAsync({
-      mediaTypes: MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+    const navigation = useNavigation();
+    const [profile, setProfile] = useState({
+      name: '',
+      dob: new Date(),
+      gender: '',
+      preference: '',
+      pictures: [],
+      bio: ''
     });
-  } catch (error) {
-    console.error("Error selecting image:", error);
-    return;
-  }
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [imageUri, setImageUri] = useState(null);
+  
+    const setPreference = (preference) => setProfile(prevState => ({ ...prevState, preference }));
+    // Function to get the style for the gender button based on the current selection
+  const getButtonStyle = (gender) => {
+    return profile.gender === gender ? styles.selectedButton : styles.button;
+  };
+  const getPreferenceButtonStyle = (preference) => {
+    return profile.preference === preference ? styles.selectedButton : styles.button;
+};
 
-    if (!result.canceled) {
+  
+    const uploadPicture = async () => {
+      let result;
+      try {
+        result = await launchImageLibraryAsync({
+          mediaTypes: MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 1,
+        });
+      } catch (error) {
+        console.error("Error selecting image:", error);
+        return;
+      }
+  
+      if (!result.canceled) {
         try {
           const uri = result.assets[0].uri;
           console.log("Image URI:", uri);
@@ -67,128 +73,175 @@ const CreateProfile = () => {
           alert("Failed to upload image: " + error.message);
         }
       }
-  };
+    };
+  
+    const onChangeDate = (event, selectedDate) => {
+      setShowDatePicker(Platform.OS === 'ios');
+      const currentDate = selectedDate || profile.dob;
+      setProfile(prevProfile => ({ ...prevProfile, dob: currentDate }));
+    };
 
-  const onChangeDate = (event, selectedDate) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    const currentDate = selectedDate || profile.dob;
-    setProfile(prevProfile => ({ ...prevProfile, dob: currentDate }));
-  };
-
-  return (
-    <View style={styles.container}>
-      <KeyboardAvoidingView behavior='padding'>
+    const setGender = (gender) => {
+        setProfile(prevState => ({ ...prevState, gender }));
+      };
+    
+  
+    return (
+     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.container}>
+        <KeyboardAvoidingView behavior='padding'>
         <TextInput
-          value={profile.name}
-          style={styles.input}
-          placeholder="Name"
-          onChangeText={(text) => setProfile({ ...profile, name: text })}
+            value={profile.name}
+            style={styles.input}
+            placeholder="Name"
+            placeholderTextColor="#888"
+            onChangeText={(text) => setProfile({ ...profile, name: text })}
         />
-        {/* Date of Birth Picker */}
-        <TouchableOpacity style={styles.button} onPress={() => setShowDatePicker(true)}>
-          <Text style={styles.buttonText}>{profile.dob.toDateString()}</Text>
-        </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker
-            value={profile.dob}
-            mode="date"
-            display="default"
-            onChange={onChangeDate}
-          />
-        )}
-        {/* Gender Selection Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.preferenceButton} onPress={() => setGender('Male')}>
+          {/* Date of Birth Picker */}
+          <TouchableOpacity style={styles.button} onPress={() => setShowDatePicker(true)}>
+            <Text style={styles.buttonText}>Set date of birth</Text>
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={profile.dob}
+              mode="date"
+              display="default"
+              onChange={onChangeDate}
+            />
+          )}
+          {/* Gender Selection Buttons */}
+          <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={getButtonStyle('Male')} 
+            onPress={() => setGender('Male')}>
             <Text style={styles.buttonText}>Male</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.preferenceButton} onPress={() => setGender('Female')}>
+          <TouchableOpacity 
+            style={getButtonStyle('Female')} 
+            onPress={() => setGender('Female')}>
             <Text style={styles.buttonText}>Female</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.preferenceButton} onPress={() => setGender('Non-binary')}>
+          <TouchableOpacity 
+            style={getButtonStyle('Non-binary')} 
+            onPress={() => setGender('Non-binary')}>
             <Text style={styles.buttonText}>Non-binary</Text>
           </TouchableOpacity>
         </View>
-        {/* Bio TextInput */}
-        <TextInput
-          value={profile.bio}
-          style={styles.input}
-          placeholder="Your Bio"
-          multiline={true}
-          numberOfLines={4}
-          onChangeText={(text) => setProfile({ ...profile, bio: text })}
-        />
-        {/* Existing Preference Buttons */}
-         {/* Preference Buttons */}
-         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.preferenceButton} onPress={() => setPreference('Men')}>
-            <Text style={styles.buttonText}>Men</Text>
+          {/* Bio TextInput */}
+          <TextInput
+            value={profile.bio}
+            style={styles.input}
+            placeholder="Your Bio"
+            placeholderTextColor="#888"
+            multiline={true}
+            numberOfLines={4}
+            onChangeText={(text) => setProfile({ ...profile, bio: text })}
+          />
+          {/* Preference Buttons */}
+          <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={getPreferenceButtonStyle('Men')}
+                onPress={() => setPreference('Men')}>
+                <Text style={styles.buttonText}>Men</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={getPreferenceButtonStyle('Women')}
+                onPress={() => setPreference('Women')}>
+                <Text style={styles.buttonText}>Women</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={getPreferenceButtonStyle('Non-binary')}
+                onPress={() => setPreference('Non-binary')}>
+                <Text style={styles.buttonText}>Non-binary</Text>
+              </TouchableOpacity>
+            </View>
+          {/* Image Display */}
+          {imageUri && (
+            <Image
+              source={{ uri: imageUri }}
+              style={styles.uploadedImage}
+              resizeMode="contain"
+            />
+          )}
+          {/* Image Upload Button */}
+          <TouchableOpacity style={styles.button} onPress={uploadPicture}>
+            <Text style={styles.buttonText}>Upload Picture</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.preferenceButton} onPress={() => setPreference('Women')}>
-            <Text style={styles.buttonText}>Women</Text>
+          {/* Navigation Button */}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate('Signup', { profile })}
+          >
+            <Text style={styles.buttonText}>Next</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.preferenceButton} onPress={() => setPreference('Non-binary')}>
-            <Text style={styles.buttonText}>Non-binary</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate('Welcome')}
+          >
+            <Text style={styles.buttonText}>Back</Text>
           </TouchableOpacity>
-        </View>
-        {/* Image Display */}
-        {imageUri && (
-  <Image
-    source={{ uri: imageUri }}
-    style={styles.uploadedImage}
-    resizeMode="contain"
-  />
-)}
+        </KeyboardAvoidingView>
+      </View>
+      </TouchableWithoutFeedback>
+    );
+  };
+  
+  export default CreateProfile;
 
-        {/* Image Upload Button */}
-        <TouchableOpacity style={styles.button} onPress={uploadPicture}>
-          <Text style={styles.buttonText}>Upload Picture</Text>
-        </TouchableOpacity>
-        {/* Navigation Button */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('Signup', { profile })}
-        >
-          <Text style={styles.buttonText}>Next</Text>
-        </TouchableOpacity>
-      </KeyboardAvoidingView>
-    </View>
-  );
-};
-
-export default CreateProfile;
-
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 10,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 10,
-  },
-  preferenceButton: {
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5,
-  },
-  button: {
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: 'white',
-  }
-});
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      backgroundColor: '#f0f0f0',
+      padding: 20,
+    },
+    input: {
+      height: 50,
+      backgroundColor: 'white',
+      borderColor: '#e0e0e0',
+      borderWidth: 1,
+      borderRadius: 25,
+      marginBottom: 15,
+      paddingHorizontal: 20,
+      fontSize: 16,
+      color: '#333',
+    },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginVertical: 10,
+    },
+    button: {
+      backgroundColor: '#007aff',
+      padding: 12,
+      borderRadius: 25,
+      alignItems: 'center',
+      marginTop: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 1.5,
+    },
+    selectedButton: {
+      backgroundColor: '#ff4081', // Selected button color
+      padding: 12,
+      borderRadius: 25,
+      alignItems: 'center',
+      marginTop: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 1.5,
+    },
+    buttonText: {
+      color: 'white',
+      fontSize: 16,
+    },
+    uploadedImage: {
+      width: 200,
+      height: 200,
+      borderRadius: 100,
+      alignSelf: 'center',
+      marginTop: 10,
+    }
+  });
