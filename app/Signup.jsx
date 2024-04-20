@@ -1,4 +1,4 @@
-import { Button, View, Text, StyleSheet, TextInput, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { Button, View, Text, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { FIREBASE_AUTH } from 'FirebaseConfig'
@@ -46,14 +46,26 @@ const Signup = () => {
     };
 
     return (
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
             <KeyboardAvoidingView behavior='padding'>
-                <TextInput value={email} style={styles.input} placeholder="Email" autoCapitalize="none"
+                <TextInput value={email} 
+                    style={styles.input} 
+                    placeholder="Email" 
+                    placeholderTextColor="#888"
+                    autoCapitalize="none"
                     onChangeText={setEmail} />
-                <TextInput secureTextEntry={true} value={password} style={styles.input} placeholder="Password"
-                    autoCapitalize="none" onChangeText={setPassword} />
+                <TextInput secureTextEntry={true} value={password} 
+                    style={styles.input} 
+                    placeholder="Password"
+                    placeholderTextColor="#888"
+                    autoCapitalize="none" 
+                    onChangeText={setPassword} />
                 <TextInput secureTextEntry={true} value={confirmPassword} style={styles.input}
-                    placeholder="Confirm Password" autoCapitalize="none" onChangeText={setConfirmPassword} />
+                    placeholder="Confirm Password" 
+                    placeholderTextColor="#888"
+                    autoCapitalize="none" 
+                    onChangeText={setConfirmPassword} />
                 {loading ? (
                     <ActivityIndicator size="large" color="#0000ff" />
                 ) : (
@@ -68,6 +80,8 @@ const Signup = () => {
                 )}
             </KeyboardAvoidingView>
         </View>
+        </TouchableWithoutFeedback>
+    
     );
 }
 
@@ -75,18 +89,22 @@ export default Signup
 
 const styles = StyleSheet.create({
     container: {
-        marginHorizontal: 20,
         flex: 1,
-        justifyContent: 'center'
-    },
-    input: {
-        marginVertical: 4,
+        justifyContent: 'center',
+        backgroundColor: '#f0f0f0',
+        padding: 20,
+      },
+      input: {
         height: 50,
+        backgroundColor: 'white',
+        borderColor: '#e0e0e0',
         borderWidth: 1,
-        borderRadius: 4,
-        padding: 10,
-        backgroundColor: '#fff'
-    },
+        borderRadius: 25,
+        marginBottom: 15,
+        paddingHorizontal: 20,
+        fontSize: 16,
+        color: '#333',
+      },
     button: {
         backgroundColor: '#fff',
         paddingVertical: 15,

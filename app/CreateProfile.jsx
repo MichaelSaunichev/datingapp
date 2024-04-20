@@ -46,21 +46,16 @@ const uploadPicture = async () => {
       try {
         const uri = result.assets[0].uri;
         console.log("Image URI:", uri);
-  
         // Fetch the image blob
         const response = await fetch(uri);
         const blob = await response.blob();
-  
         // Get a reference to the Firebase storage location
         const storage = getStorage();
         const storageRef = ref(storage, `pictures/${Date.now()}`);
-  
         // Upload the image blob to Firebase Storage
         await uploadBytes(storageRef, blob);
-  
         // Get the download URL of the uploaded image
         const imageUrl = await getDownloadURL(storageRef);
-  
         // Update profile state with the image URL
         setImageUris([...imageUris, imageUrl]); // Add new image URL to array
         setProfile(prevProfile => ({
@@ -100,7 +95,8 @@ const uploadPicture = async () => {
         />
           {/* Date of Birth Picker */}
           <TouchableOpacity style={styles.button} onPress={() => setShowDatePicker(true)}>
-            <Text style={styles.buttonText}>Set date of birth</Text>
+            <Text style={styles.buttonText}>Set date of birth
+            </Text>
           </TouchableOpacity>
           {showDatePicker && (
             <DateTimePicker
@@ -111,6 +107,7 @@ const uploadPicture = async () => {
             />
           )}
           {/* Gender Selection Buttons */}
+          <Text style={styles.sectionTitle}>Gender</Text>
           <View style={styles.buttonContainer}>
           <TouchableOpacity 
             style={getButtonStyle('Male')} 
@@ -139,6 +136,7 @@ const uploadPicture = async () => {
             onChangeText={(text) => setProfile({ ...profile, bio: text })}
           />
           {/* Preference Buttons */}
+          <Text style={styles.sectionTitle}>Dating Preference</Text>
           <View style={styles.buttonContainer}>
               <TouchableOpacity 
                 style={getPreferenceButtonStyle('Men')}
@@ -246,5 +244,11 @@ const uploadPicture = async () => {
         height: 100, // Smaller height
         borderRadius: 0, // Adjust as needed
         margin: 5, // Space between images
-    }
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        paddingVertical: 0,
+      }
   });

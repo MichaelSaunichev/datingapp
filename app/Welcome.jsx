@@ -62,7 +62,8 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 3, width: 3 },
     shadowOpacity: 1,
     shadowRadius: 5,
-  },
+    alignItems: 'center', // Ensure text is centered
+},
   buttonText: {
     color: '#000',
     fontWeight: 'bold',
