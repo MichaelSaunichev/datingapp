@@ -11,20 +11,20 @@ const CreateProfile = () => {
       name: '',
       dob: new Date(),
       gender: '',
-      preference: '',
+      datingPreferences: '',
       pictures: [],
       bio: ''
     });
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [imageUris, setImageUris] = useState([]);
   
-    const setPreference = (preference) => setProfile(prevState => ({ ...prevState, preference }));
+    const setPreference = (datingPreferences) => setProfile(prevState => ({ ...prevState, datingPreferences }));
     // Function to get the style for the gender button based on the current selection
   const getButtonStyle = (gender) => {
     return profile.gender === gender ? styles.selectedButton : styles.button;
   };
-  const getPreferenceButtonStyle = (preference) => {
-    return profile.preference === preference ? styles.selectedButton : styles.button;
+  const getPreferenceButtonStyle = (datingPreferences) => {
+    return profile.datingPreferences === datingPreferences ? styles.selectedButton : styles.button;
 };
 
   

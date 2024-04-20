@@ -30,9 +30,7 @@ const Signup = () => {
         try {
             const response = await createUserWithEmailAndPassword(auth, email, password);
             console.log(response);
-
-            const firestore = getFirestore();
-            console.log("\nprofile:::",profile);
+            
             try {
                 const response = await fetch('http://192.168.1.17:3000/api/user/create', {
                     method: 'POST',
