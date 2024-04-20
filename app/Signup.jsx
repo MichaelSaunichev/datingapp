@@ -4,6 +4,9 @@ import { useNavigation } from '@react-navigation/native';
 import { FIREBASE_AUTH } from 'FirebaseConfig'
 import { signInWithEmailAndPassword } from '@firebase/auth';
 import { createUserWithEmailAndPassword } from '@firebase/auth';
+import { getFirestore, doc, setDoc } from '@firebase/firestore';
+import { useRoute } from '@react-navigation/native';
+
 
 const Signup = () => {
     const [email, setEmail] = useState('');
@@ -11,8 +14,10 @@ const Signup = () => {
     const [loading, setLoading] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState('');
 
-    const auth = FIREBASE_AUTH;
+    const route = useRoute();
+    const { profile } = route.params;
 
+    const auth = FIREBASE_AUTH;
     const navigation = useNavigation();
 
 
@@ -25,13 +30,21 @@ const Signup = () => {
         try {
             const response = await createUserWithEmailAndPassword(auth, email, password);
             console.log(response);
-        } catch {
-            console.log(error);
-            alert('Sign up failed');
+
+            const firestore = getFirestore();
+            await setDoc(doc(firestore, "users", response.user.uid), {
+                ...profile,
+                createdAt: new Date()
+            });
+            console.log("Profile saved to Firestore.");
+        } catch (error) {
+            console.error(error);
+            alert('Sign up failed: ' + error.message);
         } finally {
             setLoading(false);
         }
-    }
+    };
+
     return (
         <View style={styles.container}>
             <KeyboardAvoidingView behavior='padding'>

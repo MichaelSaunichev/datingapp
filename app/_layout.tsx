@@ -7,11 +7,12 @@ import { NavigationContainer } from '@react-navigation/native'
 import Login from './Login';
 import Welcome from './Welcome';
 import Signup from './Signup';
+import CreateProfile from './CreateProfile';
 import { Stack } from 'expo-router';
-import { Auth, User } from 'firebase/auth'
+import { Auth, User } from '@firebase/auth'
 import { FIREBASE_AUTH } from 'FirebaseConfig'
 import 'FirebaseConfig'
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from '@firebase/auth';
 
 const StackGuy = createNativeStackNavigator();
 
@@ -49,6 +50,7 @@ export default function RootLayoutNav() {
           <StackGuy.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
           <StackGuy.Screen name="Login" component={Login} options={{ headerShown: false }} />
           <StackGuy.Screen name="Signup" component={Signup} options={{ headerShown: false }} />
+          <StackGuy.Screen name="CreateProfile" component={CreateProfile} options={{ headerShown: false }} />
           </>
         )}
       </StackGuy.Navigator>

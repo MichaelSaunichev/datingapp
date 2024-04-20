@@ -19,7 +19,7 @@ const Welcome = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('Signup')}>
+          onPress={() => navigation.navigate('CreateProfile')}>
           <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
       </View>
