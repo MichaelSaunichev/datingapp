@@ -42,7 +42,7 @@ const TabTwoScreen = () => {
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch(`http://192.168.1.8:3000/api/user/${userId}`);
+      const response = await fetch(`http://192.168.1.17:3000/api/user/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch user data');
       }
@@ -55,7 +55,7 @@ const TabTwoScreen = () => {
 
   const loadEarlierMessages = async () => {
     try {
-      const response = await fetch(`http://192.168.1.8:3000/api/chat/${userId}/${selectedChat}?limit=20&offset=${messages.length}`);
+      const response = await fetch(`http://192.168.1.17:3000/api/chat/${userId}/${selectedChat}?limit=20&offset=${messages.length}`);
       if (!response.ok) {
         throw new Error('Failed to fetch earlier messages');
       }
@@ -70,7 +70,7 @@ const TabTwoScreen = () => {
 
   const fetchChats = async () => {
     try {
-      const response = await fetch(`http://192.168.1.8:3000/api/chats/${userId}`);
+      const response = await fetch(`http://192.168.1.17:3000/api/chats/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch chat users');
       }
@@ -86,7 +86,7 @@ const TabTwoScreen = () => {
     setSelectedChat(chatId);
   
     try {
-      const response = await fetch(`http://192.168.1.8:3000/api/chat/${userId}/${chatId}`);
+      const response = await fetch(`http://192.168.1.17:3000/api/chat/${userId}/${chatId}`);
   
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
@@ -115,7 +115,7 @@ const TabTwoScreen = () => {
     setMessages(updatedMessages);
     
     try {
-      const response = await fetch(`http://192.168.1.8:3000/api/chat/${userId}/${chatId}`, {
+      const response = await fetch(`http://192.168.1.17:3000/api/chat/${userId}/${chatId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ const TabTwoScreen = () => {
 
   const handleUnmatch = async (userId2: string) => {
     try {
-      const response = await fetch(`http://192.168.1.8:3000/api/unmatch/${userId}/${userId2}`, {
+      const response = await fetch(`http://192.168.1.17:3000/api/unmatch/${userId}/${userId2}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +154,7 @@ const TabTwoScreen = () => {
 
   const handleBlock = async (userId2: string) => {
     try {
-      const response = await fetch(`http://192.168.1.8:3000/api/block/${userId}/${userId2}`, {
+      const response = await fetch(`http://192.168.1.17:3000/api/block/${userId}/${userId2}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

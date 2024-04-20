@@ -37,7 +37,7 @@ const NetworkScreen  = () => {
     const fetchProfileImageUris = async (userIds: string[]) => {
         try {
             for (const userId of userIds) {
-                const response = await fetch(`http://192.168.1.8:3000/api/uri/${userId}`);
+                const response = await fetch(`http://192.168.1.17:3000/api/uri/${userId}`);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch profile image for user ${userId}`);
                 }
@@ -54,7 +54,7 @@ const NetworkScreen  = () => {
 
     const fetchMessages = async () => {
         try {
-            const response = await fetch(`http://192.168.1.8:3000/api/globalchat`);
+            const response = await fetch(`http://192.168.1.17:3000/api/globalchat`);
             if (!response.ok) {
                 throw new Error('Failed to fetch global chat');
             }
@@ -67,7 +67,7 @@ const NetworkScreen  = () => {
 
     const loadEarlierMessages = async () => {
         try {
-            const response = await fetch(`http://192.168.1.8:3000/api/globalchat?limit=20&offset=${messages.length}`);
+            const response = await fetch(`http://192.168.1.17:3000/api/globalchat?limit=20&offset=${messages.length}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch earlier messages');
             }
@@ -100,7 +100,7 @@ const NetworkScreen  = () => {
             ));
     
             // Send the updated likes to the backend
-            const response = await fetch(`http://192.168.1.8:3000/api/globalchat/${updatedMessage._id}/like`, {
+            const response = await fetch(`http://192.168.1.17:3000/api/globalchat/${updatedMessage._id}/like`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ const NetworkScreen  = () => {
 
         try {
             // Send the new message to the backend server
-            const response = await fetch(`http://192.168.1.8:3000/api/globalchat`, {
+            const response = await fetch(`http://192.168.1.17:3000/api/globalchat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ const NetworkScreen  = () => {
 
     const handleAvatarPress = async (user: User) => {
         try {
-            const response = await fetch(`http://192.168.1.8:3000/api/user/${user._id}`);
+            const response = await fetch(`http://192.168.1.17:3000/api/user/${user._id}`);
             if (!response.ok) {
                 throw new Error(`Failed to fetch user profile for user ${user._id}`);
             }
