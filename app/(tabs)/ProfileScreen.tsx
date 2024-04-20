@@ -13,12 +13,9 @@ type ProfileState = {
   age: number;
   gender: 'Man' | 'Woman' | 'Non-binary';
   bio: string;
-  profileImageUris: string[];
+  pictures: string[];
   datingPreferences: 'Men' | 'Women' |'Everyone';
-  minimumAge: number;
-  maximumAge: number;
   accountPaused: boolean;
-  notificationsEnabled: boolean;
 };
 
 const ProfileScreen: React.FC = ({}) => {
@@ -27,12 +24,9 @@ const ProfileScreen: React.FC = ({}) => {
     age: 21,
     gender: 'Man',
     bio: '',
-    profileImageUris: [],
+    pictures: [],
     datingPreferences: 'Everyone',
-    minimumAge: 18,
-    maximumAge: 25,
     accountPaused: false,
-    notificationsEnabled: false
   });
   const [tempProfileState, setTempProfileState] = useState<ProfileState>({ ...profileState });
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -68,19 +62,14 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const saveChanges = () => {
-    if (tempProfileState.minimumAge > tempProfileState.maximumAge) {
-      alert("Invalid Age Range")
-      return;
-    }
-    else{
-      setProfileState({
-        ...tempProfileState
-      });
-      setIsDeleting(false)
-      updateUserData();
-      setIsSettingsModalVisible(false)
-      setIsEditModalVisible(false)
-    }
+    setProfileState({
+      ...tempProfileState
+    });
+    setIsDeleting(false)
+    updateUserData();
+    setIsSettingsModalVisible(false)
+    setIsEditModalVisible(false)
+
   };
 
   const handleLogOut = () => {
@@ -91,7 +80,7 @@ const ProfileScreen: React.FC = ({}) => {
   const deleteImage = (index: number) => {
     setTempProfileState(prevState => ({
       ...prevState,
-      profileImageUris: prevState.profileImageUris.filter((_, i) => i !== index),
+      pictures: prevState.pictures.filter((_, i) => i !== index),
     }));
   };
 
@@ -129,7 +118,7 @@ const ProfileScreen: React.FC = ({}) => {
       const newUri = result.assets[0].uri;
       setTempProfileState((prevState) => ({
         ...prevState,
-        profileImageUris: [...prevState.profileImageUris, newUri],
+        pictures: [...prevState.pictures, newUri],
       }));
       setIsImageUploading(false);
     }
@@ -142,7 +131,7 @@ const ProfileScreen: React.FC = ({}) => {
     <View style={styles.profileContainer}>
       {/* Profile Image */}
       <Image
-        source={{ uri: profileState.profileImageUris[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+        source={{ uri: profileState.pictures[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
         style={styles.profileImage}
       />
       <View style={styles.textContainerName}>
@@ -186,14 +175,6 @@ const ProfileScreen: React.FC = ({}) => {
               />
             </View>
 
-            <View style={styles.settingContainer}>
-              <Text>Enable notifications</Text>
-              <Switch
-                value={tempProfileState.notificationsEnabled}
-                onValueChange={(value) => setTempProfileState((prevState) => ({ ...prevState, notificationsEnabled: value }))}
-              />
-            </View>
-
             {/* Dating Preferences */}
             <View style={styles.settingContainer}>
             <Text style={{ marginBottom: 10 }}>Dating Preferences</Text>
@@ -209,49 +190,6 @@ const ProfileScreen: React.FC = ({}) => {
                   </TouchableOpacity>
                 ))}
               </View>
-            </View>
-
-
-            <View style={styles.settingContainer}>
-              <Text>Minimum Age: {tempProfileState?.minimumAge || 'N/A'}</Text>
-              <Slider
-                style={{ width: '100%' }}
-                minimumValue={18}
-                maximumValue={25}
-                step={1}
-                minimumTrackTintColor="#FF6F61"
-                maximumTrackTintColor="#4CAF50"
-                thumbTintColor="#4CAF50"
-                onValueChange={(value) => {
-                  setTempProfileState((prevState) => ({
-                    ...prevState,
-                    minimumAge: value,
-                  }));
-                
-                }}
-                value={tempProfileState?.minimumAge || 18}
-              />
-            </View>
-
-            <View style={styles.settingContainer}>
-              <Text>Maximum Age: {tempProfileState?.maximumAge || 'N/A'}</Text>
-              <Slider
-                style={{ width: '100%' }}
-                minimumValue={18}
-                maximumValue={25}
-                step={1}
-                minimumTrackTintColor="#4CAF50"
-                maximumTrackTintColor="#FF6F61"
-                thumbTintColor="#4CAF50"
-                onValueChange={(value) => {
-                  setTempProfileState((prevState) => ({
-                    ...prevState,
-                    maximumAge: value,
-                  }));
-                
-                }}
-                value={tempProfileState?.maximumAge || 18}
-              />
             </View>
 
             <TouchableOpacity onPress={saveChanges} style={styles.saveChangesButton}>
@@ -319,8 +257,8 @@ const ProfileScreen: React.FC = ({}) => {
                 </View>
 
                 <View style={styles.imagePreviewContainer}>
-                  {tempProfileState.profileImageUris.length > 0 ? (
-                    tempProfileState.profileImageUris.map((uri, index) => (
+                  {tempProfileState.pictures.length > 0 ? (
+                    tempProfileState.pictures.map((uri, index) => (
                       <View key={index}>
                         {isDeleting ? (
                           <TouchableOpacity onPress={() => deleteImage(index)}>

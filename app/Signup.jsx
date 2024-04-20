@@ -30,13 +30,24 @@ const Signup = () => {
         try {
             const response = await createUserWithEmailAndPassword(auth, email, password);
             console.log(response);
-
-            const firestore = getFirestore();
-            await setDoc(doc(firestore, "users", response.user.uid), {
-                ...profile,
-                createdAt: new Date()
-            });
-            console.log("Profile saved to Firestore.");
+            
+            try {
+                const response = await fetch('http://192.168.1.17:3000/api/user/create', {
+                    method: 'POST',
+                    headers: {
+                    'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(profile),
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to create user');
+                }
+                const newUser = await response.json();
+                return newUser;
+                } catch (error) {
+                console.error(error);
+                return null;
+                }
         } catch (error) {
             console.error(error);
             alert('Sign up failed: ' + error.message);
