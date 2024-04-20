@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button, View, Text, StyleSheet, TextInput, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { Modal, Button, View, Text, StyleSheet, TouchableWithoutFeedback, Keyboard, TextInput, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { signInWithEmailAndPassword } from '@firebase/auth';
 import { FIREBASE_AUTH } from '../node_modules/FirebaseConfig';
@@ -44,6 +44,7 @@ const Login = () => {
     };
 
     return (
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
             <Modal
                 animationType="slide"
@@ -79,6 +80,7 @@ const Login = () => {
                     value={email} 
                     style={styles.input} 
                     placeholder="Email" 
+                    placeholderTextColor="#888"
                     autoCapitalize="none"
                     onChangeText={setEmail}
                 />
@@ -87,6 +89,7 @@ const Login = () => {
                     value={password} 
                     style={styles.input} 
                     placeholder="Password" 
+                    placeholderTextColor="#888"
                     autoCapitalize="none"
                     onChangeText={setPassword}
                 />
@@ -107,6 +110,7 @@ const Login = () => {
                 )}
             </KeyboardAvoidingView>
         </View>
+        </TouchableWithoutFeedback>
     );
 }
 
@@ -114,18 +118,22 @@ export default Login;
 
 const styles = StyleSheet.create({
     container: {
-        marginHorizontal: 20,
         flex: 1,
-        justifyContent: 'center'
-    },
-    input: {
-        marginVertical: 4,
+        justifyContent: 'center',
+        backgroundColor: '#f0f0f0',
+        padding: 20,
+      },
+      input: {
         height: 50,
+        backgroundColor: 'white',
+        borderColor: '#e0e0e0',
         borderWidth: 1,
-        borderRadius: 4,
-        padding: 10,
-        backgroundColor: '#fff',
-    },
+        borderRadius: 25,
+        marginBottom: 15,
+        paddingHorizontal: 20,
+        fontSize: 16,
+        color: '#333',
+      },
     button: {
         backgroundColor: '#fff',
         paddingVertical: 15,
@@ -155,11 +163,11 @@ const styles = StyleSheet.create({
         marginTop: 22
     },
     modalView: {
-        margin: 20,
+        marginTop: -200,
+        margin: 10,
         backgroundColor: "white",
         borderRadius: 20,
         padding: 35,
-        alignItems: "center",
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
