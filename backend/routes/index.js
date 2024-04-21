@@ -9,48 +9,48 @@ const { render } = require('../app');
 const globalChat = []
 
 const users = [
-  { id: '0', name: 'Sean', age: 20, gender: 'Male', bio: 'Description 0', pictures: [], datingPreferences: 'Everyone', 
+  { id: 'x@gmail.com', name: 'Sean', dob: '2002-05-16T23:32:00.000Z', gender: 'Male', bio: 'Description 0', pictures: [], datingPreferences: 'Everyone', 
   accountPaused: false, renderIndex: 0 },
-  { id: '1', name: 'Stacy', age: 21, gender: 'Female', bio: 'Description 1', pictures: [], datingPreferences: 'Everyone', 
+  { id: 'y@gmail.com', name: 'Stacy', dob: '2001-05-16T23:32:00.000Z', gender: 'Female', bio: 'Description 1', pictures: [], datingPreferences: 'Everyone', 
   accountPaused: false, renderIndex: 0 },
-  { id: '2', name: 'Chad', age: 22, gender: 'Male', bio: 'Description 2', pictures: [], datingPreferences: 'Everyone', 
+  { id: 'z@gmail.com', name: 'Chad', dob: '2005-05-16T23:32:00.000Z', gender: 'Male', bio: 'Description 2', pictures: [], datingPreferences: 'Everyone', 
   accountPaused: false, renderIndex: 0 },
-  { id: '3', name: 'Diego', age: 23, gender: 'Male', bio: 'Description 3', pictures: [], datingPreferences: 'Everyone', 
+  { id: 'a@gmail.com', name: 'Diego', dob: '2003-05-16T23:32:00.000Z', gender: 'Male', bio: 'Description 3', pictures: [], datingPreferences: 'Everyone', 
   accountPaused: false, renderIndex: 0 },
-  { id: '4', name: 'Emma', age: 24, gender: 'Female', bio: 'Description 4', pictures: [], datingPreferences: 'Everyone', 
+  { id: 'b@gmail.com', name: 'Emma', dob: '2002-05-16T23:32:00.000Z', gender: 'Female', bio: 'Description 4', pictures: [], datingPreferences: 'Everyone', 
   accountPaused: false, renderIndex: 0 },
 ];
 
 const cardData = {
-  '0': [
-    { id: '1', likesYou: 0 },
-    { id: '2', likesYou: 0 },
-    { id: '3', likesYou: 0 },
-    { id: '4', likesYou: 0 },
+  'x@gmail.com': [
+    { id: 'y@gmail.com', likesYou: 0 },
+    { id: 'z@gmail.com', likesYou: 0 },
+    { id: 'a@gmail.com', likesYou: 0 },
+    { id: 'b@gmail.com', likesYou: 0 },
   ],
-  '1': [
-    { id: '0', likesYou: 0 },
-    { id: '2', likesYou: 0 },
-    { id: '3', likesYou: 0 },
-    { id: '4', likesYou: 0 },
+  'y@gmail.com': [
+    { id: 'x@gmail.com', likesYou: 0 },
+    { id: 'z@gmail.com', likesYou: 0 },
+    { id: 'a@gmail.com', likesYou: 0 },
+    { id: 'b@gmail.com', likesYou: 0 },
   ],
-  '2': [
-    { id: '0', likesYou: 0 },
-    { id: '1', likesYou: 0 },
-    { id: '3', likesYou: 0 },
-    { id: '4', likesYou: 0 },
+  'z@gmail.com': [
+    { id: 'x@gmail.com', likesYou: 0 },
+    { id: 'y@gmail.com', likesYou: 0 },
+    { id: 'a@gmail.com', likesYou: 0 },
+    { id: 'b@gmail.com', likesYou: 0 },
   ],
-  '3': [
-    { id: '0', likesYou: 0 },
-    { id: '1', likesYou: 0 },
-    { id: '2', likesYou: 0 },
-    { id: '4', likesYou: 0 },
+  'a@gmail.com': [
+    { id: 'x@gmail.com', likesYou: 0 },
+    { id: 'y@gmail.com', likesYou: 0 },
+    { id: 'z@gmail.com', likesYou: 0 },
+    { id: 'b@gmail.com', likesYou: 0 },
   ],
-  '4': [
-    { id: '0', likesYou: 0 },
-    { id: '1', likesYou: 0 },
-    { id: '2', likesYou: 0 },
-    { id: '3', likesYou: 0 },
+  'b@gmail.com': [
+    { id: 'x@gmail.com', likesYou: 0 },
+    { id: 'y@gmail.com', likesYou: 0 },
+    { id: 'z@gmail.com', likesYou: 0 },
+    { id: 'a@gmail.com', likesYou: 0 },
   ],
 };
 
@@ -66,18 +66,16 @@ function generateUserId() {
 }
 
 router.post('/api/user/create', (req, res) => {
-  const { bio, dob, gender, name, pictures, preference } = req.body;
-
-  const userId = generateUserId();
+  const { bio, dob, gender, name, pictures, datingPreferences, id } = req.body;
 
   const newUser = {
-    id: userId,
+    id: id,
     name,
     dob,
     gender,
     bio,
     pictures,
-    preference,
+    datingPreferences,
     accountPaused: false,
     renderIndex: 0
   };
@@ -86,7 +84,40 @@ router.post('/api/user/create', (req, res) => {
 
   console.log("users:",users);
 
+  if (!cardData[newUser.id]) {
+    cardData[newUser.id] = [];
+  }
+
+  users.forEach((user) => {
+    if (user.id !== newUser.id) {
+      cardData[newUser.id].push({ id: user.id, likesYou: 0 });
+    }
+  });
+
+
+  users.forEach((user) => {
+    if (user.id !== newUser.id) {
+      const renderIndex = user.renderIndex;
+      const insertIndex = renderIndex + 1;
+      cardData[user.id].splice(insertIndex, 0, { id: newUser.id, likesYou: 0 });
+    }
+  });
+
+  console.log("cardData:", cardData);
+
   res.status(201).json(newUser);
+});
+
+router.get('/api/uri/:userId', (req, res) => {
+  const { userId } = req.params;
+  const user = users.find(u => u.id === userId);
+
+  if (user) {
+    const { pictures } = user;
+    res.json(pictures || []);
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
 });
 
 // Get user by ID
@@ -178,7 +209,7 @@ router.get('/api/cards', function (req, res, next) {
         pictures: checkUser.pictures,
         likesYou: card.likesYou,
         accountPaused: checkUser.accountPaused,
-        age: checkUser.age,
+        dob: checkUser.dob,
         gender: checkUser.gender
       };
 

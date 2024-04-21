@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useRoute } from '@react-navigation/native';
 import { useViewRefSet } from 'react-native-reanimated/lib/typescript/reanimated2/ViewDescriptorsSet';
 
 interface Card {
@@ -11,7 +12,7 @@ interface Card {
   pictures: string[];
   likesYou: number;
   accountPaused: number;
-  age: number;
+  dob: string;
   gender: 'Male' | 'Female' | 'Non-binary';
 }
 
@@ -20,6 +21,9 @@ type userPreferences = {
 }
 
 const TabOneScreen = () => {
+  const route = useRoute();
+  const routeParams = route.params as { userEmail: string | undefined };
+  const userEmail = routeParams ? routeParams.userEmail : undefined;
   
   const [preferences, setPreferences] = useState<userPreferences | null>(null);
   const [card, setCard] = useState<Card>();
@@ -27,7 +31,7 @@ const TabOneScreen = () => {
   const [loadingMatched, setLoadingMatched] = useState<Boolean>(false);
   const [matched, setMatched] = useState<Boolean>(false);
 
-const userId = '4';
+const userId = 'y@gmail.com';
 
   useFocusEffect(
     React.useCallback(() => {
@@ -196,13 +200,27 @@ const userId = '4';
     }
   };
 
+  const calculateAgeFromDOB = (dob: string): number | null => {
+    console.log('dob:', dob);
+    if (!dob) return null;
+    const dobDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - dobDate.getFullYear();
+    const monthDiff = today.getMonth() - dobDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
+      age--;
+    }
+    console.log('age', age);
+    return age;
+  };
+
   const renderCard = (card: Card | null) => (
     <View style={{ backgroundColor: '#FFF8E1', padding: 20, width: '100%', height: '100%' }}>
       {matched && <Text style={{fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginTop: -10, marginBottom: 10}}>You Matched!</Text>}
       <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled showsVerticalScrollIndicator={false}>
         {card ? (
           <View style={styles.card}>
-            <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center', width:'80%' }}>{card.name}, {card.age}</Text>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center', width:'80%' }}>{card.name}, {calculateAgeFromDOB(card.dob) || ''}</Text>
             <View style={{ alignItems: 'center' }}>
               {card.pictures.length > 0 && (
                 <Image
@@ -251,6 +269,7 @@ const userId = '4';
     if (card === undefined) {
       return null;
     }
+    console.log("card", card);
     const renderedCard = renderCard(card);
     return renderedCard;
   };

@@ -7,10 +7,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import {NavigationContainer} from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
+import { getStorage, ref, uploadBytes, getDownloadURL } from '@firebase/storage';
 
 type ProfileState = {
   name: string;
-  age: number;
+  dob: string;
   gender: 'Man' | 'Woman' | 'Non-binary';
   bio: string;
   pictures: string[];
@@ -19,9 +21,13 @@ type ProfileState = {
 };
 
 const ProfileScreen: React.FC = ({}) => {
+  const route = useRoute();
+  const routeParams = route.params as { userEmail: string | undefined };
+  const userEmail = routeParams ? routeParams.userEmail : undefined;
+
   const [profileState, setProfileState] = useState<ProfileState>({
     name: '',
-    age: 21,
+    dob: '',
     gender: 'Man',
     bio: '',
     pictures: [],
@@ -33,8 +39,9 @@ const ProfileScreen: React.FC = ({}) => {
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [age, setAge] = useState<number | null>(null);
 
-  const userId = '1';
+  const userId = userEmail;
   
 
   useEffect(() => {
@@ -47,6 +54,22 @@ const ProfileScreen: React.FC = ({}) => {
       })
       .catch(error => console.error('Error fetching user data:', error));
   }, [userId]);
+
+  useEffect(() => {
+    const calculateAge = (dob: string): number | null => {
+      if (!dob) return null; // Return null if DOB is not provided
+      const dobDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - dobDate.getFullYear();
+      const monthDiff = today.getMonth() - dobDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
+        age--; // Reduce age if birthday hasn't occurred yet this year
+      }
+      return age;
+    };
+
+    setAge(calculateAge(profileState.dob));
+  }, [profileState.dob]);
   
   const updateUserData = () => {
     // Send a request to update user data
@@ -112,13 +135,20 @@ const ProfileScreen: React.FC = ({}) => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
+      aspect: [4, 3],
       quality: 1,
     });
     if (!result.canceled) {
-      const newUri = result.assets[0].uri;
+      const uri = result.assets[0].uri;
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const storage = getStorage();
+      const storageRef = ref(storage, `pictures/${Date.now()}`);
+      await uploadBytes(storageRef, blob);
+      const imageUrl = await getDownloadURL(storageRef);
       setTempProfileState((prevState) => ({
         ...prevState,
-        pictures: [...prevState.pictures, newUri],
+        pictures: [...prevState.pictures, imageUrl],
       }));
       setIsImageUploading(false);
     }
@@ -136,7 +166,7 @@ const ProfileScreen: React.FC = ({}) => {
       />
       <View style={styles.textContainerName}>
         {/*name*/}
-        <Text style={styles.nameText}>{profileState.name}, {profileState.age}</Text>
+        <Text style={styles.nameText}>{profileState.name}, {age}</Text>
       </View>
       <View style={styles.buttonAndLabelContainer}>
         {/* Settings Button Group */}

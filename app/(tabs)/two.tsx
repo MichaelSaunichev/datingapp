@@ -2,18 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlatList, TouchableOpacity, Text, View, Image, Button, Modal, StyleSheet, ImageBackground } from 'react-native';
 import { GiftedChat, IMessage, User, Send } from 'react-native-gifted-chat';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-//Messages
 
 interface CustomMessage extends IMessage {
   user: User;
 }
 
 const TabTwoScreen = () => {
+  const route = useRoute();
+  const routeParams = route.params as { userEmail: string | undefined };
+  const userEmail = routeParams ? routeParams.userEmail : undefined;
+  
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [chats, setChats] = useState<{ name: string; profileImageUri?: string; _id: string }[]>([]);
   const [messages, setMessages] = useState<CustomMessage[]>([]);
@@ -28,7 +31,7 @@ const TabTwoScreen = () => {
   const navigation = useNavigation();
 
 
-  const userId = 2;
+  const userId = userEmail;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -95,6 +98,8 @@ const TabTwoScreen = () => {
       const {messages, userProfile} = await response.json();
       setMessages(messages);
       setUserProfile(userProfile);
+      console.log("messages", messages);
+      console.log("userProfile:", userProfile);
     } catch (error) {
       console.error('Error loading messages:', error);
     }
@@ -176,10 +181,16 @@ const TabTwoScreen = () => {
       )
   };
 
-  const scrollToBottom = () => {
-      if (scrollViewRef && scrollViewRef.current) {
-          scrollViewRef.current.scrollToEnd({ animated: true });
-      }
+  const calculateAgeFromDOB = (dob: string): number | null => {
+    if (!dob) return null;
+    const dobDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - dobDate.getFullYear();
+    const monthDiff = today.getMonth() - dobDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
+      age--;
+    }
+    return age;
   };
 
   interface RenderSendProps {
@@ -202,11 +213,11 @@ const TabTwoScreen = () => {
       );
   };
 
-  const renderChats = ({ item }: { item: { name: string; profileImageUri?: string; _id: string, firstMessage: string } }) => (
+  const renderChats = ({ item }: { item: { name: string; picture?: string; _id: string, firstMessage: string } }) => (
     <TouchableOpacity onPress={() => onChatSelect(Number(item._id))}>
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#888888' }}>
         <Image
-          source={{ uri: item.profileImageUri || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+          source={{ uri: item.picture || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
           style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
         />
         <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black' }}>{item.name}</Text>
@@ -237,7 +248,7 @@ const TabTwoScreen = () => {
               <TouchableOpacity onPress={() => setmodal2Visible(true)}>
                 {userProfile && (
                   <Image
-                    source={{ uri: userProfile.profileImageUris[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+                    source={{ uri: userProfile.pictures[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
                     style={{ width: 50, height: 50, borderRadius: 50 }}
                   />
                 )}
@@ -278,13 +289,13 @@ const TabTwoScreen = () => {
               <View style={styles.centeredView}>
                 <View style={styles.modalContent}>
                   <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-                    <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{userProfile.name}, {userProfile.age}</Text>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{userProfile.name}, {calculateAgeFromDOB(userProfile.dob) || ''}</Text>
                     {/* Render the first profile image */}
                     <View style={{ alignItems: 'center' }}>
-                    {userProfile.profileImageUris.length > 0 && (
+                    {userProfile.pictures.length > 0 && (
                       <Image
                         key={userProfile.profileImageUris[0]}
-                        source={{ uri: userProfile.profileImageUris[0] }}
+                        source={{ uri: userProfile.pictures[0] }}
                         style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
                       />
                     )}
@@ -293,7 +304,7 @@ const TabTwoScreen = () => {
                     <Text style={{ fontSize: 14, marginTop: 10, textAlign: 'center' }}>{userProfile.bio}</Text>
                     {/* Render additional profile pictures */}
                     <View style={{ alignItems: 'center' }}>
-                      {userProfile.profileImageUris.slice(1).map((uri: string, index: number) => (
+                      {userProfile.pictures.slice(1).map((uri: string, index: number) => (
                         <Image
                           key={uri}
                           source={{ uri }}
@@ -333,8 +344,8 @@ const TabTwoScreen = () => {
                       <Image
                         style={styles.avatar}
                         source={{
-                          uri: userProfile && userProfile.profileImageUris.length > 0
-                            ? userProfile.profileImageUris[0]
+                          uri: userProfile && userProfile.pictures.length > 0
+                            ? userProfile.pictures[0]
                             : 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image'
                         }}
                       />

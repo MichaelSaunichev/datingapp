@@ -16,13 +16,13 @@ import { onAuthStateChanged } from '@firebase/auth';
 
 const StackGuy = createNativeStackNavigator();
 
-function InnerLayout() {
+function InnerLayout({ user }: { user: User | null }) {
   const colorScheme = useColorScheme();
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} initialParams={{ userEmail: user?.email }}/>
       </Stack>
     </ThemeProvider>
   );
@@ -34,7 +34,6 @@ export default function RootLayoutNav() {
 
   useEffect(() => {
     onAuthStateChanged(FIREBASE_AUTH, (user) => {
-      console.log('user', user);
       setUser(user);
     });
   }, []);
@@ -44,7 +43,9 @@ export default function RootLayoutNav() {
       <StackGuy.Navigator>
         {user ? (
           // User is signed in
-          <StackGuy.Screen name="Tabs" component={InnerLayout} options={{ headerShown: false }} />
+          <StackGuy.Screen name="Tabs" options={{ headerShown: false }}>
+            {() => <InnerLayout user={user} />}
+          </StackGuy.Screen>
         ) : (
           <>
           <StackGuy.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />

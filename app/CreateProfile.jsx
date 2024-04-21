@@ -45,7 +45,6 @@ const uploadPicture = async () => {
     if (!result.canceled) {
       try {
         const uri = result.assets[0].uri;
-        console.log("Image URI:", uri);
         // Fetch the image blob
         const response = await fetch(uri);
         const blob = await response.blob();
@@ -172,7 +171,13 @@ const uploadPicture = async () => {
           {/* Navigation Button */}
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate('Signup', { profile })}
+            onPress={() => {
+              const serializedProfile = {
+                ...profile,
+                dob: profile.dob.toISOString()
+              };
+              navigation.navigate('Signup', { profile: serializedProfile });
+            }}
           >
             <Text style={styles.buttonText}>Next</Text>
           </TouchableOpacity>
