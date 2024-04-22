@@ -7,6 +7,8 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
+import { useRoute } from '@react-navigation/native';
+
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -17,7 +19,11 @@ function TabBarIcon(props: {
 }
 
 export default function TabLayout() {
+  
   const colorScheme = useColorScheme();
+  const route = useRoute();
+  const routeParams = route.params as { userEmail: string | undefined };
+  const userEmail = routeParams ? routeParams.userEmail : undefined;
 
   return (
     <Tabs
@@ -29,6 +35,7 @@ export default function TabLayout() {
       }}>
       <Tabs.Screen
         name="index"
+        initialParams={{ userEmail }}
         options={{
           title: 'Discover',
           tabBarIcon: ({ color }) => <TabBarIcon name="heart" color={color} />,
@@ -50,6 +57,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="two"
+        initialParams={{ userEmail }}
         options={{
           title: 'Matches',
           tabBarIcon: ({ color }) => <TabBarIcon name="comments" color={color} />,
@@ -57,6 +65,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="NetworkScreen"
+        initialParams={{ userEmail }}
         options={{
           title: 'Social',
           tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
@@ -64,6 +73,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="ProfileScreen"
+        initialParams={{ userEmail }}
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,

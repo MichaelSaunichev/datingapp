@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Image, StyleSheet, Modal, ScrollView, TouchableOpacity, TouchableWithoutFeedback, } from 'react-native';
-import { Avatar, GiftedChat, IMessage, User, Send  } from 'react-native-gifted-chat';
+import { GiftedChat, IMessage, User, Send  } from 'react-native-gifted-chat';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Keyboard } from 'react-native';
+import { useRoute } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface CustomMessage extends IMessage {
@@ -13,6 +14,10 @@ interface CustomMessage extends IMessage {
 }
 
 const NetworkScreen  = () => {
+    const route = useRoute();
+    const routeParams = route.params as { userEmail: string | undefined };
+    const userEmail = routeParams ? routeParams.userEmail : undefined;
+
     const [temporaryAnonymousMode, setTemporaryAnonymousMode] = useState<boolean>(false);
     const [isAnonymousMode, setIsAnonymousMode] = useState<boolean>(false);
     const [messages, setMessages] = useState<CustomMessage[]>([]);
@@ -21,16 +26,20 @@ const NetworkScreen  = () => {
     const [modal2Visible, setModal2Visible] = useState<boolean>(false);
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [selectedEmoji, setSelectedEmoji] = useState<string>('');
-    const userId = '2';
+    const userId = userEmail || '';
     const scrollViewRef = useRef<ScrollView>(null);
     const [showChat, setShowChat] = useState<boolean>(false);
 
     useEffect(() => {
-        fetchMessages();
-    }, []);
+        if(showChat){
+            fetchMessages();
+        }
+    }, [showChat]);
 
     useEffect(() => {
-        const userIdsToFetch = messages.map((message) => message.user?._id).filter((id) => id && id !== userId && !pictures[id]);
+        const userIdsToFetch = messages
+            .map((message) => message.user?._id)
+            .filter((id, index, array) => id && array.indexOf(id) === index && !pictures[id]);
         fetchProfileImageUris(userIdsToFetch.map(String))
     }, [messages]);
 
@@ -202,6 +211,18 @@ const NetworkScreen  = () => {
         );
     };
 
+    const calculateAgeFromDOB = (dob: string): number | null => {
+        if (!dob) return null;
+        const dobDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - dobDate.getFullYear();
+        const monthDiff = today.getMonth() - dobDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
+          age--;
+        }
+        return age;
+      };
+
     return (
     <View style={{ flex: 1 }}>
     {showChat? (
@@ -209,7 +230,7 @@ const NetworkScreen  = () => {
                 <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
                     <View style={{ alignItems: 'center' }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10 }}>
-                            <TouchableOpacity style={styles.backButton} onPress={() => setShowChat(false)}>
+                            <TouchableOpacity style={styles.backButton} onPress={() => {setMessages([]); setShowChat(false); setPictures({})}}>
                                 <Text style={styles.toggleButtonText}>Back</Text>
                             </TouchableOpacity>
                             <Text style={[styles.actionButtonText, { marginRight: 20, marginLeft: 20, marginBottom: 10, color: isAnonymousMode ? 'white' : 'black' }]}>
@@ -399,7 +420,7 @@ const NetworkScreen  = () => {
                         <View style={styles.centeredView}>
                             <View style={styles.modalContent}>
                                 <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-                                    <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{selectedUser.name}, {selectedUser.age}</Text>
+                                    <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{selectedUser.name}, {calculateAgeFromDOB(selectedUser.dob) !== null && calculateAgeFromDOB(selectedUser.dob)}</Text>
                                     {/* Render the first profile image */}
                                     <View style={{ alignItems: 'center' }}>
                                     {selectedUser.pictures.length > 0 && (
