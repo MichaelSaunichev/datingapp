@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Image, StyleSheet, Modal, ScrollView, TouchableOpacity, TouchableWithoutFeedback, } from 'react-native';
-import { Avatar, GiftedChat, IMessage, User, Send  } from 'react-native-gifted-chat';
+import { GiftedChat, IMessage, User, Send  } from 'react-native-gifted-chat';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Keyboard } from 'react-native';
 import { useRoute } from '@react-navigation/native';
@@ -26,13 +26,15 @@ const NetworkScreen  = () => {
     const [modal2Visible, setModal2Visible] = useState<boolean>(false);
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [selectedEmoji, setSelectedEmoji] = useState<string>('');
-    const userId = userEmail;
+    const userId = userEmail || '';
     const scrollViewRef = useRef<ScrollView>(null);
     const [showChat, setShowChat] = useState<boolean>(false);
 
     useEffect(() => {
-        fetchMessages();
-    }, []);
+        if(showChat){
+            fetchMessages();
+        }
+    }, [showChat]);
 
     useEffect(() => {
         const userIdsToFetch = messages
@@ -42,7 +44,6 @@ const NetworkScreen  = () => {
     }, [messages]);
 
     const fetchProfileImageUris = async (userIds: string[]) => {
-        console.log("User ID:", userIds);
         try {
             for (const userId of userIds) {
                 const response = await fetch(`http://192.168.1.17:3000/api/uri/${userId}`);
@@ -50,7 +51,6 @@ const NetworkScreen  = () => {
                     throw new Error(`Failed to fetch profile image for user ${userId}`);
                 }
                 const pictures = await response.json();
-                console.log("pic:", pictures);
                 setPictures((prevProfileImageUris) => ({
                     ...prevProfileImageUris,
                     [userId]: pictures[0] || '',
@@ -230,7 +230,7 @@ const NetworkScreen  = () => {
                 <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
                     <View style={{ alignItems: 'center' }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10 }}>
-                            <TouchableOpacity style={styles.backButton} onPress={() => setShowChat(false)}>
+                            <TouchableOpacity style={styles.backButton} onPress={() => {setMessages([]); setShowChat(false); setPictures({})}}>
                                 <Text style={styles.toggleButtonText}>Back</Text>
                             </TouchableOpacity>
                             <Text style={[styles.actionButtonText, { marginRight: 20, marginLeft: 20, marginBottom: 10, color: isAnonymousMode ? 'white' : 'black' }]}>
@@ -420,7 +420,7 @@ const NetworkScreen  = () => {
                         <View style={styles.centeredView}>
                             <View style={styles.modalContent}>
                                 <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-                                    <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{selectedUser.name}, {calculateAgeFromDOB(selectedUser.dob) || ''}</Text>
+                                    <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{selectedUser.name}, {calculateAgeFromDOB(selectedUser.dob) !== null && calculateAgeFromDOB(selectedUser.dob)}</Text>
                                     {/* Render the first profile image */}
                                     <View style={{ alignItems: 'center' }}>
                                     {selectedUser.pictures.length > 0 && (

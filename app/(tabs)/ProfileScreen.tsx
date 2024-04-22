@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Switch, Modal, View, Text, TextInput, Button, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
-import Slider from '@react-native-community/slider';
+import { Switch, Modal, View, Text, TextInput, ActivityIndicator, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Link } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
-import ImageCropPicker from 'react-native-image-crop-picker';
-import {NavigationContainer} from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL } from '@firebase/storage';
 
@@ -40,19 +35,34 @@ const ProfileScreen: React.FC = ({}) => {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [age, setAge] = useState<number | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   const userId = userEmail;
-  
 
   useEffect(() => {
-    // Fetch user data when the component mounts
-    fetch(`http://192.168.1.17:3000/api/user/${userId}`)
-      .then(response => response.json())
-      .then(userData => {
-        setProfileState(userData);
-        setTempProfileState(userData);
-      })
-      .catch(error => console.error('Error fetching user data:', error));
+    const fetchUser = () => {
+      fetch(`http://192.168.1.17:3000/api/user/${userId}`)
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          } else if (response.status === 404) {
+            console.log("retry");
+            setTimeout(fetchUser, 500);
+          } else {
+            throw new Error('Failed to fetch user data');
+          }
+        })
+        .then(userData => {
+          if (userData) {
+            setProfileState(userData);
+            setTempProfileState(userData);
+          }
+        })
+        .catch(error => console.error('Error fetching user data:', error))
+        .finally(() => setLoadingProfile(false));
+    };
+  
+    fetchUser();
   }, [userId]);
 
   useEffect(() => {
@@ -156,7 +166,18 @@ const ProfileScreen: React.FC = ({}) => {
       setIsImageUploading(false);
     }
   };
-
+  if(loadingProfile){
+    return(
+      <View style={{
+        backgroundColor:'#FFF8E1',
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    )
+  }
   return (
     <View style={styles.profileContainer}>
       {/* Profile Image */}

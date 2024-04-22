@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRoute } from '@react-navigation/native';
-import { useViewRefSet } from 'react-native-reanimated/lib/typescript/reanimated2/ViewDescriptorsSet';
 
 interface Card {
   id: number;
@@ -31,21 +30,37 @@ const TabOneScreen = () => {
   const [loadingMatched, setLoadingMatched] = useState<Boolean>(false);
   const [matched, setMatched] = useState<Boolean>(false);
 
-const userId = 'y@gmail.com';
+  const userId = userEmail;
 
   useFocusEffect(
     React.useCallback(() => {
       setLoading(false);
       setMatched(false);
-      fetch(`http://192.168.1.17:3000/api/user/${userId}`)
-      .then(response => response.json())
-      .then(userData => {
-        const { datingPreferences } = userData;
-        setPreferences({
-          datingPreferences: datingPreferences,
-        });
-      })
-      .catch(error => console.error('Error fetching user data:', error));
+  
+      const fetchUser = () => {
+        fetch(`http://192.168.1.17:3000/api/user/${userId}`)
+          .then(response => {
+            if (response.ok) {
+              return response.json();
+            } else if (response.status === 404) {
+              console.log("retry");
+              setTimeout(fetchUser, 500);
+            } else {
+              throw new Error('Failed to fetch user data');
+            }
+          })
+          .then(userData => {
+            if(userData){
+              const { datingPreferences } = userData;
+              setPreferences({
+                datingPreferences: datingPreferences,
+              });
+            }
+          })
+          .catch(error => console.error('Error fetching user data:', error));
+      };
+  
+      fetchUser();
     }, [userId])
   );
 
@@ -57,7 +72,6 @@ const userId = 'y@gmail.com';
 
   const renderCardUI = async () => {
     if (loadingMatched){
-      console.log("loading Matched");
       return
     }
 
@@ -97,8 +111,6 @@ const userId = 'y@gmail.com';
       if (!response.ok) {
         throw new Error('Failed to remove card');
       }
-      //const responseData = await response.json();
-      //console.log(responseData.message);
     } catch (error) {
       console.error('Error removing card:', error);
     }
@@ -141,11 +153,9 @@ const userId = 'y@gmail.com';
 
   const onLike = async () => {
     if (loading){
-      console.log("loading");
       return
     }
     const currentCard = card;
-    console.log('Liked:', currentCard);
     if (currentCard != undefined){
       if (currentCard.likesYou === 1) {
         try {
@@ -178,13 +188,11 @@ const userId = 'y@gmail.com';
 
   const onDislike = async () => {
     if (loading) {
-      console.log("loading");
       return;
     }
   
     try {
       const currentCard = card;
-      console.log('Disliked:', currentCard);
       await fetch('http://192.168.1.17:3000/api/incrementIndex', {
         method: 'POST',
         headers: {
@@ -201,7 +209,6 @@ const userId = 'y@gmail.com';
   };
 
   const calculateAgeFromDOB = (dob: string): number | null => {
-    console.log('dob:', dob);
     if (!dob) return null;
     const dobDate = new Date(dob);
     const today = new Date();
@@ -210,7 +217,6 @@ const userId = 'y@gmail.com';
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
       age--;
     }
-    console.log('age', age);
     return age;
   };
 
@@ -269,14 +275,15 @@ const userId = 'y@gmail.com';
     if (card === undefined) {
       return null;
     }
-    console.log("card", card);
     const renderedCard = renderCard(card);
     return renderedCard;
   };
 
   return (
     <View style={styles.container}>
-      {getRenderedCard()}
+      {getRenderedCard() || (
+        <ActivityIndicator size="large" color="#0000ff" />
+      )}
     </View>
   );
 };
@@ -286,6 +293,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#FFF8E1',
   },
   cardContainer: {
     flexGrow: 1,

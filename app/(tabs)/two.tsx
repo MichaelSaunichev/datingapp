@@ -17,12 +17,11 @@ const TabTwoScreen = () => {
   const routeParams = route.params as { userEmail: string | undefined };
   const userEmail = routeParams ? routeParams.userEmail : undefined;
   
-  const [selectedChat, setSelectedChat] = useState<number | null>(null);
-  const [chats, setChats] = useState<{ name: string; profileImageUri?: string; _id: string }[]>([]);
+  const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [chats, setChats] = useState<{ name: string; picture?: string; _id: string }[]>([]);
   const [messages, setMessages] = useState<CustomMessage[]>([]);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [readyChat, setReadyChat] = useState<boolean>(false);
-  const [userName, setUserName] = useState<string | null>(null);
 
   const [modal1Visible, setmodal1Visible] = useState(false);
   const [modal2Visible, setmodal2Visible] = useState(false);
@@ -36,25 +35,11 @@ const TabTwoScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       const fetchData = async () => {
-        await fetchUserData();
         await fetchChats();
       };
       fetchData();
     }, [userId])
   );
-
-  const fetchUserData = async () => {
-    try {
-      const response = await fetch(`http://192.168.1.17:3000/api/user/${userId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch user data');
-      }
-      const userData = await response.json();
-      setUserName(userData.name);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
 
   const loadEarlierMessages = async () => {
     try {
@@ -85,8 +70,9 @@ const TabTwoScreen = () => {
     }
   };
 
-  const onChatSelect = async (chatId: number) => {
+  const onChatSelect = async (chatId: string) => {
     setSelectedChat(chatId);
+    console.log("chat id:", chatId);
   
     try {
       const response = await fetch(`http://192.168.1.17:3000/api/chat/${userId}/${chatId}`);
@@ -214,7 +200,7 @@ const TabTwoScreen = () => {
   };
 
   const renderChats = ({ item }: { item: { name: string; picture?: string; _id: string, firstMessage: string } }) => (
-    <TouchableOpacity onPress={() => onChatSelect(Number(item._id))}>
+    <TouchableOpacity onPress={() => onChatSelect(item._id)}>
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#888888' }}>
         <Image
           source={{ uri: item.picture || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
@@ -294,7 +280,7 @@ const TabTwoScreen = () => {
                     <View style={{ alignItems: 'center' }}>
                     {userProfile.pictures.length > 0 && (
                       <Image
-                        key={userProfile.profileImageUris[0]}
+                        key={userProfile.pictures[0]}
                         source={{ uri: userProfile.pictures[0] }}
                         style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
                       />

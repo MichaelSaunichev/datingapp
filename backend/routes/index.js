@@ -61,10 +61,6 @@ const chatData = {
 // --------------------------------------------------------------------------------------
 // User
 
-function generateUserId() {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
-}
-
 router.post('/api/user/create', (req, res) => {
   const { bio, dob, gender, name, pictures, datingPreferences, id } = req.body;
 

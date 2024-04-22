@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useColorScheme } from '@/components/useColorScheme'; // Update the path as necessary
+import { useColorScheme } from '@/components/useColorScheme';
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { NavigationContainer } from '@react-navigation/native'
 import Login from './Login';
