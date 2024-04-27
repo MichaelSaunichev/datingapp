@@ -25,10 +25,13 @@ const TabTwoScreen = () => {
 
   const [modal1Visible, setmodal1Visible] = useState(false);
   const [modal2Visible, setmodal2Visible] = useState(false);
-  const scrollViewRef = useRef<ScrollView>(null);
 
-  const navigation = useNavigation();
+  const [imageBlobs, setImageBlobs] = useState<string[]>([]);
 
+  const [loadingChat, setLoadingChat] = useState<boolean>(false);
+
+  const [modal2Ready, setModal2Ready] = useState<boolean>(false);
+  const [modal2Loading, setModal2Loading] = useState<boolean>(false);
 
   const userId = userEmail;
 
@@ -70,7 +73,36 @@ const TabTwoScreen = () => {
     }
   };
 
+  const setTheImageBlobs = async () => {
+    const imageUrls = userProfile.pictures || [];
+    try {
+      const blobs = await Promise.all(imageUrls.map(fetchImageAndConvertToBlob));
+      setImageBlobs(blobs);
+    } catch (error) {
+      console.error('Error fetching images and converting to blobs:', error);
+    } finally {
+      setModal2Ready(true);
+      setModal2Loading(false);
+    }
+  };
+
+  const fetchImageAndConvertToBlob = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Error fetching image and converting to blob:', error);
+      return '';
+    }
+  };
+
   const onChatSelect = async (chatId: string) => {
+    if(loadingChat){
+      console.log("loading another chat");
+      return
+    }
+    setLoadingChat(true);
     setSelectedChat(chatId);
     console.log("chat id:", chatId);
   
@@ -91,6 +123,7 @@ const TabTwoScreen = () => {
     }
     finally {
       setReadyChat(true);
+      setLoadingChat(false);
     }
   };
 
@@ -226,12 +259,14 @@ const TabTwoScreen = () => {
                 borderRadius: 5,
                 paddingVertical: 8,
                 paddingHorizontal: 14,
+                opacity: modal2Loading ? 0.5 : 1,
               }}
+              disabled={modal2Loading}
             >
               <Text style={{ color: 'black', fontSize: 16 }}>Back</Text>
             </TouchableOpacity>
             <View style={{ position: 'absolute', top: 7, left: '50%', marginLeft: -10 }}>
-              <TouchableOpacity onPress={() => setmodal2Visible(true)}>
+              <TouchableOpacity onPress={() => {setmodal2Visible(true); setTheImageBlobs(); setModal2Loading(true)}}>
                 {userProfile && (
                   <Image
                     source={{ uri: userProfile.pictures[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
@@ -241,7 +276,7 @@ const TabTwoScreen = () => {
               </TouchableOpacity>
             </View>
             <View style={{ position: 'absolute', top: 15, right: '1.5%' }}>
-              <TouchableOpacity onPress={() => setmodal1Visible(true)} style={styles.manageButton}>
+              <TouchableOpacity onPress={() => setmodal1Visible(true)} style={[styles.manageButton, { opacity: modal2Loading ? 0.5 : 1 }]} disabled={modal2Loading}>
                 <MaterialCommunityIcons name="cog" size={24} color="white" />
               </TouchableOpacity>
             </View>
@@ -269,8 +304,8 @@ const TabTwoScreen = () => {
             <Modal
               animationType="slide"
               transparent={true}
-              visible={modal2Visible}
-              onRequestClose={() => setmodal2Visible(false)}
+              visible={modal2Visible && modal2Ready}
+              onRequestClose={() => {setmodal2Visible(false); setModal2Ready(false); setImageBlobs([])}}
             >
               <View style={styles.centeredView}>
                 <View style={styles.modalContent}>
@@ -278,10 +313,10 @@ const TabTwoScreen = () => {
                     <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{userProfile.name}, {calculateAgeFromDOB(userProfile.dob) || ''}</Text>
                     {/* Render the first profile image */}
                     <View style={{ alignItems: 'center' }}>
-                    {userProfile.pictures.length > 0 && (
+                    {imageBlobs.length > 0 && (
                       <Image
-                        key={userProfile.pictures[0]}
-                        source={{ uri: userProfile.pictures[0] }}
+                        key={imageBlobs[0]}
+                        source={{ uri: imageBlobs[0] }}
                         style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
                       />
                     )}
@@ -290,7 +325,7 @@ const TabTwoScreen = () => {
                     <Text style={{ fontSize: 14, marginTop: 10, textAlign: 'center' }}>{userProfile.bio}</Text>
                     {/* Render additional profile pictures */}
                     <View style={{ alignItems: 'center' }}>
-                      {userProfile.pictures.slice(1).map((uri: string, index: number) => (
+                      {imageBlobs.slice(1).map((uri: string, index: number) => (
                         <Image
                           key={uri}
                           source={{ uri }}
@@ -300,7 +335,7 @@ const TabTwoScreen = () => {
                     </View>
                   </ScrollView>
                   <View style={styles.buttonContainer}>
-                    <TouchableOpacity onPress={() => setmodal2Visible(false)} style={styles.cancelButtonProfile}>
+                    <TouchableOpacity onPress={() => {setmodal2Visible(false); setModal2Ready(false); setImageBlobs([])}} style={styles.cancelButtonProfile}>
                       <Text style={styles.actionButtonText}>Close</Text>
                     </TouchableOpacity>
                   </View>
@@ -325,7 +360,7 @@ const TabTwoScreen = () => {
               } else {
                 // Render profile picture
                 return (
-                  <TouchableOpacity onPress={() => setmodal2Visible(true)}>
+                  <TouchableOpacity onPress={() => {setmodal2Visible(true); setTheImageBlobs(); setModal2Loading(true)}}>
                     <View style={styles.avatarContainer}>
                       <Image
                         style={styles.avatar}

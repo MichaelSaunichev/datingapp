@@ -13,6 +13,11 @@ interface CustomMessage extends IMessage {
   likes?: string[];
 }
 
+interface SelectedUser {
+    pictures: string[];
+    // Add other properties here if needed
+  }
+
 const NetworkScreen  = () => {
     const route = useRoute();
     const routeParams = route.params as { userEmail: string | undefined };
@@ -29,6 +34,9 @@ const NetworkScreen  = () => {
     const userId = userEmail || '';
     const scrollViewRef = useRef<ScrollView>(null);
     const [showChat, setShowChat] = useState<boolean>(false);
+    const [imageBlobs, setImageBlobs] = useState<string[]>([]);
+    const [modalLoading, setModalLoading] = useState<boolean>(false);
+    const [alreadyLoadingBlobs, setalreadyLoadingBlobs] = useState(false)
 
     useEffect(() => {
         if(showChat){
@@ -37,11 +45,48 @@ const NetworkScreen  = () => {
     }, [showChat]);
 
     useEffect(() => {
+        if(selectedUser){
+            setTheImageBlobs(selectedUser);
+        }
+    }, [selectedUser]);
+
+    useEffect(() => {
         const userIdsToFetch = messages
             .map((message) => message.user?._id)
             .filter((id, index, array) => id && array.indexOf(id) === index && !pictures[id]);
         fetchProfileImageUris(userIdsToFetch.map(String))
     }, [messages]);
+
+    const setTheImageBlobs = async (user: SelectedUser) => {
+        if (alreadyLoadingBlobs){
+            console.log("over");
+            return
+        }
+        setalreadyLoadingBlobs(true);
+        const imageUrls = user.pictures || [];
+        try {
+        const blobs = await Promise.all(imageUrls.map(fetchImageAndConvertToBlob));
+        setImageBlobs(blobs);
+        } catch (error) {
+        console.error('Error fetching images and converting to blobs:', error);
+        } finally {
+            setModalVisible(true);
+            setalreadyLoadingBlobs(false);
+            setModalLoading(false); 
+        }
+
+      };
+    
+      const fetchImageAndConvertToBlob = async (url: string): Promise<string> => {
+        try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          return URL.createObjectURL(blob);
+        } catch (error) {
+          console.error('Error fetching image and converting to blob:', error);
+          return '';
+        }
+      };
 
     const fetchProfileImageUris = async (userIds: string[]) => {
         try {
@@ -73,6 +118,7 @@ const NetworkScreen  = () => {
             console.error('Error fetching messages:', error);
         }
     };
+    
 
     const loadEarlierMessages = async () => {
         try {
@@ -166,16 +212,18 @@ const NetworkScreen  = () => {
     };
 
     const handleAvatarPress = async (user: User) => {
-        try {
-            const response = await fetch(`http://192.168.1.17:3000/api/user/${user._id}`);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch user profile for user ${user._id}`);
+        if (!modalLoading){
+            setModalLoading(true);
+            try {
+                const response = await fetch(`http://192.168.1.17:3000/api/user/${user._id}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch user profile for user ${user._id}`);
+                }
+                const userProfile = await response.json();
+                setSelectedUser(userProfile); // Set selected user profile
+            } catch (error) {
+                console.error('Error fetching user profile:', error);
             }
-            const userProfile = await response.json();
-            setSelectedUser(userProfile); // Set selected user profile
-            setModalVisible(true); // Show the modal
-        } catch (error) {
-            console.error('Error fetching user profile:', error);
         }
     };
 
@@ -230,13 +278,13 @@ const NetworkScreen  = () => {
                 <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
                     <View style={{ alignItems: 'center' }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10 }}>
-                            <TouchableOpacity style={styles.backButton} onPress={() => {setMessages([]); setShowChat(false); setPictures({})}}>
+                            <TouchableOpacity disabled = {modalLoading} style={[styles.backButton, { opacity: modalLoading ? 0.5 : 1 }]} onPress={() => {setMessages([]); setShowChat(false); setPictures({})}}>
                                 <Text style={styles.toggleButtonText}>Back</Text>
                             </TouchableOpacity>
                             <Text style={[styles.actionButtonText, { marginRight: 20, marginLeft: 20, marginBottom: 10, color: isAnonymousMode ? 'white' : 'black' }]}>
                                 {isAnonymousMode ? 'Your identity will be hidden' : 'Your identity will be visible'}
                             </Text>
-                            <TouchableOpacity style={styles.toggleButton} onPress={() => setModal2Visible(true)}>
+                            <TouchableOpacity disabled = {modalLoading} style={[styles.toggleButton, { opacity: modalLoading ? 0.5 : 1 }]} onPress={() => setModal2Visible(true)}>
                                 <MaterialCommunityIcons name="cog" size={24} color="white" />
                             </TouchableOpacity>
                         </View>
@@ -414,7 +462,7 @@ const NetworkScreen  = () => {
                     animationType="slide"
                     transparent={true}
                     visible={modalVisible}
-                    onRequestClose={() => setModalVisible(false)}
+                    onRequestClose={() => {setModalVisible(false); setImageBlobs([])}}
                 >
                     {selectedUser && (
                         <View style={styles.centeredView}>
@@ -423,10 +471,10 @@ const NetworkScreen  = () => {
                                     <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{selectedUser.name}, {calculateAgeFromDOB(selectedUser.dob) !== null && calculateAgeFromDOB(selectedUser.dob)}</Text>
                                     {/* Render the first profile image */}
                                     <View style={{ alignItems: 'center' }}>
-                                    {selectedUser.pictures.length > 0 && (
+                                    {imageBlobs.length > 0 && (
                                         <Image
-                                        key={selectedUser.pictures[0]}
-                                        source={{ uri: selectedUser.pictures[0] }}
+                                        key={imageBlobs[0]}
+                                        source={{ uri: imageBlobs[0] }}
                                         style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
                                         />
                                     )}
@@ -435,7 +483,7 @@ const NetworkScreen  = () => {
                                     <Text style={{ fontSize: 14, marginTop: 10, textAlign: 'center' }}>{selectedUser.bio}</Text>
                                     {/* Render additional profile pictures */}
                                     <View style={{ alignItems: 'center' }}>
-                                        {selectedUser.pictures.slice(1).map((uri: string, index: number) => (
+                                        {imageBlobs.slice(1).map((uri: string, index: number) => (
                                         <Image
                                             key={uri}
                                             source={{ uri }}
@@ -445,7 +493,7 @@ const NetworkScreen  = () => {
                                     </View>
                                 </ScrollView>
                                 <View style={styles.buttonContainer}>
-                                    <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.cancelButtonProfile}>
+                                    <TouchableOpacity onPress={() => {setModalVisible(false); setImageBlobs([])}} style={styles.cancelButtonProfile}>
                                         <Text style={styles.actionButtonText}>Close</Text>
                                     </TouchableOpacity>
                                 </View>

@@ -3,7 +3,7 @@ import { Switch, Modal, View, Text, TextInput, ActivityIndicator, StyleSheet, Im
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
-import { getStorage, ref, uploadBytes, getDownloadURL } from '@firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 
 type ProfileState = {
   name: string;
@@ -36,8 +36,14 @@ const ProfileScreen: React.FC = ({}) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [age, setAge] = useState<number | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
+
+  const [imageBlobs, setImageBlobs] = useState<string[]>([]);
+  const [editModalLoading, seteditModalLoading] = useState<boolean>(false);
+  const [alreadyLoadingBlobs, setalreadyLoadingBlobs] = useState(false)
 
   const userId = userEmail;
+  
 
   useEffect(() => {
     const fetchUser = () => {
@@ -94,27 +100,80 @@ const ProfileScreen: React.FC = ({}) => {
       .catch(error => console.error('Error updating user data:', error));
   };
 
-  const saveChanges = () => {
-    setProfileState({
-      ...tempProfileState
-    });
-    setIsDeleting(false)
-    updateUserData();
-    setIsSettingsModalVisible(false)
-    setIsEditModalVisible(false)
-
+  const saveChanges = async () => {
+    if (tempProfileState.pictures.length < 3 || tempProfileState.pictures.length > 5){
+      alert("Please use 3 to 5 images");
+    }else{
+      setProfileState({
+        ...tempProfileState
+      });
+      setIsDeleting(false);
+      updateUserData();
+      setIsEditModalVisible(false);
+      setImagesToDelete([]);
+  
+      await Promise.all(imagesToDelete.map(async (imageUrl) => {
+        try {
+          const storage = getStorage();
+          const imageRef = ref(storage, imageUrl);
+          await deleteObject(imageRef);
+          console.log('Image deleted successfully from Firebase Storage:', imageUrl);
+        } catch (error) {
+          console.error('Error deleting image from Firebase Storage:', error);
+        }
+      }));
+    }
   };
 
-  const handleLogOut = () => {
-    console.log('Log Out ');
-    // clear data, depends on our authentication protocol
+  const saveChangesSettings = async () => {
+    updateUserData();
+    setIsSettingsModalVisible(false);
+  }
+
+  const handleLogOut = async () => {
+    console.log("sign out");
+  };
+
+  const setTheImageBlobs = async () => {
+    if (alreadyLoadingBlobs){
+      console.log("over here");
+      return
+    }
+    setalreadyLoadingBlobs(true);
+    const imageUrls = tempProfileState.pictures || [];
+    try {
+      const blobs = await Promise.all(imageUrls.map(fetchImageAndConvertToBlob));
+      setImageBlobs(blobs);
+    } catch (error) {
+      console.error('Error fetching images and converting to blobs:', error);
+    } finally {
+      setalreadyLoadingBlobs(false);
+      setIsEditModalVisible(true);
+      seteditModalLoading(false);
+    }
+  };
+
+  const fetchImageAndConvertToBlob = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Error fetching image and converting to blob:', error);
+      return '';
+    }
   };
 
   const deleteImage = (index: number) => {
+    const imageUrlToDelete = tempProfileState.pictures[index];
     setTempProfileState(prevState => ({
       ...prevState,
       pictures: prevState.pictures.filter((_, i) => i !== index),
     }));
+    setImagesToDelete((prevImages) => [...prevImages, imageUrlToDelete]);
+    const blobUrlToDelete = imageBlobs[index];
+    URL.revokeObjectURL(blobUrlToDelete);
+    setImageBlobs((prevBlobs) => prevBlobs.filter((_, i) => i !== index));
   };
 
   const isPreference = (value: any): value is ProfileState['datingPreferences'] => {
@@ -160,6 +219,8 @@ const ProfileScreen: React.FC = ({}) => {
         ...prevState,
         pictures: [...prevState.pictures, imageUrl],
       }));
+      const localImageUrl = URL.createObjectURL(blob);
+      setImageBlobs((prevBlobs) => [...prevBlobs, localImageUrl]);
       setIsImageUploading(false);
     }
     else{
@@ -192,14 +253,14 @@ const ProfileScreen: React.FC = ({}) => {
       <View style={styles.buttonAndLabelContainer}>
         {/* Settings Button Group */}
         <View style={styles.buttonGroup}>
-          <TouchableOpacity onPress={() => setIsSettingsModalVisible(!isSettingsModalVisible)} style={styles.iconButton}>
+          <TouchableOpacity disabled = {editModalLoading} onPress={() => setIsSettingsModalVisible(!isSettingsModalVisible)} style={[styles.iconButton, {opacity: editModalLoading ? 0.5 : 1}]}>
             <MaterialIcons name="settings" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.labelText}>Settings</Text>
         </View>
         {/* Edit Profile Button Group */}
         <View style={styles.buttonGroup}>
-          <TouchableOpacity onPress={() => setIsEditModalVisible(true)} style={styles.iconButton}>
+          <TouchableOpacity onPress={() => {setTheImageBlobs(); seteditModalLoading(true)}} style={styles.iconButton}>
             <MaterialIcons name="edit" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.labelText}>Edit Profile</Text>
@@ -243,7 +304,7 @@ const ProfileScreen: React.FC = ({}) => {
               </View>
             </View>
 
-            <TouchableOpacity onPress={saveChanges} style={styles.saveChangesButton}>
+            <TouchableOpacity onPress={saveChangesSettings} style={styles.saveChangesButton}>
               <Text style={styles.buttonText}>Save Changes</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => {setIsSettingsModalVisible(!isSettingsModalVisible), setTempProfileState(profileState)}} style={styles.cancelButton}>
@@ -262,7 +323,11 @@ const ProfileScreen: React.FC = ({}) => {
         transparent={true}
         visible={isEditModalVisible}
         onRequestClose={() => {
+          setIsDeleting(false);
           setIsEditModalVisible(false);
+          setTempProfileState(profileState);
+          setImagesToDelete([]);
+          setImageBlobs([]);
         }}
       > 
           <View style={styles.centeredView}>
@@ -308,8 +373,8 @@ const ProfileScreen: React.FC = ({}) => {
                 </View>
 
                 <View style={styles.imagePreviewContainer}>
-                  {tempProfileState.pictures.length > 0 ? (
-                    tempProfileState.pictures.map((uri, index) => (
+                  {imageBlobs.length > 0 ? (
+                    imageBlobs.map((uri, index) => (
                       <View key={index}>
                         {isDeleting ? (
                           <TouchableOpacity onPress={() => deleteImage(index)}>
@@ -342,6 +407,8 @@ const ProfileScreen: React.FC = ({}) => {
                       setIsDeleting(false);
                       setIsEditModalVisible(false);
                       setTempProfileState(profileState);
+                      setImagesToDelete([]);
+                      setImageBlobs([]);
                     }}
                     style={[styles.cancelButton, { opacity: isImageUploading ? 0.5 : 1 }]}
                     disabled={isImageUploading}
