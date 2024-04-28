@@ -3,7 +3,8 @@ import { Switch, Modal, View, Text, TextInput, ActivityIndicator, StyleSheet, Im
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
-import { getStorage, ref, uploadBytes, getDownloadURL } from '@firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
+import { getAuth, deleteUser, User } from "firebase/auth";
 
 type ProfileState = {
   name: string;
@@ -36,8 +37,17 @@ const ProfileScreen: React.FC = ({}) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [age, setAge] = useState<number | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
+
+  const [imageBlobs, setImageBlobs] = useState<string[]>([]);
+  const [editModalLoading, seteditModalLoading] = useState<boolean>(false);
+  const [alreadyLoadingBlobs, setalreadyLoadingBlobs] = useState(false)
+
+  const [profileBlob, setProfileBlob] = useState<string>('');;
+  const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] = useState(false);
 
   const userId = userEmail;
+  
 
   useEffect(() => {
     const fetchUser = () => {
@@ -52,8 +62,10 @@ const ProfileScreen: React.FC = ({}) => {
             throw new Error('Failed to fetch user data');
           }
         })
-        .then(userData => {
+        .then(async userData => {
           if (userData) {
+            const blobUrl = await fetchImageAndConvertToBlob(userData.pictures[0]);
+            setProfileBlob(blobUrl);
             setProfileState(userData);
             setTempProfileState(userData);
           }
@@ -64,6 +76,7 @@ const ProfileScreen: React.FC = ({}) => {
   
     fetchUser();
   }, [userId]);
+  
 
   useEffect(() => {
     const calculateAge = (dob: string): number | null => {
@@ -94,27 +107,125 @@ const ProfileScreen: React.FC = ({}) => {
       .catch(error => console.error('Error updating user data:', error));
   };
 
-  const saveChanges = () => {
-    setProfileState({
-      ...tempProfileState
-    });
-    setIsDeleting(false)
-    updateUserData();
-    setIsSettingsModalVisible(false)
-    setIsEditModalVisible(false)
+  const saveChanges = async () => {
+    if (tempProfileState.pictures.length < 3 || tempProfileState.pictures.length > 5){
+      alert("Please use 3 to 5 images");
+    }else{
+      setProfileState({
+        ...tempProfileState
+      });
+      setIsDeleting(false);
+      updateUserData();
+      setIsEditModalVisible(false);
+      setImagesToDelete([]);
 
+      const blobUrl = await fetchImageAndConvertToBlob(tempProfileState.pictures[0]);
+      setProfileBlob(blobUrl);
+  
+      await Promise.all(imagesToDelete.map(async (imageUrl) => {
+        try {
+          const storage = getStorage();
+          const imageRef = ref(storage, imageUrl);
+          await deleteObject(imageRef);
+          console.log('Image deleted successfully from Firebase Storage:', imageUrl);
+        } catch (error) {
+          console.error('Error deleting image from Firebase Storage:', error);
+        }
+      }));
+    }
   };
 
-  const handleLogOut = () => {
-    console.log('Log Out ');
-    // clear data, depends on our authentication protocol
+  const saveChangesSettings = async () => {
+    updateUserData();
+    setIsSettingsModalVisible(false);
+  }
+
+  const handleLogOut = async () => {
+    console.log("sign out");
+  };
+
+  const deleteAccount = async () => {
+    
+    try {
+
+      await Promise.all(profileState.pictures.map(async (imageUrl) => {
+        try {
+          const storage = getStorage();
+          const imageRef = ref(storage, imageUrl);
+          await deleteObject(imageRef);
+          console.log('Image deleted successfully from Firebase Storage:', imageUrl);
+        } catch (error) {
+          console.error('Error deleting image from Firebase Storage:', error);
+        }
+      }));
+
+      const response = await fetch(`http://192.168.1.17:3000/api/user/delete/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (response.ok) {
+        console.log(`User account with userId ${userId} deleted successfully!`);
+      } else {
+        console.error(`Failed to delete user account with userId ${userId}.`);
+      }
+
+      const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+            await deleteUser(currentUser);
+            console.log('Firebase user account deleted successfully.');
+        } else {
+            console.error('Error: No current user found in Firebase authentication.');
+            return; // Exit function if no current user found
+        }
+    } catch (error) {
+      console.error('Error deleting user account:', error);
+    }
+  };
+
+  const setTheImageBlobs = async () => {
+    if (alreadyLoadingBlobs){
+      console.log("over here");
+      return
+    }
+    setalreadyLoadingBlobs(true);
+    const imageUrls = tempProfileState.pictures || [];
+    try {
+      const blobs = await Promise.all(imageUrls.map(fetchImageAndConvertToBlob));
+      setImageBlobs(blobs);
+    } catch (error) {
+      console.error('Error fetching images and converting to blobs:', error);
+    } finally {
+      setalreadyLoadingBlobs(false);
+      setIsEditModalVisible(true);
+      seteditModalLoading(false);
+    }
+  };
+
+  const fetchImageAndConvertToBlob = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Error fetching image and converting to blob:', error);
+      return '';
+    }
   };
 
   const deleteImage = (index: number) => {
+    const imageUrlToDelete = tempProfileState.pictures[index];
     setTempProfileState(prevState => ({
       ...prevState,
       pictures: prevState.pictures.filter((_, i) => i !== index),
     }));
+    setImagesToDelete((prevImages) => [...prevImages, imageUrlToDelete]);
+    const blobUrlToDelete = imageBlobs[index];
+    URL.revokeObjectURL(blobUrlToDelete);
+    setImageBlobs((prevBlobs) => prevBlobs.filter((_, i) => i !== index));
   };
 
   const isPreference = (value: any): value is ProfileState['datingPreferences'] => {
@@ -160,6 +271,8 @@ const ProfileScreen: React.FC = ({}) => {
         ...prevState,
         pictures: [...prevState.pictures, imageUrl],
       }));
+      const localImageUrl = URL.createObjectURL(blob);
+      setImageBlobs((prevBlobs) => [...prevBlobs, localImageUrl]);
       setIsImageUploading(false);
     }
     else{
@@ -182,7 +295,7 @@ const ProfileScreen: React.FC = ({}) => {
     <View style={styles.profileContainer}>
       {/* Profile Image */}
       <Image
-        source={{ uri: profileState.pictures[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+        source={{ uri: profileBlob || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
         style={styles.profileImage}
       />
       <View style={styles.textContainerName}>
@@ -192,14 +305,14 @@ const ProfileScreen: React.FC = ({}) => {
       <View style={styles.buttonAndLabelContainer}>
         {/* Settings Button Group */}
         <View style={styles.buttonGroup}>
-          <TouchableOpacity onPress={() => setIsSettingsModalVisible(!isSettingsModalVisible)} style={styles.iconButton}>
+          <TouchableOpacity disabled = {editModalLoading} onPress={() => setIsSettingsModalVisible(!isSettingsModalVisible)} style={[styles.iconButton, {opacity: editModalLoading ? 0.5 : 1}]}>
             <MaterialIcons name="settings" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.labelText}>Settings</Text>
         </View>
         {/* Edit Profile Button Group */}
         <View style={styles.buttonGroup}>
-          <TouchableOpacity onPress={() => setIsEditModalVisible(true)} style={styles.iconButton}>
+          <TouchableOpacity onPress={() => {setTheImageBlobs(); seteditModalLoading(true)}} style={styles.iconButton}>
             <MaterialIcons name="edit" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.labelText}>Edit Profile</Text>
@@ -214,6 +327,27 @@ const ProfileScreen: React.FC = ({}) => {
         onRequestClose={()=> setIsSettingsModalVisible(!isSettingsModalVisible)}
       >
         <View style={styles.centeredView}>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isDeleteConfirmationVisible}
+            onRequestClose={() => setIsDeleteConfirmationVisible(false)}
+          >
+            <View style={styles.centeredView}>
+              <View style={[styles.modalView, {width: '81%', height: '81%'}]}>
+                <Text style={styles.modalTitle}>Confirm Account Deletion</Text>
+                <Text style= {styles.deleteConfirmationText}>Are you sure you want to delete your account?</Text>
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity onPress={() => setIsDeleteConfirmationVisible(false)} style={styles.cancelButton}>
+                    <Text style={styles.buttonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={deleteAccount} style={[styles.logOutButton, {backgroundColor: "#FF6F61"}]}>
+                    <Text style={styles.buttonText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
           <View style={styles.modalView}>
             <Text style={styles.modalTitle}>Settings</Text>
 
@@ -243,7 +377,7 @@ const ProfileScreen: React.FC = ({}) => {
               </View>
             </View>
 
-            <TouchableOpacity onPress={saveChanges} style={styles.saveChangesButton}>
+            <TouchableOpacity onPress={saveChangesSettings} style={styles.saveChangesButton}>
               <Text style={styles.buttonText}>Save Changes</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => {setIsSettingsModalVisible(!isSettingsModalVisible), setTempProfileState(profileState)}} style={styles.cancelButton}>
@@ -252,6 +386,11 @@ const ProfileScreen: React.FC = ({}) => {
             <TouchableOpacity onPress={handleLogOut} style={styles.logOutButton}>
               <Text style={styles.buttonText}>Log Out</Text>
             </TouchableOpacity>
+            <View style={styles.deleteAccountButtonContainer}>
+              <TouchableOpacity onPress={() => setIsDeleteConfirmationVisible(true)} style={styles.deleteAccountButton}>
+                <Text style={styles.buttonText}>Delete Account</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -262,7 +401,11 @@ const ProfileScreen: React.FC = ({}) => {
         transparent={true}
         visible={isEditModalVisible}
         onRequestClose={() => {
+          setIsDeleting(false);
           setIsEditModalVisible(false);
+          setTempProfileState(profileState);
+          setImagesToDelete([]);
+          setImageBlobs([]);
         }}
       > 
           <View style={styles.centeredView}>
@@ -308,8 +451,8 @@ const ProfileScreen: React.FC = ({}) => {
                 </View>
 
                 <View style={styles.imagePreviewContainer}>
-                  {tempProfileState.pictures.length > 0 ? (
-                    tempProfileState.pictures.map((uri, index) => (
+                  {imageBlobs.length > 0 ? (
+                    imageBlobs.map((uri, index) => (
                       <View key={index}>
                         {isDeleting ? (
                           <TouchableOpacity onPress={() => deleteImage(index)}>
@@ -342,6 +485,8 @@ const ProfileScreen: React.FC = ({}) => {
                       setIsDeleting(false);
                       setIsEditModalVisible(false);
                       setTempProfileState(profileState);
+                      setImagesToDelete([]);
+                      setImageBlobs([]);
                     }}
                     style={[styles.cancelButton, { opacity: isImageUploading ? 0.5 : 1 }]}
                     disabled={isImageUploading}
@@ -510,7 +655,7 @@ const styles = StyleSheet.create({
   logOutButton: {
     width: '100%',
     marginTop: 10, 
-    backgroundColor: '#FF6F61', 
+    backgroundColor: '#FF8C00',
     padding: 10,
     borderRadius: 5,
   },
@@ -568,6 +713,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#888888', 
     padding: 10,
     borderRadius: 5,
+  },
+  deleteAccountButtonContainer: {
+    position: 'absolute',
+    bottom: 50,
+    width: '100%',
+    alignItems: 'center',
+  },
+  deleteAccountButton: {
+    backgroundColor: '#FF6F61',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  deleteConfirmationText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#333',
+    marginBottom: 20,
   },
 });
 

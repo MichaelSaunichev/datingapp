@@ -26,9 +26,9 @@ const TabOneScreen = () => {
   
   const [preferences, setPreferences] = useState<userPreferences | null>(null);
   const [card, setCard] = useState<Card>();
-  const [loading, setLoading] = useState<Boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [loadingMatched, setLoadingMatched] = useState<Boolean>(false);
-  const [matched, setMatched] = useState<Boolean>(false);
+  const [matched, setMatched] = useState<boolean>(false);
 
   const userId = userEmail;
 
@@ -74,7 +74,7 @@ const TabOneScreen = () => {
     if (loadingMatched){
       return
     }
-
+    setLoadingMatched(true);
     if (preferences){
       try {
         const { datingPreferences } = preferences;
@@ -87,13 +87,26 @@ const TabOneScreen = () => {
     
         const cardData = await response.json();
 
-        // Update the cards state with the fetched data
-        setCard(cardData);
+        if (!cardData) {
+          setCard(cardData);
+        } else{
+          const imageUrls = cardData.pictures;
+          // Load images
+          const images = await Promise.all(imageUrls.map(async (url: string) => {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return URL.createObjectURL(blob); // Convert blob to object URL
+          }));
+
+          // Once all images are loaded, set the card data and images
+          setCard({ ...cardData, pictures: images });
+        }
 
       } catch (error) {
         console.error('Error fetching card data:', error);
       } finally{
           setLoadingMatched(false);
+          setLoading(false);
           setMatched(false);
         }
     }
@@ -116,7 +129,7 @@ const TabOneScreen = () => {
     }
   };
 
-  const addChat = async (userId: string, chatAddId: number) => {
+  const addChat = async (userId: string | undefined, chatAddId: number) => {
     try {
       const response = await fetch(`http://192.168.1.17:3000/api/addchat/${userId}/${chatAddId}`, {
         method: 'PUT',
@@ -155,6 +168,7 @@ const TabOneScreen = () => {
     if (loading){
       return
     }
+    setLoading(true); 
     const currentCard = card;
     if (currentCard != undefined){
       if (currentCard.likesYou === 1) {
@@ -165,8 +179,6 @@ const TabOneScreen = () => {
           });
         } catch (error) {
           console.error('Error liked back:', error);
-        } finally {
-          setLoading(false);
         }
       } else {
         try {
@@ -176,8 +188,6 @@ const TabOneScreen = () => {
           });
         } catch (error) {
           console.error('Error not liked back:', error);
-        } finally {
-          setLoading(false);
         }
       }
     }
@@ -190,7 +200,7 @@ const TabOneScreen = () => {
     if (loading) {
       return;
     }
-  
+    setLoading(true); 
     try {
       const currentCard = card;
       await fetch('http://192.168.1.17:3000/api/incrementIndex', {
@@ -203,8 +213,6 @@ const TabOneScreen = () => {
       renderCardUI();
     } catch (error) {
       console.error('Error disliking card:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -253,17 +261,17 @@ const TabOneScreen = () => {
       </ScrollView>
       {!matched && card && (
       <View style={styles.buttonContainerChoice}>
-        <TouchableOpacity style={[styles.button, { backgroundColor: '#FF6F61' }]} onPress={() => { setLoading(true); onDislike(); }}>
+        <TouchableOpacity disabled = {loading} style={[styles.button, { backgroundColor: '#FF6F61', opacity: loading ? 0.5 : 1 }]} onPress={() => { onDislike(); }}>
           <FontAwesome name="times" size={24} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, { backgroundColor: '#4CAF50' }]} onPress={() => { setLoading(true); onLike(); }}>
+        <TouchableOpacity style={[styles.button, { backgroundColor: '#4CAF50', opacity: loading ? 0.5 : 1 }]} onPress={() => { onLike(); }}>
           <FontAwesome name="heart" size={24} color="white" />
         </TouchableOpacity>
       </View>
       )}
       {matched && (
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.button, { backgroundColor: '#3498db', marginTop: 10 }]} onPress={() => { setLoadingMatched(true); renderCardUI() } }>
+          <TouchableOpacity style={[styles.button, { backgroundColor: '#3498db', marginTop: 10}]} onPress={() => { renderCardUI() } }>
             <Text style={styles.buttonText}>Next</Text>
           </TouchableOpacity>
         </View>

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { FlatList, TouchableOpacity, Text, View, Image, Button, Modal, StyleSheet, ImageBackground } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { FlatList, TouchableOpacity, Text, View, Image, Button, Modal, StyleSheet, ActivityIndicator } from 'react-native';
 import { GiftedChat, IMessage, User, Send } from 'react-native-gifted-chat';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -18,28 +17,34 @@ const TabTwoScreen = () => {
   const userEmail = routeParams ? routeParams.userEmail : undefined;
   
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  const [chats, setChats] = useState<{ name: string; picture?: string; _id: string }[]>([]);
+  const [chats, setChats] = useState<{ name: string; picture?: string; _id: string; firstMessage: string}[]>([]);
   const [messages, setMessages] = useState<CustomMessage[]>([]);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [readyChat, setReadyChat] = useState<boolean>(false);
 
   const [modal1Visible, setmodal1Visible] = useState(false);
   const [modal2Visible, setmodal2Visible] = useState(false);
-  const scrollViewRef = useRef<ScrollView>(null);
 
-  const navigation = useNavigation();
+  const [imageBlobs, setImageBlobs] = useState<string[]>([]);
+
+  const [loadingChat, setLoadingChat] = useState<boolean>(false);
+
+  const [modal2Ready, setModal2Ready] = useState<boolean>(false);
+  const [modal2Loading, setModal2Loading] = useState<boolean>(false);
+
+  const [userFirstImageBlobs, setUserFirstImageBlobs] = useState<{ [userId: string]: string }>({});
+  const [initialRender, setInitialRender] = useState<boolean>(false);
 
 
   const userId = userEmail;
 
-  useFocusEffect(
-    React.useCallback(() => {
+  useEffect(() => {
       const fetchData = async () => {
-        await fetchChats();
+        await fetchChatsInitial();
+        setInitialRender(true);
       };
       fetchData();
-    }, [userId])
-  );
+  }, []);
 
   const loadEarlierMessages = async () => {
     try {
@@ -63,14 +68,64 @@ const TabTwoScreen = () => {
         throw new Error('Failed to fetch chat users');
       }
       const chatUsers = await response.json();
-      console.log("chatUsers:", chatUsers);
       setChats(chatUsers.reverse());
     } catch (error) {
       console.error('Error fetching chat users:', error);
     }
   };
 
+  const fetchChatsInitial = async () => {
+    try {
+      const response = await fetch(`http://192.168.1.17:3000/api/chats/${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch chat users');
+      }
+      const chatUsers = await response.json();
+
+      const mapping: { [userId: string]: string } = {};
+      await Promise.all(chatUsers.map(async (user: { picture?: string; _id: string }) => {
+        if (user.picture) {
+          const blobUrl = await fetchImageAndConvertToBlob(user.picture);
+          mapping[user._id] = blobUrl;
+        }
+      }));
+      setUserFirstImageBlobs(mapping);
+      setChats(chatUsers.reverse());
+    } catch (error) {
+      console.error('Error fetching chat users:', error);
+    }
+  };
+
+  const setTheImageBlobs = async () => {
+    const imageUrls = userProfile.pictures || [];
+    try {
+      const blobs = await Promise.all(imageUrls.map(fetchImageAndConvertToBlob));
+      setImageBlobs(blobs);
+    } catch (error) {
+      console.error('Error fetching images and converting to blobs:', error);
+    } finally {
+      setModal2Ready(true);
+      setModal2Loading(false);
+    }
+  };
+
+  const fetchImageAndConvertToBlob = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Error fetching image and converting to blob:', error);
+      return '';
+    }
+  };
+
   const onChatSelect = async (chatId: string) => {
+    if(loadingChat){
+      console.log("loading another chat");
+      return
+    }
+    setLoadingChat(true);
     setSelectedChat(chatId);
     console.log("chat id:", chatId);
   
@@ -91,6 +146,7 @@ const TabTwoScreen = () => {
     }
     finally {
       setReadyChat(true);
+      setLoadingChat(false);
     }
   };
 
@@ -203,7 +259,7 @@ const TabTwoScreen = () => {
     <TouchableOpacity onPress={() => onChatSelect(item._id)}>
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#888888' }}>
         <Image
-          source={{ uri: item.picture || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+          source={{ uri: userFirstImageBlobs[item._id] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
           style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
         />
         <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black' }}>{item.name}</Text>
@@ -226,22 +282,24 @@ const TabTwoScreen = () => {
                 borderRadius: 5,
                 paddingVertical: 8,
                 paddingHorizontal: 14,
+                opacity: modal2Loading ? 0.5 : 1,
               }}
+              disabled={modal2Loading}
             >
               <Text style={{ color: 'black', fontSize: 16 }}>Back</Text>
             </TouchableOpacity>
             <View style={{ position: 'absolute', top: 7, left: '50%', marginLeft: -10 }}>
-              <TouchableOpacity onPress={() => setmodal2Visible(true)}>
+              <TouchableOpacity onPress={() => {setmodal2Visible(true); setTheImageBlobs(); setModal2Loading(true)}}>
                 {userProfile && (
                   <Image
-                    source={{ uri: userProfile.pictures[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+                    source={{ uri: userFirstImageBlobs[userProfile.id] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
                     style={{ width: 50, height: 50, borderRadius: 50 }}
                   />
                 )}
               </TouchableOpacity>
             </View>
             <View style={{ position: 'absolute', top: 15, right: '1.5%' }}>
-              <TouchableOpacity onPress={() => setmodal1Visible(true)} style={styles.manageButton}>
+              <TouchableOpacity onPress={() => setmodal1Visible(true)} style={[styles.manageButton, { opacity: modal2Loading ? 0.5 : 1 }]} disabled={modal2Loading}>
                 <MaterialCommunityIcons name="cog" size={24} color="white" />
               </TouchableOpacity>
             </View>
@@ -269,8 +327,8 @@ const TabTwoScreen = () => {
             <Modal
               animationType="slide"
               transparent={true}
-              visible={modal2Visible}
-              onRequestClose={() => setmodal2Visible(false)}
+              visible={modal2Visible && modal2Ready}
+              onRequestClose={() => {setmodal2Visible(false); setModal2Ready(false); setImageBlobs([])}}
             >
               <View style={styles.centeredView}>
                 <View style={styles.modalContent}>
@@ -278,10 +336,10 @@ const TabTwoScreen = () => {
                     <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{userProfile.name}, {calculateAgeFromDOB(userProfile.dob) || ''}</Text>
                     {/* Render the first profile image */}
                     <View style={{ alignItems: 'center' }}>
-                    {userProfile.pictures.length > 0 && (
+                    {imageBlobs.length > 0 && (
                       <Image
-                        key={userProfile.pictures[0]}
-                        source={{ uri: userProfile.pictures[0] }}
+                        key={imageBlobs[0]}
+                        source={{ uri: imageBlobs[0] }}
                         style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
                       />
                     )}
@@ -290,7 +348,7 @@ const TabTwoScreen = () => {
                     <Text style={{ fontSize: 14, marginTop: 10, textAlign: 'center' }}>{userProfile.bio}</Text>
                     {/* Render additional profile pictures */}
                     <View style={{ alignItems: 'center' }}>
-                      {userProfile.pictures.slice(1).map((uri: string, index: number) => (
+                      {imageBlobs.slice(1).map((uri: string, index: number) => (
                         <Image
                           key={uri}
                           source={{ uri }}
@@ -300,7 +358,7 @@ const TabTwoScreen = () => {
                     </View>
                   </ScrollView>
                   <View style={styles.buttonContainer}>
-                    <TouchableOpacity onPress={() => setmodal2Visible(false)} style={styles.cancelButtonProfile}>
+                    <TouchableOpacity onPress={() => {setmodal2Visible(false); setModal2Ready(false); setImageBlobs([])}} style={styles.cancelButtonProfile}>
                       <Text style={styles.actionButtonText}>Close</Text>
                     </TouchableOpacity>
                   </View>
@@ -309,7 +367,6 @@ const TabTwoScreen = () => {
             </Modal>
           </View>
           <GiftedChat
-            //listViewProps={{ref: scrollViewRef, onContentSizeChange: () => scrollToBottom(),}}
             loadEarlier={true}
             onLoadEarlier={loadEarlierMessages}
             scrollToBottom
@@ -318,22 +375,18 @@ const TabTwoScreen = () => {
             renderSend={renderSend}
             messages={messages}
             onSend={(newMessages) => onSend(newMessages)}
-            user={{ _id: userId}}
+            user={{ _id: userId || '' }}
             renderAvatar={(props) => {
               if (props.currentMessage?.user?._id === userId) {
                 return null;
               } else {
                 // Render profile picture
                 return (
-                  <TouchableOpacity onPress={() => setmodal2Visible(true)}>
+                  <TouchableOpacity onPress={() => {setmodal2Visible(true); setTheImageBlobs(); setModal2Loading(true)}}>
                     <View style={styles.avatarContainer}>
                       <Image
                         style={styles.avatar}
-                        source={{
-                          uri: userProfile && userProfile.pictures.length > 0
-                            ? userProfile.pictures[0]
-                            : 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image'
-                        }}
+                        source={{ uri: userFirstImageBlobs[userProfile.id] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
                       />
                     </View>
                   </TouchableOpacity>
@@ -458,7 +511,17 @@ const TabTwoScreen = () => {
     },
   });
 
-  return <View style={{ flex: 1 }}>{renderChatScreen()}</View>;
+  return (
+    <View style={{ flex: 1 }}>
+      {initialRender ? (
+        renderChatScreen()
+      ) : (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF8E1' }}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      )}
+    </View>
+  );
 };
 
 
