@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { FlatList, TouchableOpacity, Text, View, Image, Button, Modal, StyleSheet, ImageBackground } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { FlatList, TouchableOpacity, Text, View, Image, Button, Modal, StyleSheet, ActivityIndicator } from 'react-native';
 import { GiftedChat, IMessage, User, Send } from 'react-native-gifted-chat';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -18,7 +17,7 @@ const TabTwoScreen = () => {
   const userEmail = routeParams ? routeParams.userEmail : undefined;
   
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  const [chats, setChats] = useState<{ name: string; picture?: string; _id: string }[]>([]);
+  const [chats, setChats] = useState<{ name: string; picture?: string; _id: string; firstMessage: string}[]>([]);
   const [messages, setMessages] = useState<CustomMessage[]>([]);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [readyChat, setReadyChat] = useState<boolean>(false);
@@ -33,16 +32,19 @@ const TabTwoScreen = () => {
   const [modal2Ready, setModal2Ready] = useState<boolean>(false);
   const [modal2Loading, setModal2Loading] = useState<boolean>(false);
 
+  const [userFirstImageBlobs, setUserFirstImageBlobs] = useState<{ [userId: string]: string }>({});
+  const [initialRender, setInitialRender] = useState<boolean>(false);
+
+
   const userId = userEmail;
 
-  useFocusEffect(
-    React.useCallback(() => {
+  useEffect(() => {
       const fetchData = async () => {
-        await fetchChats();
+        await fetchChatsInitial();
+        setInitialRender(true);
       };
       fetchData();
-    }, [userId])
-  );
+  }, []);
 
   const loadEarlierMessages = async () => {
     try {
@@ -66,7 +68,28 @@ const TabTwoScreen = () => {
         throw new Error('Failed to fetch chat users');
       }
       const chatUsers = await response.json();
-      console.log("chatUsers:", chatUsers);
+      setChats(chatUsers.reverse());
+    } catch (error) {
+      console.error('Error fetching chat users:', error);
+    }
+  };
+
+  const fetchChatsInitial = async () => {
+    try {
+      const response = await fetch(`http://192.168.1.17:3000/api/chats/${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch chat users');
+      }
+      const chatUsers = await response.json();
+
+      const mapping: { [userId: string]: string } = {};
+      await Promise.all(chatUsers.map(async (user: { picture?: string; _id: string }) => {
+        if (user.picture) {
+          const blobUrl = await fetchImageAndConvertToBlob(user.picture);
+          mapping[user._id] = blobUrl;
+        }
+      }));
+      setUserFirstImageBlobs(mapping);
       setChats(chatUsers.reverse());
     } catch (error) {
       console.error('Error fetching chat users:', error);
@@ -236,7 +259,7 @@ const TabTwoScreen = () => {
     <TouchableOpacity onPress={() => onChatSelect(item._id)}>
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#888888' }}>
         <Image
-          source={{ uri: item.picture || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+          source={{ uri: userFirstImageBlobs[item._id] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
           style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
         />
         <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black' }}>{item.name}</Text>
@@ -269,7 +292,7 @@ const TabTwoScreen = () => {
               <TouchableOpacity onPress={() => {setmodal2Visible(true); setTheImageBlobs(); setModal2Loading(true)}}>
                 {userProfile && (
                   <Image
-                    source={{ uri: userProfile.pictures[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+                    source={{ uri: userFirstImageBlobs[userProfile.id] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
                     style={{ width: 50, height: 50, borderRadius: 50 }}
                   />
                 )}
@@ -344,7 +367,6 @@ const TabTwoScreen = () => {
             </Modal>
           </View>
           <GiftedChat
-            //listViewProps={{ref: scrollViewRef, onContentSizeChange: () => scrollToBottom(),}}
             loadEarlier={true}
             onLoadEarlier={loadEarlierMessages}
             scrollToBottom
@@ -353,7 +375,7 @@ const TabTwoScreen = () => {
             renderSend={renderSend}
             messages={messages}
             onSend={(newMessages) => onSend(newMessages)}
-            user={{ _id: userId}}
+            user={{ _id: userId || '' }}
             renderAvatar={(props) => {
               if (props.currentMessage?.user?._id === userId) {
                 return null;
@@ -364,11 +386,7 @@ const TabTwoScreen = () => {
                     <View style={styles.avatarContainer}>
                       <Image
                         style={styles.avatar}
-                        source={{
-                          uri: userProfile && userProfile.pictures.length > 0
-                            ? userProfile.pictures[0]
-                            : 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image'
-                        }}
+                        source={{ uri: userFirstImageBlobs[userProfile.id] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
                       />
                     </View>
                   </TouchableOpacity>
@@ -493,7 +511,17 @@ const TabTwoScreen = () => {
     },
   });
 
-  return <View style={{ flex: 1 }}>{renderChatScreen()}</View>;
+  return (
+    <View style={{ flex: 1 }}>
+      {initialRender ? (
+        renderChatScreen()
+      ) : (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF8E1' }}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      )}
+    </View>
+  );
 };
 
 

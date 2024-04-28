@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button, View, Text, StyleSheet, TouchableWithoutFeedback, Keyboard, TextInput, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableWithoutFeedback, Keyboard, TextInput, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { signInWithEmailAndPassword } from '@firebase/auth';
 import { FIREBASE_AUTH } from '../node_modules/FirebaseConfig';

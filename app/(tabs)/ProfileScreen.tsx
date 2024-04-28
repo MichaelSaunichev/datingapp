@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
+import { getAuth, deleteUser, User } from "firebase/auth";
 
 type ProfileState = {
   name: string;
@@ -42,6 +43,9 @@ const ProfileScreen: React.FC = ({}) => {
   const [editModalLoading, seteditModalLoading] = useState<boolean>(false);
   const [alreadyLoadingBlobs, setalreadyLoadingBlobs] = useState(false)
 
+  const [profileBlob, setProfileBlob] = useState<string>('');;
+  const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] = useState(false);
+
   const userId = userEmail;
   
 
@@ -58,8 +62,10 @@ const ProfileScreen: React.FC = ({}) => {
             throw new Error('Failed to fetch user data');
           }
         })
-        .then(userData => {
+        .then(async userData => {
           if (userData) {
+            const blobUrl = await fetchImageAndConvertToBlob(userData.pictures[0]);
+            setProfileBlob(blobUrl);
             setProfileState(userData);
             setTempProfileState(userData);
           }
@@ -70,6 +76,7 @@ const ProfileScreen: React.FC = ({}) => {
   
     fetchUser();
   }, [userId]);
+  
 
   useEffect(() => {
     const calculateAge = (dob: string): number | null => {
@@ -111,6 +118,9 @@ const ProfileScreen: React.FC = ({}) => {
       updateUserData();
       setIsEditModalVisible(false);
       setImagesToDelete([]);
+
+      const blobUrl = await fetchImageAndConvertToBlob(tempProfileState.pictures[0]);
+      setProfileBlob(blobUrl);
   
       await Promise.all(imagesToDelete.map(async (imageUrl) => {
         try {
@@ -132,6 +142,48 @@ const ProfileScreen: React.FC = ({}) => {
 
   const handleLogOut = async () => {
     console.log("sign out");
+  };
+
+  const deleteAccount = async () => {
+    
+    try {
+
+      await Promise.all(profileState.pictures.map(async (imageUrl) => {
+        try {
+          const storage = getStorage();
+          const imageRef = ref(storage, imageUrl);
+          await deleteObject(imageRef);
+          console.log('Image deleted successfully from Firebase Storage:', imageUrl);
+        } catch (error) {
+          console.error('Error deleting image from Firebase Storage:', error);
+        }
+      }));
+
+      const response = await fetch(`http://192.168.1.17:3000/api/user/delete/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (response.ok) {
+        console.log(`User account with userId ${userId} deleted successfully!`);
+      } else {
+        console.error(`Failed to delete user account with userId ${userId}.`);
+      }
+
+      const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+            await deleteUser(currentUser);
+            console.log('Firebase user account deleted successfully.');
+        } else {
+            console.error('Error: No current user found in Firebase authentication.');
+            return; // Exit function if no current user found
+        }
+    } catch (error) {
+      console.error('Error deleting user account:', error);
+    }
   };
 
   const setTheImageBlobs = async () => {
@@ -243,7 +295,7 @@ const ProfileScreen: React.FC = ({}) => {
     <View style={styles.profileContainer}>
       {/* Profile Image */}
       <Image
-        source={{ uri: profileState.pictures[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+        source={{ uri: profileBlob || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
         style={styles.profileImage}
       />
       <View style={styles.textContainerName}>
@@ -275,6 +327,27 @@ const ProfileScreen: React.FC = ({}) => {
         onRequestClose={()=> setIsSettingsModalVisible(!isSettingsModalVisible)}
       >
         <View style={styles.centeredView}>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isDeleteConfirmationVisible}
+            onRequestClose={() => setIsDeleteConfirmationVisible(false)}
+          >
+            <View style={styles.centeredView}>
+              <View style={[styles.modalView, {width: '81%', height: '81%'}]}>
+                <Text style={styles.modalTitle}>Confirm Account Deletion</Text>
+                <Text style= {styles.deleteConfirmationText}>Are you sure you want to delete your account?</Text>
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity onPress={() => setIsDeleteConfirmationVisible(false)} style={styles.cancelButton}>
+                    <Text style={styles.buttonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={deleteAccount} style={[styles.logOutButton, {backgroundColor: "#FF6F61"}]}>
+                    <Text style={styles.buttonText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
           <View style={styles.modalView}>
             <Text style={styles.modalTitle}>Settings</Text>
 
@@ -313,6 +386,11 @@ const ProfileScreen: React.FC = ({}) => {
             <TouchableOpacity onPress={handleLogOut} style={styles.logOutButton}>
               <Text style={styles.buttonText}>Log Out</Text>
             </TouchableOpacity>
+            <View style={styles.deleteAccountButtonContainer}>
+              <TouchableOpacity onPress={() => setIsDeleteConfirmationVisible(true)} style={styles.deleteAccountButton}>
+                <Text style={styles.buttonText}>Delete Account</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -577,7 +655,7 @@ const styles = StyleSheet.create({
   logOutButton: {
     width: '100%',
     marginTop: 10, 
-    backgroundColor: '#FF6F61', 
+    backgroundColor: '#FF8C00',
     padding: 10,
     borderRadius: 5,
   },
@@ -635,6 +713,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#888888', 
     padding: 10,
     borderRadius: 5,
+  },
+  deleteAccountButtonContainer: {
+    position: 'absolute',
+    bottom: 50,
+    width: '100%',
+    alignItems: 'center',
+  },
+  deleteAccountButton: {
+    backgroundColor: '#FF6F61',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  deleteConfirmationText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#333',
+    marginBottom: 20,
   },
 });
 

@@ -61,6 +61,47 @@ const chatData = {
 // --------------------------------------------------------------------------------------
 // User
 
+router.delete('/api/user/delete/:userId', (req, res) => {
+  const userId = req.params.userId;
+  const index = users.findIndex(user => user.id === userId);
+  if (index !== -1) {
+    // Remove user from users array
+    users.splice(index, 1);
+
+    // Remove user's card data
+    delete cardData[userId];
+
+
+    // Remove user from other users' cardData
+    for (const key in cardData) {
+      const userIndex = cardData[key].findIndex(card => card.id === userId);
+      console.log('ind', userIndex);
+      if (userIndex !== -1) {
+        const user = users.find(user => user.id === key);
+        if (user && user.renderIndex != null && userIndex < user.renderIndex) {
+          user.renderIndex -= 1;
+        }
+        cardData[key].splice(userIndex, 1);
+      }
+    }
+
+    // Remove user's chat data
+    delete chatData[userId];
+
+    // Remove chat data with the deleted user from other users' chatData
+    for (const key in chatData) {
+      chatData[key].delete(userId);
+    }
+    console.log("users", users);
+    console.log("carddata", cardData);
+    console.log("chatData", chatData);
+
+    res.status(200).json({ message: `User with ID ${userId} deleted successfully.` });
+  } else {
+    res.status(404).json({ error: `User with ID ${userId} not found.` });
+  }
+});
+
 router.post('/api/user/create', (req, res) => {
   const { bio, dob, gender, name, pictures, datingPreferences, id } = req.body;
 

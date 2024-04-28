@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, Image, StyleSheet, Modal, ScrollView, TouchableOpacity, TouchableWithoutFeedback, } from 'react-native';
 import { GiftedChat, IMessage, User, Send  } from 'react-native-gifted-chat';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -37,6 +37,10 @@ const NetworkScreen  = () => {
     const [imageBlobs, setImageBlobs] = useState<string[]>([]);
     const [modalLoading, setModalLoading] = useState<boolean>(false);
     const [alreadyLoadingBlobs, setalreadyLoadingBlobs] = useState(false)
+
+    useEffect(() => {
+        console.log("pics:", pictures);
+    }, [pictures]);
 
     useEffect(() => {
         if(showChat){
@@ -88,18 +92,24 @@ const NetworkScreen  = () => {
         }
       };
 
-    const fetchProfileImageUris = async (userIds: string[]) => {
+      const fetchProfileImageUris = async (userIds: string[]) => {
         try {
+            const newPictures: { [userId: string]: string } = {};
             for (const userId of userIds) {
                 const response = await fetch(`http://192.168.1.17:3000/api/uri/${userId}`);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch profile image for user ${userId}`);
                 }
                 const pictures = await response.json();
-                setPictures((prevProfileImageUris) => ({
-                    ...prevProfileImageUris,
-                    [userId]: pictures[0] || '',
-                }));
+    
+                const blobs = await Promise.all(pictures.map(fetchImageAndConvertToBlob));
+                const blobUrl = blobs[0] || ''; // Get the blob URL
+    
+                // Update the newPictures object with blob URLs
+                newPictures[userId] = blobUrl;
+    
+                // Update the pictures state with the newPictures object
+                setPictures((prevPictures) => ({ ...prevPictures, ...newPictures }));
             }
         } catch (error) {
             console.error('Error fetching profile images:', error);
