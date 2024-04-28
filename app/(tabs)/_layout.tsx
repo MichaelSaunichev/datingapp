@@ -61,6 +61,7 @@ export default function TabLayout() {
         options={{
           title: 'Matches',
           tabBarIcon: ({ color }) => <TabBarIcon name="comments" color={color} />,
+          tabBarHideOnKeyboard: true,
         }}
       />
       <Tabs.Screen
@@ -69,7 +70,9 @@ export default function TabLayout() {
         options={{
           title: 'Social',
           tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
+          tabBarHideOnKeyboard: true,
         }}
+        
       />
       <Tabs.Screen
         name="ProfileScreen"

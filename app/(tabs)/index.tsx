@@ -201,18 +201,22 @@ const TabOneScreen = () => {
       return;
     }
     setLoading(true); 
-    try {
-      const currentCard = card;
-      await fetch('http://192.168.1.17:3000/api/incrementIndex', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: userId }),
-      });
-      renderCardUI();
-    } catch (error) {
-      console.error('Error disliking card:', error);
+    const currentCard = card;
+    if (currentCard != undefined){
+      try {
+        await fetch('http://192.168.1.17:3000/api/incrementIndex', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: userId }),
+        });
+        renderCardUI();
+      } catch (error) {
+        console.error('Error disliking card:', error);
+      }
+    } else{
+      setLoading(false);
     }
   };
 
@@ -271,7 +275,7 @@ const TabOneScreen = () => {
       )}
       {matched && (
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.button, { backgroundColor: '#3498db', marginTop: 10}]} onPress={() => { renderCardUI() } }>
+          <TouchableOpacity style={[styles.button, { opacity: loadingMatched ? 0.5 : 1, backgroundColor: '#3498db', marginTop: 10}]} onPress={() => { renderCardUI() } }>
             <Text style={styles.buttonText}>Next</Text>
           </TouchableOpacity>
         </View>
