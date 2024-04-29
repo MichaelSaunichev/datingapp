@@ -110,20 +110,21 @@ const NetworkScreen  = () => {
             const newPictures: { [userId: string]: string } = {};
             for (const userId of userIds) {
                 const response = await fetch(`http://192.168.1.17:3000/api/uri/${userId}`);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch profile image for user ${userId}`);
-                }
+                //if (!response.ok) {
+                //    throw new Error(`Failed to fetch profile image for user ${userId}`);
+                //}
                 const pictures = await response.json();
     
-                const blobs = await Promise.all(pictures.map(fetchImageAndConvertToBlob));
-                const blobUrl = blobs[0] || ''; // Get the blob URL
+                if (pictures.length > 0) {
+                    const blobs = await Promise.all(pictures.map(fetchImageAndConvertToBlob));
+                    const blobUrl = blobs[0] || ''; // Get the blob URL
     
-                // Update the newPictures object with blob URLs
-                newPictures[userId] = blobUrl;
-    
-                // Update the pictures state with the newPictures object
-                setPictures((prevPictures) => ({ ...prevPictures, ...newPictures }));
+                    // Update the newPictures object with blob URLs
+                    newPictures[userId] = blobUrl;
+                }
             }
+            // Update the pictures state with the newPictures object
+            setPictures((prevPictures) => ({ ...prevPictures, ...newPictures }));
         } catch (error) {
             console.error('Error fetching profile images:', error);
         }
@@ -254,7 +255,8 @@ const NetworkScreen  = () => {
             try {
                 const response = await fetch(`http://192.168.1.17:3000/api/user/${user._id}`);
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch user profile for user ${user._id}`);
+                    setModalLoading(false);
+                    return
                 }
                 const userProfile = await response.json();
                 setSelectedUser(userProfile); // Set selected user profile

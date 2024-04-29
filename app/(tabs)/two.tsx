@@ -62,10 +62,8 @@ const TabTwoScreen = () => {
     });
 
     socket.on('theNewMessage', ({ senderId, recipientId }) => {
-      console.log("up");
       //current user
       if (senderId == userId){
-        console.log("gg");
         fetchMostRecentMessage(true);
         setShouldFetchChats(true);
       }
@@ -80,8 +78,7 @@ const TabTwoScreen = () => {
             setShouldFetchChats(true);
           //outside of chats
           } else{
-            console.log("ff");
-            fetchChatsInitial();
+            fetchChats();
           }
       }
   });
@@ -204,8 +201,6 @@ const TabTwoScreen = () => {
       const {messages, userProfile} = await response.json();
       setMessages(messages);
       setUserProfile(userProfile);
-      console.log("messages", messages);
-      console.log("userProfile:", userProfile);
     } catch (error) {
       console.error('Error loading messages:', error);
     }
@@ -227,19 +222,13 @@ const TabTwoScreen = () => {
     setMessages(updatedMessages);
     
     try {
-      const response = await fetch(`http://192.168.1.17:3000/api/chat/${userId}/${chatId}`, {
+      await fetch(`http://192.168.1.17:3000/api/chat/${userId}/${chatId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(lastNewMessage),
       });
-      //if (response.ok){
-      //  fetchChats();
-      //}
-      //else {
-      //  throw new Error('Failed post');
-      //}
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {
@@ -350,7 +339,7 @@ const TabTwoScreen = () => {
           <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: 15 }}>
             <TouchableOpacity
               onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); if (shouldFetchChats) {
-                fetchChatsInitial(); setShouldFetchChats(false)} else {console.log('not');} }}
+                fetchChats(); setShouldFetchChats(false)} }}
               style={{
                 backgroundColor: '#888888',
                 borderRadius: 5,
