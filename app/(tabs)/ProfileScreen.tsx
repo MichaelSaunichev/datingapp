@@ -127,7 +127,6 @@ const ProfileScreen: React.FC = ({}) => {
           const storage = getStorage();
           const imageRef = ref(storage, imageUrl);
           await deleteObject(imageRef);
-          console.log('Image deleted successfully from Firebase Storage:', imageUrl);
         } catch (error) {
           console.error('Error deleting image from Firebase Storage:', error);
         }
@@ -188,7 +187,6 @@ const ProfileScreen: React.FC = ({}) => {
 
   const setTheImageBlobs = async () => {
     if (alreadyLoadingBlobs){
-      console.log("over here");
       return
     }
     setalreadyLoadingBlobs(true);

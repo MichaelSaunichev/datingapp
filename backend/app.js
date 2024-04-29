@@ -24,9 +24,9 @@ const io = socketIo(server);
 io.on('connection', (socket) => {
   console.log('A client connected');
 
-  socket.on('sendMessage', () => {
+  socket.on('sendMessage', ({ theUserId }) => {
     console.log('Received sendMessage event from client');
-    io.emit('message', 'Hello from server');
+    io.emit('message', { theUserId });
   });
 
   socket.on('updateChats', ({ theUserId1, theUserId2 }) => {

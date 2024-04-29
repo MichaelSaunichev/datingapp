@@ -75,7 +75,6 @@ router.delete('/api/user/delete/:userId', (req, res) => {
     // Remove user from other users' cardData
     for (const key in cardData) {
       const userIndex = cardData[key].findIndex(card => card.id === userId);
-      console.log('ind', userIndex);
       if (userIndex !== -1) {
         const user = users.find(user => user.id === key);
         if (user && user.renderIndex != null && userIndex < user.renderIndex) {
@@ -214,7 +213,6 @@ router.delete('/api/cards/:userId/:cardId', (req, res) => {
 
 router.get('/api/cards', function (req, res, next) {
   const { userId, datingPreferences } = req.query;
-  console.log("datingpreference:", datingPreferences);
   // Retrieve user cards data for the specified user ID
   const userCards = cardData[userId] || [];
 
@@ -237,7 +235,6 @@ router.get('/api/cards', function (req, res, next) {
       (checkUser.gender === 'Non-binary') ||
       ((datingPreferences === 'Men' && checkUser.gender === 'Male') ||
         (datingPreferences === 'Women' && checkUser.gender === 'Female')) 
-    console.log("meets:", meetsPreferences);
     if (meetsPreferences) {
       nextCard = {
         id: checkUserId,
@@ -257,7 +254,6 @@ router.get('/api/cards', function (req, res, next) {
 
     // If the current card doesn't meet preferences, move to the next index
     currentIndex += 1;
-    console.log("index:",currentIndex);
     // Wrap the index to 0 if it reaches the end of the array
     if (currentIndex === userCards.length) {
       currentIndex = 0;
@@ -289,7 +285,6 @@ router.post('/api/incrementIndex', (req, res) => {
 router.put('/api/addlike/:userId/:likedUser', (req, res) => {
   const userId = req.params.userId;
   const likedUser = req.params.likedUser;
-  console.log("liked", likedUser);
 
   // Find the user in the likedUser array with the specified userId
   const likedUserData = cardData[likedUser];
