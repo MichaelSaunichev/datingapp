@@ -5,6 +5,8 @@ import { useRoute } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import io from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 
 
 interface CustomMessage extends IMessage {
@@ -35,6 +37,9 @@ const TabTwoScreen = () => {
   const [userFirstImageBlobs, setUserFirstImageBlobs] = useState<{ [userId: string]: string }>({});
   const [initialRender, setInitialRender] = useState<boolean>(false);
 
+  const socketRef = useRef(null as Socket | null);
+  const [shouldFetchChats, setShouldFetchChats] = useState<boolean>(false);
+
 
   const userId = userEmail;
 
@@ -45,6 +50,66 @@ const TabTwoScreen = () => {
       };
       fetchData();
   }, []);
+
+  useEffect(() => {
+    const socket = io('http://192.168.1.17:3000');
+    socketRef.current = socket;
+    
+    socket.on('updateTheChats', ({ theUserId1, theUserId2 }) => {
+        if ( (theUserId1 === userId) || (theUserId2 === userId) ){
+            fetchChatsInitial();
+        }
+    });
+
+    socket.on('theNewMessage', ({ senderId, recipientId }) => {
+      console.log("up");
+      //current user
+      if (senderId == userId){
+        console.log("gg");
+        fetchMostRecentMessage(true);
+        setShouldFetchChats(true);
+      }
+      //if person being sent to
+      if (recipientId === userId) {
+          // if in the chat
+          if (selectedChat === senderId) {
+            fetchMostRecentMessage(false);
+            setShouldFetchChats(true);
+          // in another chat
+          } else if (selectedChat != null){
+            setShouldFetchChats(true);
+          //outside of chats
+          } else{
+            console.log("ff");
+            fetchChatsInitial();
+          }
+      }
+  });
+  
+    return () => {
+        socket.disconnect();
+    };
+  }, []);
+
+  const fetchMostRecentMessage = async (alreadyGot: boolean) => {
+    try {
+      const chatId = selectedChat?.toString();
+      const response = await fetch(`http://192.168.1.17:3000/api/chat/${userId}/${chatId}?limit=1`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch most recent message');
+      }
+      const { messages } = await response.json();      
+      const mostRecentMessage = messages[0];
+      console.log("the messages", mostRecentMessage);
+      if(!alreadyGot){
+        if (mostRecentMessage) {
+          setMessages(previousMessages => [...previousMessages, mostRecentMessage]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching most recent message:', error);
+    }
+  };
 
   const loadEarlierMessages = async () => {
     try {
@@ -169,14 +234,18 @@ const TabTwoScreen = () => {
         },
         body: JSON.stringify(lastNewMessage),
       });
-      if (response.ok){
-        fetchChats();
-      }
-      else {
-        throw new Error('Failed post');
-      }
+      //if (response.ok){
+      //  fetchChats();
+      //}
+      //else {
+      //  throw new Error('Failed post');
+      //}
     } catch (error) {
       console.error('Error sending message:', error);
+    } finally {
+      if (socketRef.current) {
+        socketRef.current.emit('newMessage', { senderId: userId, recipientId: selectedChat });
+      }
     }
   };
 
@@ -195,7 +264,9 @@ const TabTwoScreen = () => {
     } catch (error) {
       console.error('Error unmatching:', error);
     } finally{
-      fetchChats();
+      if (socketRef.current) {
+        socketRef.current.emit('updateChats', { theUserId1: null, theUserId2: userId2 });
+      }
     }
   };
 
@@ -214,7 +285,9 @@ const TabTwoScreen = () => {
     } catch (error) {
       console.error('Error unmatching:', error);
     } finally{
-      fetchChats();
+      if (socketRef.current) {
+        socketRef.current.emit('updateChats', { theUserId1: null, theUserId2: userId2 });
+      }
     }
   };
   const scrollToBottomComponent = () => {
@@ -276,7 +349,8 @@ const TabTwoScreen = () => {
         <View style={{ flex: 1 , backgroundColor: '#FFF8E1'}}>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: 15 }}>
             <TouchableOpacity
-              onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); }}
+              onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); if (shouldFetchChats) {
+                fetchChatsInitial(); setShouldFetchChats(false)} else {console.log('not');} }}
               style={{
                 backgroundColor: '#888888',
                 borderRadius: 5,

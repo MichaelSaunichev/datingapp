@@ -5,6 +5,8 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Keyboard } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import io from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 
 interface CustomMessage extends IMessage {
   user: User;
@@ -15,7 +17,6 @@ interface CustomMessage extends IMessage {
 
 interface SelectedUser {
     pictures: string[];
-    // Add other properties here if needed
   }
 
 const NetworkScreen  = () => {
@@ -32,15 +33,27 @@ const NetworkScreen  = () => {
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [selectedEmoji, setSelectedEmoji] = useState<string>('');
     const userId = userEmail || '';
-    const scrollViewRef = useRef<ScrollView>(null);
+    //const scrollViewRef = useRef<ScrollView>(null);
     const [showChat, setShowChat] = useState<boolean>(false);
     const [imageBlobs, setImageBlobs] = useState<string[]>([]);
     const [modalLoading, setModalLoading] = useState<boolean>(false);
     const [alreadyLoadingBlobs, setalreadyLoadingBlobs] = useState(false)
 
+    const socketRef = useRef(null as Socket | null);
+
     useEffect(() => {
-        console.log("pics:", pictures);
-    }, [pictures]);
+        const socket = io('http://192.168.1.17:3000');
+        socketRef.current = socket;
+        
+        socket.on('message', () => {
+            console.log("recieved");
+            fetchMostRecentMessage();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
 
     useEffect(() => {
         if(showChat){
@@ -128,6 +141,20 @@ const NetworkScreen  = () => {
             console.error('Error fetching messages:', error);
         }
     };
+
+    const fetchMostRecentMessage = async () => {
+        try {
+            const response = await fetch(`http://192.168.1.17:3000/api/globalchat?limit=1`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch most recent message');
+            }
+            const { messages } = await response.json();
+            const mostRecentMessage = messages[0];
+            setMessages(previousMessages => GiftedChat.append(previousMessages, mostRecentMessage, false));
+        } catch (error) {
+            console.error('Error fetching most recent message:', error);
+        }
+    };
     
 
     const loadEarlierMessages = async () => {
@@ -187,11 +214,6 @@ const NetworkScreen  = () => {
             isAnonymous: isAnonymousMode,
             emoji: isAnonymousMode ? selectedEmoji : undefined,
         }));
-    
-        // Update the messages state
-        setMessages(previousMessages =>
-            GiftedChat.append(previousMessages, messagesToAppend, false)
-        );
 
         const lastNewMessage = newMessages[newMessages.length - 1];
 
@@ -217,7 +239,12 @@ const NetworkScreen  = () => {
         } catch (error) {
             console.error('Error sending message:', error);
         } finally {
-            scrollToBottom();
+            //scrollToBottom();
+            if (socketRef.current) {
+                socketRef.current.emit('sendMessage');
+              } else {
+                console.error('Socket connection is not established');
+              }
         }
     };
 
@@ -243,11 +270,11 @@ const NetworkScreen  = () => {
         );
     };
 
-    const scrollToBottom = () => {
-        if (scrollViewRef && scrollViewRef.current) {
-            scrollViewRef.current.scrollToEnd({ animated: true });
-        }
-    };
+    //const scrollToBottom = () => {
+    //    if (scrollViewRef && scrollViewRef.current) {
+    //        scrollViewRef.current.scrollToEnd({ animated: true });
+    //    }
+    //};
 
     interface RenderSendProps {
         text?: string;

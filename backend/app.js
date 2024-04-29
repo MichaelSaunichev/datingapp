@@ -15,6 +15,35 @@ var usersRouter = require('./routes/users');
 var app = express();
 app.use(cors());
 
+const http = require('http');
+const socketIo = require('socket.io');
+const server = http.createServer(app);
+const io = socketIo(server);
+
+// socket
+io.on('connection', (socket) => {
+  console.log('A client connected');
+
+  socket.on('sendMessage', () => {
+    console.log('Received sendMessage event from client');
+    io.emit('message', 'Hello from server');
+  });
+
+  socket.on('updateChats', ({ theUserId1, theUserId2 }) => {
+    console.log(`${theUserId1} - ${theUserId2}`);
+    io.emit('updateTheChats', { theUserId1, theUserId2 });
+  });
+
+  socket.on('newMessage', ({ senderId, recipientId }) => {
+    console.log(`New message from ${senderId} to ${recipientId}`);
+    io.emit('theNewMessage', { senderId, recipientId });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('A client disconnected');
+  });
+});
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -49,7 +78,7 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-app.listen(port, ip, () => {
+server.listen(port, ip, () => {
   console.log(`Server is running at http://${ip}:${port}`);
 });
 

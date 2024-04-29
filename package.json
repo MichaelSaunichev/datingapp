@@ -26,6 +26,7 @@
     "@react-navigation/native": "^6.1.10",
     "@react-navigation/stack": "^6.3.21",
     "@types/firebase": "^3.2.1",
+    "@types/socket.io-client": "^3.0.0",
     "core-js": "^3.36.0",
     "expo": "~50.0.17",
     "expo-font": "~11.10.3",
@@ -59,6 +60,7 @@
     "react-native-vector-icons": "^10.0.3",
     "react-native-web": "~0.19.6",
     "secure-random": "^1.1.2",
+    "socket.io-client": "^4.7.5",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

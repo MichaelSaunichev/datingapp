@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRoute } from '@react-navigation/native';
+import io from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 
 interface Card {
   id: number;
@@ -27,8 +29,10 @@ const TabOneScreen = () => {
   const [preferences, setPreferences] = useState<userPreferences | null>(null);
   const [card, setCard] = useState<Card>();
   const [loading, setLoading] = useState<boolean>(false);
-  const [loadingMatched, setLoadingMatched] = useState<Boolean>(false);
+  const [loadingMatched, setLoadingMatched] = useState<boolean>(false);
   const [matched, setMatched] = useState<boolean>(false);
+
+  const socketRef = useRef(null as Socket | null);
 
   const userId = userEmail;
 
@@ -69,6 +73,16 @@ const TabOneScreen = () => {
       renderCardUI();
     }
   }, [preferences]);
+
+  useEffect(() => {
+    const socket = io('http://192.168.1.17:3000');
+    socketRef.current = socket;
+    
+    return () => {
+        socket.disconnect();
+    };
+}, []);
+
 
   const renderCardUI = async () => {
     if (loadingMatched){
@@ -165,25 +179,38 @@ const TabOneScreen = () => {
   };
 
   const onLike = async () => {
-    if (loading){
-      return
+    if (loading || !preferences) {
+      return;
     }
     setLoading(true); 
-    const currentCard = card;
-    if (currentCard != undefined){
-      if (currentCard.likesYou === 1) {
+    const { datingPreferences } = preferences;
+
+    const response = await fetch(`http://192.168.1.17:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}`);
+        
+    if (!response.ok) {
+      throw new Error('Failed to fetch card data');
+    }
+    const cardData = await response.json();
+    if (cardData != undefined){
+      if (cardData.likesYou === 1) {
         try {
-          addChat(userId, currentCard.id);
-          await removeCard(currentCard).then(() => {
+          addChat(userId, cardData.id);
+          await removeCard(cardData).then(() => {
             setMatched(true);
+            if (socketRef.current) {
+              console.log('emit', cardData.id, userId);
+                socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: cardData.id });
+            } else{
+              console.log('not');
+            }
           });
         } catch (error) {
           console.error('Error liked back:', error);
         }
       } else {
         try {
-          addLike(currentCard.id);
-          await removeCard(currentCard).then(() => {
+          await addLike(cardData.id);
+          await removeCard(cardData).then(() => {
             renderCardUI();
           });
         } catch (error) {
@@ -275,7 +302,7 @@ const TabOneScreen = () => {
       )}
       {matched && (
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.button, { opacity: loadingMatched ? 0.5 : 1, backgroundColor: '#3498db', marginTop: 10}]} onPress={() => { renderCardUI() } }>
+          <TouchableOpacity disabled = {loadingMatched} style={[styles.button, { opacity: loadingMatched ? 0.5 : 1, backgroundColor: '#3498db', marginTop: 10}]} onPress={() => { renderCardUI() } }>
             <Text style={styles.buttonText}>Next</Text>
           </TouchableOpacity>
         </View>
