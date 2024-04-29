@@ -133,7 +133,7 @@ router.post('/api/user/create', (req, res) => {
 
 
   users.forEach((user) => {
-    if (user.id !== newUser.id) {
+    if (user.id !== newUser.id && cardData[user.id]) {
       const renderIndex = user.renderIndex;
       const insertIndex = renderIndex + 1;
       cardData[user.id].splice(insertIndex, 0, { id: newUser.id, likesYou: 0 });
