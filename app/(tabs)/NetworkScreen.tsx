@@ -45,9 +45,10 @@ const NetworkScreen  = () => {
         const socket = io('http://192.168.1.17:3000');
         socketRef.current = socket;
         
-        socket.on('message', () => {
-            console.log("recieved");
-            fetchMostRecentMessage();
+        socket.on('message', ( {theUserId} ) => {
+            if (userId != theUserId){
+                fetchMostRecentMessage();
+            }
         });
 
         return () => {
@@ -76,7 +77,6 @@ const NetworkScreen  = () => {
 
     const setTheImageBlobs = async (user: SelectedUser) => {
         if (alreadyLoadingBlobs){
-            console.log("over");
             return
         }
         setalreadyLoadingBlobs(true);
@@ -216,6 +216,10 @@ const NetworkScreen  = () => {
             emoji: isAnonymousMode ? selectedEmoji : undefined,
         }));
 
+        setMessages(previousMessages =>
+            GiftedChat.append(previousMessages, messagesToAppend, false)
+        );
+
         const lastNewMessage = newMessages[newMessages.length - 1];
 
         const messageToSend = {
@@ -242,7 +246,7 @@ const NetworkScreen  = () => {
         } finally {
             //scrollToBottom();
             if (socketRef.current) {
-                socketRef.current.emit('sendMessage');
+                socketRef.current.emit('sendMessage', { theUserId: userId });
               } else {
                 console.error('Socket connection is not established');
               }

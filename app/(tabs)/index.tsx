@@ -198,10 +198,7 @@ const TabOneScreen = () => {
           await removeCard(cardData).then(() => {
             setMatched(true);
             if (socketRef.current) {
-              console.log('emit', cardData.id, userId);
-                socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: cardData.id });
-            } else{
-              console.log('not');
+              socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: cardData.id });
             }
           });
         } catch (error) {

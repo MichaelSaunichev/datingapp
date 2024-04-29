@@ -43,7 +43,6 @@ const Signup = () => {
                     throw new Error('Failed to create user');
                 }
                 const newUser = await response.json();
-                console.log("donee");
                 return newUser;
                 } catch (error) {
                     console.error(error);
