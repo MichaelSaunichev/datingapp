@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useProfile } from './ProfileContext'; // Ensure you import useProfile from its correct path
 
 const EnterName = () => {
+    const { profile, setProfile } = useProfile();
     const navigation = useNavigation();
-    const [name, setName] = useState('');
+
+    const handleNameChange = (name) => {
+        setProfile(prevProfile => ({
+            ...prevProfile,
+            name: name // Update the name property of the profile
+        }));
+    };
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -12,16 +20,16 @@ const EnterName = () => {
                 <KeyboardAvoidingView behavior='padding'>
                     <Text style={styles.sectionTitle}>Enter your name</Text>
                     <TextInput
-                        value={name}
+                        value={profile.name}
                         style={styles.input}
                         placeholder="Name"
                         placeholderTextColor="#888"
-                        onChangeText={setName}
+                        onChangeText={handleNameChange} // Update this to handleNameChange
                     />
                     {/* Navigation Button to go to the next screen */}
                     <TouchableOpacity
                         style={styles.button}
-                        onPress={() => navigation.navigate('EnterDOB', { name })}
+                        onPress={() => navigation.navigate('EnterDOB')} // Removed passing name as a parameter since it's managed globally
                     >
                         <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>

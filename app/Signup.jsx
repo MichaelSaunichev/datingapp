@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword } from '@firebase/auth';
 import { createUserWithEmailAndPassword } from '@firebase/auth';
 import { getFirestore, doc, setDoc } from '@firebase/firestore';
 import { useRoute } from '@react-navigation/native';
+import { useProfile } from './ProfileContext';
 
 
 const Signup = () => {
@@ -15,7 +16,7 @@ const Signup = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
 
     const route = useRoute();
-    const { profile } = route.params;
+    const { profile } = useProfile();
 
     const auth = FIREBASE_AUTH;
     const navigation = useNavigation();

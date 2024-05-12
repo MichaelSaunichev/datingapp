@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useProfile } from './ProfileContext';
 
 const EnterDOB = () => {
+    const { profile, setProfile } = useProfile();
     const navigation = useNavigation();
-    const [dob, setDob] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     const onChangeDate = (event, selectedDate) => {
         setShowDatePicker(Platform.OS === 'ios'); // keep the picker open on iOS after selection
-        const currentDate = selectedDate || dob;
-        setDob(currentDate);
+        const currentDate = selectedDate || profile.dob;
+        setProfile(prev => ({ ...prev, dob: currentDate })); // Update dob in the global profile state
     };
 
     return (
@@ -22,7 +23,7 @@ const EnterDOB = () => {
             </TouchableOpacity>
             {showDatePicker && (
                 <DateTimePicker
-                    value={dob}
+                    value={profile.dob}
                     mode="date"
                     display="default"
                     onChange={onChangeDate}
@@ -30,9 +31,7 @@ const EnterDOB = () => {
             )}
             <TouchableOpacity
                 style={styles.button}
-                onPress={() => {
-                    navigation.navigate('SelectGender', { dob: dob.toISOString() });
-                }}
+                onPress={() => navigation.navigate('SelectGender')}
             >
                 <Text style={styles.buttonText}>Next</Text>
             </TouchableOpacity>

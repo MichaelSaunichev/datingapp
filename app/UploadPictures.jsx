@@ -3,14 +3,15 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'rea
 import { useNavigation } from '@react-navigation/native';
 import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from '@firebase/storage';
+import { useProfile } from './ProfileContext'; // Import useProfile from your context provider
 
 const UploadPictures = () => {
     const navigation = useNavigation();
-    const [pictures, setPictures] = useState([]);
-    const [uploading, setUploading] = useState(false);
+    const { profile, setProfile } = useProfile(); // Access profile from ProfileContext
+    const [uploading, setUploading] = useState(false); // Local state for managing upload status
 
     const uploadPicture = async () => {
-        if (pictures.length >= 5) {
+        if (profile.pictures.length >= 5) {
             alert("You can only upload up to 5 pictures.");
             return;
         }
@@ -33,7 +34,12 @@ const UploadPictures = () => {
                 const storageRef = ref(storage, `pictures/${Date.now()}`);
                 await uploadBytes(storageRef, blob);
                 const imageUrl = await getDownloadURL(storageRef);
-                setPictures([...pictures, imageUrl]);
+
+                // Update the global profile state with the new image URL
+                setProfile(prevProfile => ({
+                    ...prevProfile,
+                    pictures: [...prevProfile.pictures, imageUrl]
+                }));
             }
         } catch (error) {
             console.error("Error uploading image:", error);
@@ -48,16 +54,16 @@ const UploadPictures = () => {
             <ScrollView>
                 <Text style={styles.sectionTitle}>Upload 3 to 5 Pictures</Text>
                 <View style={styles.imagesContainer}>
-                    {pictures.map((url, index) => (
+                    {profile.pictures.map((url, index) => (
                         <Image key={index} source={{ uri: url }} style={styles.uploadedImage} />
                     ))}
                 </View>
-                {pictures.length < 5 && (
+                {profile.pictures.length < 5 && (
                     <TouchableOpacity style={styles.button} onPress={uploadPicture} disabled={uploading}>
                         <Text style={styles.buttonText}>Upload Picture</Text>
                     </TouchableOpacity>
                 )}
-                {pictures.length >= 3 && (
+                {profile.pictures.length >= 3 && (
                     <TouchableOpacity
                         style={styles.button}
                         onPress={() => navigation.navigate('Signup')}

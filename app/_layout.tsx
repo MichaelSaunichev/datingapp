@@ -4,6 +4,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useColorScheme } from '@/components/useColorScheme';
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { NavigationContainer } from '@react-navigation/native'
+import { ProfileProvider } from './ProfileContext'
 import Login from './Login';
 import Welcome from './Welcome';
 import Signup from './Signup';
@@ -52,6 +53,7 @@ export default function RootLayoutNav() {
   }, []);
 
   return (
+    <ProfileProvider>
     <NavigationContainer independent={true} theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StackGuy.Navigator>
         {user ? (
@@ -73,5 +75,6 @@ export default function RootLayoutNav() {
         )}
       </StackGuy.Navigator>
     </NavigationContainer>
+    </ProfileProvider>
   );
 }

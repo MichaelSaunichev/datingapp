@@ -1,20 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useProfile } from './ProfileContext'; 
 
 const SelectGender = () => {
     const navigation = useNavigation();
-    const [profile, setProfile] = useState({
-      gender: '',
-      datingPreferences: ''
-    });
+    const { profile, setProfile } = useProfile(); 
 
     const setGender = (gender) => {
-        setProfile(prevState => ({ ...prevState, gender }));
+        setProfile(prevProfile => ({ ...prevProfile, gender })); 
     };
 
     const setPreference = (datingPreferences) => {
-        setProfile(prevState => ({ ...prevState, datingPreferences }));
+        setProfile(prevProfile => ({ ...prevProfile, datingPreferences })); // Update dating preferences in the global profile state
     };
 
     const getButtonStyle = (selectedOption, option) => {
@@ -65,7 +63,7 @@ const SelectGender = () => {
             {/* Navigation Button */}
             <TouchableOpacity
                 style={styles.button}
-                onPress={() => navigation.navigate('EnterBio', { profile })}
+                onPress={() => navigation.navigate('EnterBio')} // No need to pass profile as it is globally managed
             >
                 <Text style={styles.buttonText}>Next</Text>
             </TouchableOpacity>
