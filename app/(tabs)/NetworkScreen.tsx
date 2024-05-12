@@ -42,12 +42,26 @@ const NetworkScreen  = () => {
     const socketRef = useRef(null as Socket | null);
 
     useEffect(() => {
-        const socket = io('http://192.168.1.17:3000');
+        const socket = io('http://192.168.1.19:3000');
         socketRef.current = socket;
         
         socket.on('message', ( {theUserId} ) => {
             if (userId != theUserId){
                 fetchMostRecentMessage();
+            }
+        });
+
+        socket.on('like', ({ updatedMessage, theUserId }) => {
+            if (theUserId != userId){
+                console.log("updateing like count for a message");
+                setMessages((prevMessages) =>
+                    prevMessages.map((prevMessage) =>
+                        prevMessage._id === updatedMessage._id ? updatedMessage : prevMessage
+                    )
+                );
+            }
+            else {
+                console.log("current user", userId);
             }
         });
 
@@ -109,7 +123,7 @@ const NetworkScreen  = () => {
         try {
             const newPictures: { [userId: string]: string } = {};
             for (const userId of userIds) {
-                const response = await fetch(`http://192.168.1.17:3000/api/uri/${userId}`);
+                const response = await fetch(`http://192.168.1.19:3000/api/uri/${userId}`);
                 //if (!response.ok) {
                 //    throw new Error(`Failed to fetch profile image for user ${userId}`);
                 //}
@@ -132,7 +146,7 @@ const NetworkScreen  = () => {
 
     const fetchMessages = async () => {
         try {
-            const response = await fetch(`http://192.168.1.17:3000/api/globalchat`);
+            const response = await fetch(`http://192.168.1.19:3000/api/globalchat`);
             if (!response.ok) {
                 throw new Error('Failed to fetch global chat');
             }
@@ -145,7 +159,7 @@ const NetworkScreen  = () => {
 
     const fetchMostRecentMessage = async () => {
         try {
-            const response = await fetch(`http://192.168.1.17:3000/api/globalchat?limit=1`);
+            const response = await fetch(`http://192.168.1.19:3000/api/globalchat?limit=1`);
             if (!response.ok) {
                 throw new Error('Failed to fetch most recent message');
             }
@@ -160,7 +174,7 @@ const NetworkScreen  = () => {
 
     const loadEarlierMessages = async () => {
         try {
-            const response = await fetch(`http://192.168.1.17:3000/api/globalchat?limit=20&offset=${messages.length}`);
+            const response = await fetch(`http://192.168.1.19:3000/api/globalchat?limit=20&offset=${messages.length}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch earlier messages');
             }
@@ -193,7 +207,7 @@ const NetworkScreen  = () => {
             ));
     
             // Send the updated likes to the backend
-            const response = await fetch(`http://192.168.1.17:3000/api/globalchat/${updatedMessage._id}/like`, {
+            const response = await fetch(`http://192.168.1.19:3000/api/globalchat/${updatedMessage._id}/like`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -204,7 +218,15 @@ const NetworkScreen  = () => {
             if (!response.ok) {
                 throw new Error('Failed to update like status');
             }
-        } catch (error) {
+            if (socketRef.current) {
+                socketRef.current.emit('sendLike', { theUpdatedMessage: updatedMessage, theUserId: userId });
+              } else {
+                console.error('Socket connection is not established');
+              }
+            
+        } 
+        
+        catch (error) {
             console.error('Error handling like toggle:', error);
         }
     };
@@ -230,7 +252,7 @@ const NetworkScreen  = () => {
 
         try {
             // Send the new message to the backend server
-            const response = await fetch(`http://192.168.1.17:3000/api/globalchat`, {
+            const response = await fetch(`http://192.168.1.19:3000/api/globalchat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -257,7 +279,7 @@ const NetworkScreen  = () => {
         if (!modalLoading){
             setModalLoading(true);
             try {
-                const response = await fetch(`http://192.168.1.17:3000/api/user/${user._id}`);
+                const response = await fetch(`http://192.168.1.19:3000/api/user/${user._id}`);
                 if (!response.ok) {
                     setModalLoading(false);
                     return

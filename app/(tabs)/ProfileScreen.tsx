@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Switch, Modal, View, Text, TextInput, ActivityIndicator, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 import { getAuth, deleteUser, User } from "firebase/auth";
+import io from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 
 type ProfileState = {
   name: string;
@@ -45,13 +47,14 @@ const ProfileScreen: React.FC = ({}) => {
 
   const [profileBlob, setProfileBlob] = useState<string>('');;
   const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] = useState(false);
+  const socketRef = useRef(null as Socket | null);
 
   const userId = userEmail;
   
 
   useEffect(() => {
     const fetchUser = () => {
-      fetch(`http://192.168.1.17:3000/api/user/${userId}`)
+      fetch(`http://192.168.1.19:3000/api/user/${userId}`)
         .then(response => {
           if (response.ok) {
             return response.json();
@@ -76,6 +79,15 @@ const ProfileScreen: React.FC = ({}) => {
   
     fetchUser();
   }, [userId]);
+
+  useEffect(() => {
+    const socket = io('http://192.168.1.19:3000');
+    socketRef.current = socket;
+    
+    return () => {
+        socket.disconnect();
+    };
+  }, []);
   
 
   useEffect(() => {
@@ -96,7 +108,7 @@ const ProfileScreen: React.FC = ({}) => {
   
   const updateUserData = () => {
     // Send a request to update user data
-    fetch(`http://192.168.1.17:3000/api/user/${userId}/update`, {
+    fetch(`http://192.168.1.19:3000/api/user/${userId}/update`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -158,7 +170,7 @@ const ProfileScreen: React.FC = ({}) => {
         }
       }));
 
-      const response = await fetch(`http://192.168.1.17:3000/api/user/delete/${userId}`, {
+      const response = await fetch(`http://192.168.1.19:3000/api/user/delete/${userId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -167,6 +179,9 @@ const ProfileScreen: React.FC = ({}) => {
   
       if (response.ok) {
         console.log(`User account with userId ${userId} deleted successfully!`);
+        if (socketRef.current) {
+          socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: "all" });
+        }
       } else {
         console.error(`Failed to delete user account with userId ${userId}.`);
       }

@@ -5,7 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors');
 const port = 3000;
-const ip = '192.168.1.17';
+const ip = '192.168.1.19';
 
 
 var indexRouter = require('./routes/index');
@@ -37,6 +37,11 @@ io.on('connection', (socket) => {
   socket.on('newMessage', ({ senderId, recipientId }) => {
     console.log(`New message from ${senderId} to ${recipientId}`);
     io.emit('theNewMessage', { senderId, recipientId });
+  });
+
+  socket.on('sendLike', ({ updatedMessage, theUserId }) => {
+    console.log(`New like from ${theUserId}`);
+    io.emit('like', { updatedMessage, theUserId });
   });
 
   socket.on('disconnect', () => {
