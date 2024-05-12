@@ -7,7 +7,12 @@ import { NavigationContainer } from '@react-navigation/native'
 import Login from './Login';
 import Welcome from './Welcome';
 import Signup from './Signup';
+import EnterName from './EnterName'
+import EnterBio from './EnterBio'
+import EnterDOB from './EnterDOB'
+import SelectGender from './SelectGender'
 import CreateProfile from './CreateProfile';
+import UploadPictures from './UploadPictures'
 import { Stack } from 'expo-router';
 import { Auth, User } from '@firebase/auth'
 import { FIREBASE_AUTH } from 'FirebaseConfig'
@@ -59,7 +64,11 @@ export default function RootLayoutNav() {
           <StackGuy.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
           <StackGuy.Screen name="Login" component={Login} options={{ headerShown: false }} />
           <StackGuy.Screen name="Signup" component={Signup} options={{ headerShown: false }} />
-          <StackGuy.Screen name="CreateProfile" component={CreateProfile} options={{ headerShown: false }} />
+          <StackGuy.Screen name="EnterName" component={EnterName} options={{ headerShown: false }} />
+          <StackGuy.Screen name="EnterBio" component={EnterBio} options={{ headerShown: false }} />
+          <StackGuy.Screen name="EnterDOB" component={EnterDOB} options={{ headerShown: false }} />
+          <StackGuy.Screen name="SelectGender" component={SelectGender} options={{ headerShown: false }} />
+          <StackGuy.Screen name="UploadPictures" component={UploadPictures} options={{ headerShown: false }} />
           </>
         )}
       </StackGuy.Navigator>
