@@ -212,7 +212,7 @@ router.delete('/api/cards/:userId/:cardId', (req, res) => {
 });
 
 router.get('/api/cards', function (req, res, next) {
-  const { userId, datingPreferences } = req.query;
+  const { userId, datingPreferences, checkFirstCardOnly } = req.query;
   // Retrieve user cards data for the specified user ID
   const userCards = cardData[userId] || [];
 
@@ -226,6 +226,10 @@ router.get('/api/cards', function (req, res, next) {
 
   while (true) {
     const card = userCards[currentIndex];
+
+    if (!card || (checkFirstCardOnly && currentIndex !== originalIndex)) {
+      return res.json(null);
+    }
 
     const checkUserId = card.id;
     const checkUser = users.find(u => u.id === checkUserId);
@@ -250,6 +254,8 @@ router.get('/api/cards', function (req, res, next) {
       // Update renderIndex
       users.find(u => u.id === userId).renderIndex = currentIndex;
       return res.json(nextCard);
+    } else if (checkFirstCardOnly){
+      return res.json(null);
     }
 
     // If the current card doesn't meet preferences, move to the next index

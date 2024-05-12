@@ -32,7 +32,7 @@ const Signup = () => {
             const profileWithId = { ...profile, id: email };
             
             try {
-                const response = await fetch('http://192.168.1.17:3000/api/user/create', {
+                const response = await fetch('http://192.168.1.19:3000/api/user/create', {
                     method: 'POST',
                     headers: {
                     'Content-Type': 'application/json',

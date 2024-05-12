@@ -42,7 +42,7 @@ const TabOneScreen = () => {
       setMatched(false);
   
       const fetchUser = () => {
-        fetch(`http://192.168.1.17:3000/api/user/${userId}`)
+        fetch(`http://192.168.1.19:3000/api/user/${userId}`)
           .then(response => {
             if (response.ok) {
               return response.json();
@@ -75,7 +75,7 @@ const TabOneScreen = () => {
   }, [preferences]);
 
   useEffect(() => {
-    const socket = io('http://192.168.1.17:3000');
+    const socket = io('http://192.168.1.19:3000');
     socketRef.current = socket;
     
     return () => {
@@ -93,7 +93,7 @@ const TabOneScreen = () => {
       try {
         const { datingPreferences } = preferences;
         // Fetch card data from the backend with filtering parameters
-        const response = await fetch(`http://192.168.1.17:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}`);
+        const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&checkFirstCardOnly=0`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch card data');
@@ -128,7 +128,7 @@ const TabOneScreen = () => {
 
   const removeCard = async (card: Card) => {
     try {
-      const response = await fetch(`http://192.168.1.17:3000/api/cards/${userId}/${card.id}`, {
+      const response = await fetch(`http://192.168.1.19:3000/api/cards/${userId}/${card.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -145,7 +145,7 @@ const TabOneScreen = () => {
 
   const addChat = async (userId: string | undefined, chatAddId: number) => {
     try {
-      const response = await fetch(`http://192.168.1.17:3000/api/addchat/${userId}/${chatAddId}`, {
+      const response = await fetch(`http://192.168.1.19:3000/api/addchat/${userId}/${chatAddId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -163,7 +163,7 @@ const TabOneScreen = () => {
 
   const addLike = async (likedUser: number) => {
     try {
-      const response = await fetch(`http://192.168.1.17:3000/api/addlike/${userId}/${likedUser}`, {
+      const response = await fetch(`http://192.168.1.19:3000/api/addlike/${userId}/${likedUser}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -185,13 +185,13 @@ const TabOneScreen = () => {
     setLoading(true); 
     const { datingPreferences } = preferences;
 
-    const response = await fetch(`http://192.168.1.17:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}`);
+    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&checkFirstCardOnly=1`);
         
     if (!response.ok) {
       throw new Error('Failed to fetch card data');
     }
     const cardData = await response.json();
-    if (cardData != undefined){
+    if (cardData != null){
       if (cardData.likesYou === 1) {
         try {
           addChat(userId, cardData.id);
@@ -216,19 +216,25 @@ const TabOneScreen = () => {
       }
     }
     else{
-      setLoading(false);
+      console.log("not valid card");
+      renderCardUI();
     }
   };
 
   const onDislike = async () => {
-    if (loading) {
+    if (loading || !preferences) {
       return;
     }
-    setLoading(true); 
-    const currentCard = card;
-    if (currentCard != undefined){
+    setLoading(true);
+    const { datingPreferences } = preferences;
+    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&checkFirstCardOnly=1`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch card data');
+    }
+    const cardData = await response.json();
+    if (cardData != null){
       try {
-        await fetch('http://192.168.1.17:3000/api/incrementIndex', {
+        await fetch('http://192.168.1.19:3000/api/incrementIndex', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -240,7 +246,8 @@ const TabOneScreen = () => {
         console.error('Error disliking card:', error);
       }
     } else{
-      setLoading(false);
+      console.log("not valid card");
+      renderCardUI();
     }
   };
 
