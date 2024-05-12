@@ -44,6 +44,10 @@ const TabTwoScreen = () => {
   const userId = userEmail;
 
   useEffect(() => {
+    console.log('Selected chat changed:', selectedChat);
+  }, [selectedChat]);
+
+  useEffect(() => {
       const fetchData = async () => {
         await fetchChatsInitial();
         setInitialRender(true);
@@ -62,41 +66,39 @@ const TabTwoScreen = () => {
         if (theUserId2 == "all" && theUserId1 != userId){
           const isUserId1InChats = chats.some(chat => chat._id === theUserId1);
           if (isUserId1InChats) {
-              fetchChatsInitial();
+            setSelectedChat(null);
+            fetchChatsInitial();
           }
-        } else {
-          console.log("current user", userId);
         }
     });
 
     socket.on('theNewMessage', ({ senderId, recipientId }) => {
-      //current user
-      if (senderId == userId){
-        fetchMostRecentMessage(true);
-        setShouldFetchChats(true);
-      }
+      console.log("selected chat:", selectedChat);
       //if person being sent to
       if (recipientId === userId) {
-          // if in the chat
-          if (selectedChat === senderId) {
-            fetchMostRecentMessage(false);
-            setShouldFetchChats(true);
-          // in another chat
-          } else if (selectedChat != null){
-            setShouldFetchChats(true);
-          //outside of chats
-          } else{
-            fetchChats();
-          }
+        // if in the chat
+        if (selectedChat === senderId) {
+          console.log("in chat");
+          fetchMostRecentMessage();
+          setShouldFetchChats(true);
+        // in another chat
+        } else if (selectedChat != null){
+          console.log("in another chat");
+          setShouldFetchChats(true);
+        //outside of chats
+        } else{
+          console.log("outside of chats");
+          fetchChats();
+        }
       }
-  });
+    });
   
     return () => {
         socket.disconnect();
     };
   }, []);
 
-  const fetchMostRecentMessage = async (alreadyGot: boolean) => {
+  const fetchMostRecentMessage = async () => {
     try {
       const chatId = selectedChat?.toString();
       const response = await fetch(`http://192.168.1.19:3000/api/chat/${userId}/${chatId}?limit=1`);
@@ -105,11 +107,9 @@ const TabTwoScreen = () => {
       }
       const { messages } = await response.json();      
       const mostRecentMessage = messages[0];
-      console.log("the messages", mostRecentMessage);
-      if(!alreadyGot){
-        if (mostRecentMessage) {
-          setMessages(previousMessages => [...previousMessages, mostRecentMessage]);
-        }
+      console.log("the message", mostRecentMessage);
+      if (mostRecentMessage) {
+        setMessages(previousMessages => [...previousMessages, mostRecentMessage]);
       }
     } catch (error) {
       console.error('Error fetching most recent message:', error);
@@ -240,6 +240,7 @@ const TabTwoScreen = () => {
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {
+      setShouldFetchChats(true);
       if (socketRef.current) {
         socketRef.current.emit('newMessage', { senderId: userId, recipientId: selectedChat });
       }
@@ -262,6 +263,8 @@ const TabTwoScreen = () => {
       console.error('Error unmatching:', error);
     } finally{
       if (socketRef.current) {
+        setSelectedChat(null);
+        fetchChats();
         socketRef.current.emit('updateChats', { theUserId1: null, theUserId2: userId2 });
       }
     }
@@ -282,6 +285,8 @@ const TabTwoScreen = () => {
     } catch (error) {
       console.error('Error unmatching:', error);
     } finally{
+      setSelectedChat(null);
+      fetchChats();
       if (socketRef.current) {
         socketRef.current.emit('updateChats', { theUserId1: null, theUserId2: userId2 });
       }

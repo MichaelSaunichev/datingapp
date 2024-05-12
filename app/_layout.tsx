@@ -16,6 +16,14 @@ import { onAuthStateChanged } from '@firebase/auth';
 
 const StackGuy = createNativeStackNavigator();
 
+import { Slot } from 'expo-router';
+import 'react-native-reanimated'
+/*
+export default function HomeLayout() {
+  return <Slot />;
+}*/
+
+
 function InnerLayout({ user }: { user: User | null }) {
   const colorScheme = useColorScheme();
 

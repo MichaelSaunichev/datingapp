@@ -53,7 +53,7 @@ const NetworkScreen  = () => {
 
         socket.on('like', ({ updatedMessage, theUserId }) => {
             if (theUserId != userId){
-                console.log("updateing like count for a message");
+                console.log("updating like count for a message", updatedMessage);
                 setMessages((prevMessages) =>
                     prevMessages.map((prevMessage) =>
                         prevMessage._id === updatedMessage._id ? updatedMessage : prevMessage
@@ -219,7 +219,7 @@ const NetworkScreen  = () => {
                 throw new Error('Failed to update like status');
             }
             if (socketRef.current) {
-                socketRef.current.emit('sendLike', { theUpdatedMessage: updatedMessage, theUserId: userId });
+                socketRef.current.emit('sendLike', { updatedMessage: updatedMessage, theUserId: userId });
               } else {
                 console.error('Socket connection is not established');
               }
