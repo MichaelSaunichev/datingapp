@@ -20,7 +20,6 @@ const SelectGender = () => {
     };
 
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
             <Text style={styles.sectionTitle}>Select Your Gender</Text>
             <View style={styles.buttonContainer}>
@@ -63,12 +62,11 @@ const SelectGender = () => {
             {/* Navigation Button */}
             <TouchableOpacity
                 style={styles.button}
-                onPress={() => navigation.navigate('EnterBio')} // No need to pass profile as it is globally managed
+                onPress={() => navigation.navigate('EnterBio')}
             >
                 <Text style={styles.buttonText}>Next</Text>
             </TouchableOpacity>
         </View>
-        </TouchableWithoutFeedback>
     );
 };
 
@@ -97,7 +95,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 1.5,
-        flex: 1,
         marginHorizontal: 5,
     },
     selectedButton: {
@@ -110,7 +107,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 1.5,
-        flex: 1,
         marginHorizontal: 5,
     },
     buttonText: {

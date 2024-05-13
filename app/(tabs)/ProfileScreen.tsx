@@ -120,7 +120,11 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const saveChanges = async () => {
-    if (tempProfileState.pictures.length < 3 || tempProfileState.pictures.length > 5){
+    console.log("a a",tempProfileState.bio.length);
+    if (tempProfileState.bio.length < 1){
+      alert("Please enter a valid bio");
+    }
+    else if (tempProfileState.pictures.length < 3 || tempProfileState.pictures.length > 5){
       alert("Please use 3 to 5 images");
     }else{
       setProfileState({
@@ -436,7 +440,7 @@ const ProfileScreen: React.FC = ({}) => {
                   value={tempProfileState.bio}
                   onChangeText={(text) => {
                     const maxLines = 1;
-                    const maxCharacters = 200;
+                    const maxCharacters = 100;
 
                     const lines = text.split('\n');
                     if (lines.length <= maxLines && text.length <= maxCharacters) {
@@ -444,6 +448,7 @@ const ProfileScreen: React.FC = ({}) => {
                     }
                   }}
                 />
+                <Text style={styles.charCount}>{tempProfileState.bio.length}/100</Text>
                 <Text style={styles.editProfileText}>Images:</Text>
                 <View style={styles.editProfileContainer}>
                   {!isDeleting ? (
@@ -745,6 +750,12 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 20,
   },
+  charCount: {
+    alignSelf: 'flex-end',
+    marginBottom: 10,
+    color: '#666',
+    fontSize: 14,
+},
 });
 
 

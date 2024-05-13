@@ -1,4 +1,4 @@
-import React from 'react';
+import {React, useState, useEffect} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useProfile } from './ProfileContext'; // Ensure you import useProfile from its correct path
@@ -7,7 +7,11 @@ const EnterName = () => {
     const { profile, setProfile } = useProfile();
     const navigation = useNavigation();
 
+    const [isButtonEnabled, setIsButtonEnabled] = useState(profile.name.trim().length > 0); // State to track button enablement
+
     const handleNameChange = (name) => {
+        const trimmedName = name.trim();
+        setIsButtonEnabled(trimmedName.length > 0); // Enable/disable button based on input value
         setProfile(prevProfile => ({
             ...prevProfile,
             name: name // Update the name property of the profile
@@ -28,8 +32,15 @@ const EnterName = () => {
                     />
                     {/* Navigation Button to go to the next screen */}
                     <TouchableOpacity
-                        style={styles.button}
-                        onPress={() => navigation.navigate('EnterDOB')} // Removed passing name as a parameter since it's managed globally
+                        style={[styles.button, !isButtonEnabled && { opacity: 0.5 }]} // Disable button when name is empty
+                        onPress={() => {
+                            if (profile.name.trim().length > 0) {
+                                navigation.navigate('EnterDOB');
+                            } else {
+                                setIsButtonEnabled(false);
+                            }
+                        }}
+                        disabled={!isButtonEnabled}
                     >
                         <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>

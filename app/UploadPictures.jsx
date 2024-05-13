@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
-import { getStorage, ref, uploadBytes, getDownloadURL } from '@firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 import { useProfile } from './ProfileContext'; // Import useProfile from your context provider
 
 const UploadPictures = () => {
     const navigation = useNavigation();
     const { profile, setProfile } = useProfile(); // Access profile from ProfileContext
     const [uploading, setUploading] = useState(false); // Local state for managing upload status
+    const [deleteMode, setDeleteMode] = useState(false);
+    const [selectedPictures, setSelectedPictures] = useState([]);
 
     const uploadPicture = async () => {
         if (profile.pictures.length >= 5) {
@@ -49,24 +51,93 @@ const UploadPictures = () => {
         }
     };
 
+    const toggleSelectPicture = (imageUrl) => {
+        if (selectedPictures.includes(imageUrl)) {
+            setSelectedPictures(selectedPictures.filter(url => url !== imageUrl));
+        } else {
+            setSelectedPictures([...selectedPictures, imageUrl]);
+        }
+    };
+
+    const deleteSelectedPictures = async () => {
+        try {
+            const storage = getStorage();
+            await Promise.all(selectedPictures.map(async (imageUrl) => {
+                const storage = getStorage();
+                const imageRef = ref(storage, imageUrl);
+                await deleteObject(imageRef);
+            }));
+            setProfile((prevProfile) => ({
+                ...prevProfile,
+                pictures: prevProfile.pictures.filter((url) => !selectedPictures.includes(url)),
+            }));
+            setSelectedPictures([]);
+        } catch (error) {
+            console.error('Error deleting image from Firebase Storage:', error);
+            alert("Failed to delete image: " + error.message);
+        }
+    };
+
     return (
         <View style={styles.container}>
-            <ScrollView>
-                <Text style={styles.sectionTitle}>Upload 3 to 5 Pictures</Text>
+            <ScrollView contentContainerStyle={styles.scrollContainer}>
+                <Text style={styles.sectionTitle}>
+                    {deleteMode ? 'Select images to delete:' : 'Upload 3 to 5 Pictures'}
+                </Text>
                 <View style={styles.imagesContainer}>
                     {profile.pictures.map((url, index) => (
-                        <Image key={index} source={{ uri: url }} style={styles.uploadedImage} />
+                        <TouchableOpacity
+                            key={index}
+                            onPress={() => {
+                                if (deleteMode) {
+                                    toggleSelectPicture(url);
+                                }
+                            }}
+                            style={[
+                                selectedPictures.includes(url) && styles.selectedImageContainer
+                            ]}
+                        >
+                            <Image source={{ uri: url }} style={styles.uploadedImage} />
+                            {deleteMode && (
+                                <TouchableOpacity
+                                    onPress={() => toggleSelectPicture(url)}
+                                >
+                                </TouchableOpacity>
+                            )}
+                        </TouchableOpacity>
                     ))}
                 </View>
-                {profile.pictures.length < 5 && (
-                    <TouchableOpacity style={styles.button} onPress={uploadPicture} disabled={uploading}>
+                {profile.pictures.length < 5 && !deleteMode && (
+                    <TouchableOpacity
+                        style={[styles.button, uploading && { opacity: 0.5 }]}
+                        onPress={uploadPicture}
+                        disabled={uploading}
+                    >
                         <Text style={styles.buttonText}>Upload Picture</Text>
                     </TouchableOpacity>
                 )}
-                {profile.pictures.length >= 3 && (
+                <TouchableOpacity
+                    style={[styles.button, uploading && { opacity: 0.5 }]}
+                    onPress={() => {setDeleteMode(!deleteMode); setSelectedPictures([])}}
+                >
+                    <Text style={styles.buttonText}>{deleteMode ? "Stop Deleting" : "Delete Picture"}</Text>
+                </TouchableOpacity>
+                {deleteMode && (
                     <TouchableOpacity
-                        style={styles.button}
-                        onPress={() => navigation.navigate('Signup')}
+                    style={[styles.button, uploading && { opacity: 0.5 }]}
+                        onPress={deleteSelectedPictures}
+                    >
+                        <Text style={styles.buttonText}>Delete Selected</Text>
+                    </TouchableOpacity>
+                )}
+                {profile.pictures.length >= 3 && profile.pictures.length <= 5 && (
+                    <TouchableOpacity
+                        style={[styles.button, uploading && { opacity: 0.5 }]}
+                        onPress={() => {
+                            if (profile.pictures.length >= 3 && profile.pictures.length <= 5) {
+                                navigation.navigate('Signup');
+                            }
+                        }}
                     >
                         <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>
@@ -81,10 +152,15 @@ export default UploadPictures;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
         backgroundColor: '#f0f0f0',
     },
+    scrollContainer: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        padding: 20,
+    },
     sectionTitle: {
+        alignSelf: 'center',
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
@@ -112,5 +188,13 @@ const styles = StyleSheet.create({
     buttonText: {
         color: 'white',
         fontSize: 16,
+    },
+    deleteText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: 'bold',
+    },
+    selectedImageContainer: {
+        opacity: 0.5,
     }
 });
