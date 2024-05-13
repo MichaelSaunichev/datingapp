@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -8,11 +8,13 @@ const EnterDOB = () => {
     const { profile, setProfile } = useProfile();
     const navigation = useNavigation();
     const [showDatePicker, setShowDatePicker] = useState(false);
+    let calculatedAge = 0;
 
     const onChangeDate = (event, selectedDate) => {
-        setShowDatePicker(Platform.OS === 'ios'); // keep the picker open on iOS after selection
-        const currentDate = selectedDate || profile.dob;
-        setProfile(prev => ({ ...prev, dob: currentDate })); // Update dob in the global profile state
+        if (selectedDate) {
+            setShowDatePicker(Platform.OS === 'ios');
+            setProfile(prev => ({ ...prev, dob: selectedDate }));
+        }
     };
 
     return (
@@ -31,7 +33,24 @@ const EnterDOB = () => {
             )}
             <TouchableOpacity
                 style={styles.button}
-                onPress={() => navigation.navigate('SelectGender')}
+                onPress={() => {
+                    if (profile.dob) {
+                        const today = new Date();
+                        const dob = new Date(profile.dob);
+                        calculatedAge = today.getFullYear() - dob.getFullYear();
+                        const monthDiff = today.getMonth() - dob.getMonth();
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                            calculatedAge--;
+                        }
+                    }
+                    if (calculatedAge < 18) {
+                        alert("You must be at least 18 years old to use this app.");
+                        return;
+                    } else if (calculatedAge > 150) {
+                        alert("Please enter a valid date of birth.");
+                        return;
+                    } else{ 
+                        navigation.navigate('SelectGender')}}}
             >
                 <Text style={styles.buttonText}>Next</Text>
             </TouchableOpacity>
@@ -53,7 +72,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
-        marginBottom: 20,
+        marginBottom: 10,
     },
     button: {
         backgroundColor: '#007aff',

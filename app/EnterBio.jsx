@@ -1,4 +1,4 @@
-import React from 'react';
+import {React, useState, useEffect} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useProfile } from './ProfileContext';
@@ -7,29 +7,44 @@ const EnterBio = () => {
     const navigation = useNavigation();
     const { profile, setProfile } = useProfile();
 
+    const [isButtonEnabled, setIsButtonEnabled] = useState(profile.bio.trim().length > 0); // State to track button enablement
+
     const handleBioChange = (text) => {
-        setProfile(prevProfile => ({ ...prevProfile, bio: text.slice(0, 200) })); // Update bio in the global profile state
+        const sanitizedText = text.replace(/[\r\n]/g, '');
+        setProfile(prevProfile => ({ ...prevProfile, bio: sanitizedText.slice(0, 100) }));
+        setIsButtonEnabled(sanitizedText.trim().length > 0);
     };
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <View style={styles.container}>
                 <KeyboardAvoidingView behavior='padding' style={styles.keyboardView}>
-                    <Text style={styles.sectionTitle}>Enter Your Bio (200 characters max)</Text>
+                    <Text style={styles.sectionTitle}>Enter Your Bio (100 characters max)</Text>
                     <TextInput
                         value={profile.bio}
-                        onChangeText={handleBioChange} // Use handleBioChange to update bio
+                        onChangeText={handleBioChange}
                         style={styles.input}
                         multiline={true}
-                        maxLength={200} // Restricts input length
+                        maxLength={100}
                         placeholder="Write something about yourself..."
                         placeholderTextColor="#888"
+                        onKeyPress={({ nativeEvent }) => {
+                            if (nativeEvent.key === 'Enter') {
+                                Keyboard.dismiss();
+                            }
+                        }}
                     />
-                    <Text style={styles.charCount}>{profile.bio.length}/200</Text>
+                    <Text style={styles.charCount}>{profile.bio.length}/100</Text>
                     <TouchableOpacity
-                        style={styles.button}
-                        onPress={() => navigation.navigate('UploadPictures')} // managing bio globally so don't gotta pass it in
-                        disabled={profile.bio.length < 1} // Button is disabled if u didn't put bio
+                        style={[styles.button, !isButtonEnabled && { opacity: 0.5 }]}
+                        onPress={() => {
+                            if (profile.bio.trim().length > 0) {
+                                navigation.navigate('UploadPictures');
+                            } else {
+                                setIsButtonEnabled(false);
+                            }
+                        }}
+                        disabled={!isButtonEnabled} // Button is disabled if u didn't put bio
                     >
                         <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>
@@ -51,8 +66,10 @@ const styles = StyleSheet.create({
     },
     keyboardView: {
         width: '100%',
+        justifyContent: 'center',
     },
     sectionTitle: {
+        alignSelf: 'center',
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
