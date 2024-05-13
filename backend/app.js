@@ -29,9 +29,9 @@ io.on('connection', (socket) => {
     io.emit('message', { theUserId });
   });
 
-  socket.on('updateChats', ({ theUserId1, theUserId2 }) => {
+  socket.on('updateChats', ({ theUserId1, theUserId2, func }) => {
     console.log(`${theUserId1} - ${theUserId2}`);
-    io.emit('updateTheChats', { theUserId1, theUserId2 });
+    io.emit('updateTheChats', { theUserId1, theUserId2, func });
   });
 
   socket.on('newMessage', ({ senderId, recipientId }) => {
