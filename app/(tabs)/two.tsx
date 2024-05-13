@@ -39,12 +39,19 @@ const TabTwoScreen = () => {
 
   const socketRef = useRef(null as Socket | null);
   const [shouldFetchChats, setShouldFetchChats] = useState<boolean>(false);
+  const selectedChatRef = useRef<string | null>(null);
+  const chatUserIdsRef = useRef<string[]>([]);
 
 
   const userId = userEmail;
 
   useEffect(() => {
-    console.log('Selected chat changed:', selectedChat);
+    const userIds = chats.map(chat => chat._id);
+    chatUserIdsRef.current = userIds;
+  }, [chats]);
+
+  useEffect(() => {
+    selectedChatRef.current = selectedChat;
   }, [selectedChat]);
 
   useEffect(() => {
@@ -59,30 +66,47 @@ const TabTwoScreen = () => {
     const socket = io('http://192.168.1.19:3000');
     socketRef.current = socket;
     
-    socket.on('updateTheChats', ({ theUserId1, theUserId2 }) => {
-        if ( (theUserId1 === userId) || (theUserId2 === userId) ){
-            fetchChatsInitial();
+    socket.on('updateTheChats', ({ theUserId1, theUserId2, func }) => {
+      //unmatch or block
+      if (func == "1" && theUserId2 == userId){
+        if (selectedChatRef.current == theUserId1) {
+          //in chat
+          setSelectedChat(null);
         }
-        if (theUserId2 == "all" && theUserId1 != userId){
-          const isUserId1InChats = chats.some(chat => chat._id === theUserId1);
-          if (isUserId1InChats) {
+        fetchChatsInitial();
+      }
+      //add chat after match
+      else if ( func == "0" && ( (theUserId1 === userId) || (theUserId2 === userId) ) ){
+          fetchChatsInitial();
+      }
+      //deleted account
+      else if (func == "2" && theUserId1 != userId){
+        console.log("chats", chatUserIdsRef.current);
+        console.log(theUserId1);
+        console.log("got deleted ping");
+        const isUserId1InChats = chatUserIdsRef.current.includes(theUserId1);
+        if (isUserId1InChats) {
+          if (selectedChatRef.current == theUserId1) {
+            //in chat
+            console.log("in deleted chat");
             setSelectedChat(null);
-            fetchChatsInitial();
           }
+          fetchChatsInitial();
         }
+      }
     });
 
     socket.on('theNewMessage', ({ senderId, recipientId }) => {
-      console.log("selected chat:", selectedChat);
+      console.log("selected chat:", selectedChatRef.current);
       //if person being sent to
       if (recipientId === userId) {
         // if in the chat
-        if (selectedChat === senderId) {
+        if (selectedChatRef.current === senderId) {
           console.log("in chat");
           fetchMostRecentMessage();
           setShouldFetchChats(true);
         // in another chat
-        } else if (selectedChat != null){
+        } else if (selectedChatRef.current != null){
           console.log("in another chat");
           setShouldFetchChats(true);
         //outside of chats
@@ -100,7 +124,7 @@ const TabTwoScreen = () => {
 
   const fetchMostRecentMessage = async () => {
     try {
-      const chatId = selectedChat?.toString();
+      const chatId = selectedChatRef.current?.toString();
       const response = await fetch(`http://192.168.1.19:3000/api/chat/${userId}/${chatId}?limit=1`);
       if (!response.ok) {
         throw new Error('Failed to fetch most recent message');
@@ -197,7 +221,6 @@ const TabTwoScreen = () => {
     }
     setLoadingChat(true);
     setSelectedChat(chatId);
-    console.log("chat id:", chatId);
   
     try {
       const response = await fetch(`http://192.168.1.19:3000/api/chat/${userId}/${chatId}`);
@@ -265,7 +288,7 @@ const TabTwoScreen = () => {
       if (socketRef.current) {
         setSelectedChat(null);
         fetchChats();
-        socketRef.current.emit('updateChats', { theUserId1: null, theUserId2: userId2 });
+        socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: userId2, func: "1" });
       }
     }
   };
@@ -288,7 +311,7 @@ const TabTwoScreen = () => {
       setSelectedChat(null);
       fetchChats();
       if (socketRef.current) {
-        socketRef.current.emit('updateChats', { theUserId1: null, theUserId2: userId2 });
+        socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: userId2, func: "1" });
       }
     }
   };

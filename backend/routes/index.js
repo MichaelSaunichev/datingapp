@@ -174,9 +174,17 @@ router.post('/api/user/:userId/update', (req, res) => {
   const updatedData = req.body;
 
   const userIndex = users.findIndex(u => u.id === userId);
+  console.log("data", updatedData);
 
   if (userIndex !== -1) {
+    // Preserve the existing renderIndex if it exists
+    const renderIndex = users[userIndex].renderIndex;
+    // Merge updatedData with existing user data
     users[userIndex] = { ...users[userIndex], ...updatedData };
+    // Restore the renderIndex if it exists
+    if (renderIndex !== undefined) {
+      users[userIndex].renderIndex = renderIndex;
+    }
     res.json(users[userIndex]);
   } else {
     res.status(404).json({ message: 'User not found' });
@@ -212,7 +220,7 @@ router.delete('/api/cards/:userId/:cardId', (req, res) => {
 });
 
 router.get('/api/cards', function (req, res, next) {
-  const { userId, datingPreferences, checkFirstCardOnly } = req.query;
+  const { userId, datingPreferences } = req.query;
   // Retrieve user cards data for the specified user ID
   const userCards = cardData[userId] || [];
 
@@ -227,7 +235,7 @@ router.get('/api/cards', function (req, res, next) {
   while (true) {
     const card = userCards[currentIndex];
 
-    if (!card || (checkFirstCardOnly && currentIndex !== originalIndex)) {
+    if (!card) {
       return res.json(null);
     }
 
@@ -254,8 +262,6 @@ router.get('/api/cards', function (req, res, next) {
       // Update renderIndex
       users.find(u => u.id === userId).renderIndex = currentIndex;
       return res.json(nextCard);
-    } else if (checkFirstCardOnly){
-      return res.json(null);
     }
 
     // If the current card doesn't meet preferences, move to the next index

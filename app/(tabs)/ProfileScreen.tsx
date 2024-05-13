@@ -180,7 +180,7 @@ const ProfileScreen: React.FC = ({}) => {
       if (response.ok) {
         console.log(`User account with userId ${userId} deleted successfully!`);
         if (socketRef.current) {
-          socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: "all" });
+          socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: "all", func: "2" });
         }
       } else {
         console.error(`Failed to delete user account with userId ${userId}.`);

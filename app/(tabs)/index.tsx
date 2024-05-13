@@ -78,10 +78,16 @@ const TabOneScreen = () => {
     const socket = io('http://192.168.1.19:3000');
     socketRef.current = socket;
     
+    socket.on('updateTheChats', ({ theUserId1, theUserId2, func }) => {
+      if (func == "2"){
+        renderCardUI();
+      }
+    });
+  
     return () => {
         socket.disconnect();
     };
-}, []);
+  }, []);
 
 
   const renderCardUI = async () => {
@@ -93,7 +99,7 @@ const TabOneScreen = () => {
       try {
         const { datingPreferences } = preferences;
         // Fetch card data from the backend with filtering parameters
-        const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&checkFirstCardOnly=0`);
+        const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch card data');
@@ -185,7 +191,7 @@ const TabOneScreen = () => {
     setLoading(true); 
     const { datingPreferences } = preferences;
 
-    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&checkFirstCardOnly=1`);
+    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}`);
         
     if (!response.ok) {
       throw new Error('Failed to fetch card data');
@@ -198,7 +204,7 @@ const TabOneScreen = () => {
           await removeCard(cardData).then(() => {
             setMatched(true);
             if (socketRef.current) {
-              socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: cardData.id });
+              socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: cardData.id, func: "0" });
             }
           });
         } catch (error) {
@@ -227,7 +233,7 @@ const TabOneScreen = () => {
     }
     setLoading(true);
     const { datingPreferences } = preferences;
-    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}&checkFirstCardOnly=1`);
+    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}`);
     if (!response.ok) {
       throw new Error('Failed to fetch card data');
     }
