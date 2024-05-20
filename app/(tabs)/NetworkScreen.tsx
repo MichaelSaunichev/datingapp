@@ -7,6 +7,7 @@ import { useRoute } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
+import moment from 'moment-timezone';
 
 interface CustomMessage extends IMessage {
   user: User;
@@ -33,7 +34,6 @@ const NetworkScreen  = () => {
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [selectedEmoji, setSelectedEmoji] = useState<string>('');
     const userId = userEmail || '';
-    //const scrollViewRef = useRef<ScrollView>(null);
     const [showChat, setShowChat] = useState<boolean>(false);
     const [imageBlobs, setImageBlobs] = useState<string[]>([]);
     const [modalLoading, setModalLoading] = useState<boolean>(false);
@@ -53,15 +53,11 @@ const NetworkScreen  = () => {
 
         socket.on('like', ({ updatedMessage, theUserId }) => {
             if (theUserId != userId){
-                console.log("updating like count for a message", updatedMessage);
                 setMessages((prevMessages) =>
                     prevMessages.map((prevMessage) =>
                         prevMessage._id === updatedMessage._id ? updatedMessage : prevMessage
                     )
                 );
-            }
-            else {
-                console.log("current user", userId);
             }
         });
 
@@ -124,9 +120,6 @@ const NetworkScreen  = () => {
             const newPictures: { [userId: string]: string } = {};
             for (const userId of userIds) {
                 const response = await fetch(`http://192.168.1.19:3000/api/uri/${userId}`);
-                //if (!response.ok) {
-                //    throw new Error(`Failed to fetch profile image for user ${userId}`);
-                //}
                 const pictures = await response.json();
     
                 if (pictures.length > 0) {
@@ -144,48 +137,72 @@ const NetworkScreen  = () => {
         }
     };
 
-    const fetchMessages = async () => {
-        try {
-            const response = await fetch(`http://192.168.1.19:3000/api/globalchat`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch global chat');
-            }
-            const { messages, total } = await response.json();
-            setMessages(messages);
-        } catch (error) {
-            console.error('Error fetching messages:', error);
-        }
-    };
+  // Function to convert message dates to local time
+  const convertMessageDates = (messages: CustomMessage[]): CustomMessage[] => {
+    return messages.map(message => {
+      // Get the user's local timezone offset in minutes
+      const localOffsetMinutes = moment().utcOffset();
+      // Adjust the createdAt date by the local offset
+      const createdAtDate = moment.utc(message.createdAt).add(localOffsetMinutes, 'minutes');
+      return {
+        ...message,
+        createdAt: createdAtDate.toDate(), // Keep as Date object
+      };
+    });
+  };
+  
+  const fetchMessages = async () => {
+    try {
+      const response = await fetch(`http://192.168.1.19:3000/api/globalchat`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch global chat');
+      }
+      const { messages, total } = await response.json() as { messages: CustomMessage[], total: number };
+  
+      // Convert message dates to local time
+      const localMessages = convertMessageDates(messages);
+  
+      setMessages(localMessages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
 
-    const fetchMostRecentMessage = async () => {
-        try {
-            const response = await fetch(`http://192.168.1.19:3000/api/globalchat?limit=1`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch most recent message');
-            }
-            const { messages } = await response.json();
-            const mostRecentMessage = messages[0];
-            setMessages(previousMessages => GiftedChat.append(previousMessages, mostRecentMessage, false));
-        } catch (error) {
-            console.error('Error fetching most recent message:', error);
-        }
-    };
-    
+  const fetchMostRecentMessage = async () => {
+    try {
+      const response = await fetch(`http://192.168.1.19:3000/api/globalchat?limit=1`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch most recent message');
+      }
+      const { messages } = await response.json() as { messages: CustomMessage[] };
+      const mostRecentMessage = messages[0];
 
-    const loadEarlierMessages = async () => {
-        try {
-            const response = await fetch(`http://192.168.1.19:3000/api/globalchat?limit=20&offset=${messages.length}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch earlier messages');
-            }
-            const { messages: earlierMessages } = await response.json();
-            
-            // Update state with the newly loaded messages
-            setMessages(previousMessages => GiftedChat.prepend(previousMessages, earlierMessages, false));
-        } catch (error) {
-            console.error('Error loading earlier messages:', error);
-        }
-    };
+      // Convert message date to local time
+      const localMostRecentMessage = convertMessageDates([mostRecentMessage])[0];
+
+      setMessages(previousMessages => GiftedChat.append(previousMessages, [localMostRecentMessage], false)); // Wrap in an array
+    } catch (error) {
+      console.error('Error fetching most recent message:', error);
+    }
+  };
+
+  const loadEarlierMessages = async () => {
+    try {
+      const response = await fetch(`http://192.168.1.19:3000/api/globalchat?limit=20&offset=${messages.length}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch earlier messages');
+      }
+      const { messages: earlierMessages } = await response.json() as { messages: CustomMessage[] };
+
+      // Convert message dates to local time
+      const localEarlierMessages = convertMessageDates(earlierMessages);
+      
+      // Update state with the newly loaded messages
+      setMessages(previousMessages => GiftedChat.prepend(previousMessages, localEarlierMessages, false));
+    } catch (error) {
+      console.error('Error loading earlier messages:', error);
+    }
+  };
 
 
     const handleLikeToggle = async (message: CustomMessage) => {
@@ -212,7 +229,7 @@ const NetworkScreen  = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ likes: updatedLikes }),
+                body: JSON.stringify({ likes: userId }),
             });
     
             if (!response.ok) {
@@ -251,7 +268,7 @@ const NetworkScreen  = () => {
         };
 
         try {
-            // Send the new message to the backend server
+            // Send the new message to the server
             const response = await fetch(`http://192.168.1.19:3000/api/globalchat`, {
                 method: 'POST',
                 headers: {
@@ -266,7 +283,6 @@ const NetworkScreen  = () => {
         } catch (error) {
             console.error('Error sending message:', error);
         } finally {
-            //scrollToBottom();
             if (socketRef.current) {
                 socketRef.current.emit('sendMessage', { theUserId: userId });
               } else {
@@ -285,7 +301,7 @@ const NetworkScreen  = () => {
                     return
                 }
                 const userProfile = await response.json();
-                setSelectedUser(userProfile); // Set selected user profile
+                setSelectedUser(userProfile);
             } catch (error) {
                 console.error('Error fetching user profile:', error);
             }
@@ -297,12 +313,6 @@ const NetworkScreen  = () => {
             <FontAwesome name="angle-double-down" size={24} color="#333" />
         );
     };
-
-    //const scrollToBottom = () => {
-    //    if (scrollViewRef && scrollViewRef.current) {
-    //        scrollViewRef.current.scrollToEnd({ animated: true });
-    //    }
-    //};
 
     interface RenderSendProps {
         text?: string;

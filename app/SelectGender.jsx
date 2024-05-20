@@ -11,8 +11,8 @@ const SelectGender = () => {
         setProfile(prevProfile => ({ ...prevProfile, gender })); 
     };
 
-    const setPreference = (datingPreferences) => {
-        setProfile(prevProfile => ({ ...prevProfile, datingPreferences })); // Update dating preferences in the global profile state
+    const setPreference = (dating_preferences) => {
+        setProfile(prevProfile => ({ ...prevProfile, dating_preferences })); // Update dating preferences in the global profile state
     };
 
     const getButtonStyle = (selectedOption, option) => {
@@ -43,17 +43,17 @@ const SelectGender = () => {
             <Text style={styles.sectionTitle}>Your Dating Preference</Text>
             <View style={styles.buttonContainer}>
                 <TouchableOpacity 
-                    style={getButtonStyle(profile.datingPreferences, 'Men')}
+                    style={getButtonStyle(profile.dating_preferences, 'Men')}
                     onPress={() => setPreference('Men')}>
                     <Text style={styles.buttonText}>Men</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                    style={getButtonStyle(profile.datingPreferences, 'Women')}
+                    style={getButtonStyle(profile.dating_preferences, 'Women')}
                     onPress={() => setPreference('Women')}>
                     <Text style={styles.buttonText}>Women</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                    style={getButtonStyle(profile.datingPreferences, 'Everyone')}
+                    style={getButtonStyle(profile.dating_preferences, 'Everyone')}
                     onPress={() => setPreference('Everyone')}>
                     <Text style={styles.buttonText}>Everyone</Text>
                 </TouchableOpacity>
