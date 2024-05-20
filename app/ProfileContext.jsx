@@ -10,7 +10,7 @@ export const ProfileProvider = ({ children }) => {
     name: '',
     dob: new Date(),
     gender: '',
-    datingPreferences: '',
+    dating_preferences: '',
     pictures: [],
     bio: ''
   });

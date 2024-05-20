@@ -45,6 +45,7 @@ const TabOneScreen = () => {
         fetch(`http://192.168.1.19:3000/api/user/${userId}`)
           .then(response => {
             if (response.ok) {
+              console.log("re",response)
               return response.json();
             } else if (response.status === 404) {
               console.log("retry");
@@ -55,9 +56,10 @@ const TabOneScreen = () => {
           })
           .then(userData => {
             if(userData){
-              const { datingPreferences } = userData;
+              console.log("got the data", userData);
+              const { dating_preferences } = userData;
               setPreferences({
-                datingPreferences: datingPreferences,
+                datingPreferences: dating_preferences,
               });
             }
           })
@@ -99,13 +101,15 @@ const TabOneScreen = () => {
       try {
         const { datingPreferences } = preferences;
         // Fetch card data from the backend with filtering parameters
-        const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}`);
+        const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&dating_preferences=${datingPreferences}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch card data');
         }
     
         const cardData = await response.json();
+
+        console.log("here", cardData);
 
         if (!cardData) {
           setCard(cardData);
@@ -191,7 +195,7 @@ const TabOneScreen = () => {
     setLoading(true); 
     const { datingPreferences } = preferences;
 
-    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}`);
+    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&dating_preferences=${datingPreferences}`);
         
     if (!response.ok) {
       throw new Error('Failed to fetch card data');
@@ -233,7 +237,7 @@ const TabOneScreen = () => {
     }
     setLoading(true);
     const { datingPreferences } = preferences;
-    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&datingPreferences=${datingPreferences}`);
+    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&dating_preferences=${datingPreferences}`);
     if (!response.ok) {
       throw new Error('Failed to fetch card data');
     }

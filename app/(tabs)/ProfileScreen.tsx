@@ -14,8 +14,8 @@ type ProfileState = {
   gender: 'Man' | 'Woman' | 'Non-binary';
   bio: string;
   pictures: string[];
-  datingPreferences: 'Men' | 'Women' |'Everyone';
-  accountPaused: boolean;
+  dating_preferences: 'Men' | 'Women' |'Everyone';
+  account_paused: boolean;
 };
 
 const ProfileScreen: React.FC = ({}) => {
@@ -29,8 +29,8 @@ const ProfileScreen: React.FC = ({}) => {
     gender: 'Man',
     bio: '',
     pictures: [],
-    datingPreferences: 'Everyone',
-    accountPaused: false,
+    dating_preferences: 'Everyone',
+    account_paused: false,
   });
   const [tempProfileState, setTempProfileState] = useState<ProfileState>({ ...profileState });
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -67,6 +67,7 @@ const ProfileScreen: React.FC = ({}) => {
         })
         .then(async userData => {
           if (userData) {
+            console.log("the data", userData)
             const blobUrl = await fetchImageAndConvertToBlob(userData.pictures[0]);
             setProfileBlob(blobUrl);
             setProfileState(userData);
@@ -245,7 +246,7 @@ const ProfileScreen: React.FC = ({}) => {
     setImageBlobs((prevBlobs) => prevBlobs.filter((_, i) => i !== index));
   };
 
-  const isPreference = (value: any): value is ProfileState['datingPreferences'] => {
+  const isPreference = (value: any): value is ProfileState['dating_preferences'] => {
     return ['Men', 'Women', 'Everyone'].includes(value);
   };
 
@@ -253,7 +254,7 @@ const ProfileScreen: React.FC = ({}) => {
     if (isPreference(preference)) {
       setTempProfileState((prevState) => ({
         ...prevState,
-        datingPreferences: preference,
+        dating_preferences: preference,
       }));
     } else {
       console.error('Invalid preference value:', preference);
@@ -372,8 +373,8 @@ const ProfileScreen: React.FC = ({}) => {
             <View style={styles.settingContainer}>
               <Text>Pause my account</Text>
               <Switch
-                value={tempProfileState.accountPaused}
-                onValueChange={(value) => setTempProfileState((prevState) => ({ ...prevState, accountPaused: value }))}
+                value={tempProfileState.account_paused}
+                onValueChange={(value) => setTempProfileState((prevState) => ({ ...prevState, account_paused: value }))}
               />
             </View>
 
@@ -385,7 +386,7 @@ const ProfileScreen: React.FC = ({}) => {
                   <TouchableOpacity
                     key={preference}
                     style={[styles.preferenceButton,
-                      tempProfileState.datingPreferences === preference ? styles.selectedPreference : {}]}
+                      tempProfileState.dating_preferences === preference ? styles.selectedPreference : {}]}
                     onPress={() => handleDatingPreferenceChange(preference)}
                   >
                     <Text>{preference}</Text>
