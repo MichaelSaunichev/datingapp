@@ -7,6 +7,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
+import moment from 'moment-timezone';
 
 
 interface CustomMessage extends IMessage {
@@ -48,11 +49,16 @@ const TabTwoScreen = () => {
   useEffect(() => {
     const userIds = chats.map(chat => chat._id);
     chatUserIdsRef.current = userIds;
+    console.log("yo",chats);
   }, [chats]);
 
   useEffect(() => {
     selectedChatRef.current = selectedChat;
   }, [selectedChat]);
+
+  useEffect(() => {
+    console.log("meq",);;
+  }, [messages]);
 
   useEffect(() => {
       const fetchData = async () => {
@@ -122,6 +128,25 @@ const TabTwoScreen = () => {
     };
   }, []);
 
+  const convertMessageDates = (messages: CustomMessage[]): CustomMessage[] => {
+    return messages.map(message => {
+      // Get the user's local timezone offset in minutes
+      const localOffsetMinutes = moment().utcOffset();
+      console.log(`Local timezone offset in minutes: ${localOffsetMinutes}`);
+      
+      // Adjust the createdAt date by the local offset
+      const createdAtDate = moment.utc(message.createdAt).add(localOffsetMinutes, 'minutes');
+      
+      console.log(`Original UTC date: ${message.createdAt}`);
+      console.log(`Converted local date: ${createdAtDate.toDate()}`);
+      
+      return {
+        ...message,
+        createdAt: createdAtDate.toDate(), // Keep as Date object
+      };
+    });
+  };
+
   const fetchMostRecentMessage = async () => {
     try {
       const chatId = selectedChatRef.current?.toString();
@@ -131,10 +156,11 @@ const TabTwoScreen = () => {
       }
       const { messages } = await response.json();      
       const mostRecentMessage = messages[0];
-      console.log("the message", mostRecentMessage);
-      if (mostRecentMessage) {
-        setMessages(previousMessages => [...previousMessages, mostRecentMessage]);
-      }
+      const localMostRecentMessage = convertMessageDates([mostRecentMessage])[0];
+
+    if (localMostRecentMessage) {
+      setMessages(previousMessages => [...previousMessages, localMostRecentMessage]);
+    }
     } catch (error) {
       console.error('Error fetching most recent message:', error);
     }
@@ -146,10 +172,13 @@ const TabTwoScreen = () => {
       if (!response.ok) {
         throw new Error('Failed to fetch earlier messages');
       }
-      const { messages: earlierMessages } = await response.json();
+      const { messages: earlierMessages } = await response.json() as { messages: CustomMessage[] };
+  
+      // Convert message dates to local time
+      const localEarlierMessages = convertMessageDates(earlierMessages);
   
       // Update state with the newly loaded messages
-      setMessages(previousMessages => earlierMessages.concat(previousMessages));
+      setMessages(previousMessages => [...localEarlierMessages, ...previousMessages]);
     } catch (error) {
       console.error('Error loading earlier messages:', error);
     }
@@ -162,7 +191,7 @@ const TabTwoScreen = () => {
         throw new Error('Failed to fetch chat users');
       }
       const chatUsers = await response.json();
-      setChats(chatUsers.reverse());
+      setChats(chatUsers);
     } catch (error) {
       console.error('Error fetching chat users:', error);
     }
@@ -230,7 +259,9 @@ const TabTwoScreen = () => {
       }
   
       const {messages, userProfile} = await response.json();
-      setMessages(messages);
+      const localMessages = convertMessageDates(messages);
+
+    setMessages(localMessages);
       setUserProfile(userProfile);
     } catch (error) {
       console.error('Error loading messages:', error);
@@ -251,14 +282,22 @@ const TabTwoScreen = () => {
   
     const updatedMessages = [...messages, lastNewMessage];
     setMessages(updatedMessages);
-    
+  
+    const messageToSend = {
+      ...lastNewMessage,
+      user: {
+        _id: userId,
+        name: userEmail, // Assuming the user's name is the email
+      },
+    };
+  
     try {
       await fetch(`http://192.168.1.19:3000/api/chat/${userId}/${chatId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(lastNewMessage),
+        body: JSON.stringify(messageToSend),
       });
     } catch (error) {
       console.error('Error sending message:', error);
@@ -269,6 +308,7 @@ const TabTwoScreen = () => {
       }
     }
   };
+  
 
   const handleUnmatch = async (userId2: string) => {
     try {

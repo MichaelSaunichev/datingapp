@@ -2,10 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { addMessage, getMessages, updateMessageLikes } = require('../services/globalChatService');
 const userService = require('../services/userService');
+const cardService = require('../services/cardService');
+const chatService = require('../services/chatService');
 const { render } = require('../app');
-
-const cardData = {
-};
 
 const chatData = {
 }
@@ -21,30 +20,10 @@ router.delete('/api/user/delete/:userId', async (req, res) => {
 
     if (deletedUser) {
       // Remove user's card data
-      delete cardData[userId];
-
-      // Remove user from other users' cardData
-      for (const key in cardData) {
-        const userIndex = cardData[key].findIndex(card => card.id === userId);
-        if (userIndex !== -1) {
-          const user = await userService.getUserById(key);
-          if (user && user.render_index != null && userIndex < user.render_index) {
-            user.render_index -= 1;
-          }
-          cardData[key].splice(userIndex, 1);
-        }
-      }
+      await cardService.deleteCardsByUserId(userId);
 
       // Remove user's chat data
-      delete chatData[userId];
-
-      // Remove chat data with the deleted user from other users' chatData
-      for (const key in chatData) {
-        chatData[key].delete(userId);
-      }
-
-      console.log("carddata", cardData);
-      console.log("chatData", chatData);
+      await chatService.deleteChat(userId);
 
       res.status(200).json({ message: `User with ID ${userId} deleted successfully.` });
     } else {
@@ -77,29 +56,14 @@ router.post('/api/user/create', async (req, res) => {
 
     console.log("created user:", createdUser);
 
-    // Initialize card data for the new user
-    if (!cardData[createdUser.id]) {
-      cardData[createdUser.id] = [];
-    }
-
     // Add existing users to the new user's card data
     const users = await userService.getAllUsers(); // Fetch all users from the database
-    users.forEach((user) => {
+    users.forEach(async (user) => {
       if (user.id !== createdUser.id) {
-        cardData[createdUser.id].push({ id: user.id, likesYou: 0 });
+        await cardService.addCard(createdUser.id, user.id);
+        await cardService.addCard(user.id, createdUser.id);
       }
     });
-
-    // Add the new user to existing users' card data
-    users.forEach((user) => {
-      if (user.id !== createdUser.id && cardData[user.id]) {
-        const render_index = user.render_index;
-        const insertIndex = render_index + 1;
-        cardData[user.id].splice(insertIndex, 0, { id: createdUser.id, likesYou: 0 });
-      }
-    });
-
-    console.log("cardData:", cardData);
 
     res.status(201).json(createdUser);
   } catch (error) {
@@ -167,18 +131,13 @@ router.delete('/api/cards/:userId/:cardId', async (req, res) => {
   const { userId, cardId } = req.params;
   try {
     const user = await userService.getUserById(userId);
-    if (user && cardData.hasOwnProperty(userId)) {
-      const indexToRemove = cardData[userId].findIndex(card => card.id === cardId);
-      if (indexToRemove !== -1) {
-        cardData[userId].splice(indexToRemove, 1);
-        if (user.render_index >= cardData[userId].length) {
-          user.render_index = 0;
-        }
-        await userService.updateUser(userId, { render_index: user.render_index });
-        res.json({ success: true, message: 'Card removed successfully' });
-      } else {
-        res.json({ success: false, message: 'Card not found for the specified user ID' });
+    if (user) {
+      await cardService.deleteCard(userId, cardId);
+      if (user.render_index >= (await cardService.getCardsByUserId(userId)).length) {
+        user.render_index = 0;
       }
+      await userService.updateUser(userId, { render_index: user.render_index });
+      res.json({ success: true, message: 'Card removed successfully' });
     } else {
       res.status(404).json({ success: false, message: 'Card data not found for the specified user ID' });
     }
@@ -195,7 +154,7 @@ router.get('/api/cards', async (req, res, next) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const userCards = cardData[userId] || [];
+    const userCards = await cardService.getCardsByUserId(userId);
     if (userCards.length === 0) {
       return res.json(null); // User has no cards
     }
@@ -211,7 +170,7 @@ router.get('/api/cards', async (req, res, next) => {
         return res.json(null);
       }
 
-      const checkUserId = card.id;
+      const checkUserId = card.card_id;
       const checkUser = await userService.getUserById(checkUserId);
       if (!checkUser) {
         console.log(`User with ID ${checkUserId} not found`);
@@ -238,7 +197,7 @@ router.get('/api/cards', async (req, res, next) => {
           name: checkUser.name,
           bio: checkUser.bio,
           pictures: checkUser.pictures,
-          likesYou: card.likesYou,
+          likesYou: card.likes_you,
           account_paused: checkUser.account_paused,
           dob: checkUser.dob,
           gender: checkUser.gender
@@ -269,7 +228,8 @@ const incrementIndex = async (userId) => {
   try {
     const user = await userService.getUserById(userId);
     if (user) {
-      user.render_index = (user.render_index + 1) % cardData[userId].length;
+      const userCards = await cardService.getCardsByUserId(userId);
+      user.render_index = (user.render_index + 1) % userCards.length;
       await userService.updateUser(userId, { render_index: user.render_index });
     }
   } catch (error) {
@@ -291,11 +251,11 @@ router.post('/api/incrementIndex', async (req, res) => {
 router.put('/api/addlike/:userId/:likedUser', async (req, res) => {
   const { userId, likedUser } = req.params;
   try {
-    const likedUserData = cardData[likedUser];
-    const likedUserIndex = likedUserData.findIndex(user => user.id === userId);
+    const likedUserCards = await cardService.getCardsByUserId(likedUser);
+    const likedUserCard = likedUserCards.find(card => card.card_id === userId);
 
-    if (likedUserIndex !== -1) {
-      likedUserData[likedUserIndex].likesYou = 1;
+    if (likedUserCard) {
+      await cardService.updateLikes(likedUser, userId, 1);
       res.status(200).json({ message: 'Like added successfully.' });
     } else {
       res.status(404).json({ error: 'User not found in likedUser array.' });
@@ -308,69 +268,45 @@ router.put('/api/addlike/:userId/:likedUser', async (req, res) => {
 // --------------------------------------------------------------------------------------
 // chats
 
+
 // Add chats to both users
-router.put('/api/addchat/:userId/:newUserId', (req, res) => {
+router.put('/api/addchat/:userId/:newUserId', async (req, res) => {
   const userId = req.params.userId;
   const newUserId = req.params.newUserId;
 
-  if (!chatData.hasOwnProperty(userId)) {
-    chatData[userId] = new Map();
+  try {
+    await chatService.addMessage(userId, newUserId, "Chat started", true);
+    res.status(200).send('Users added to chatData');
+  } catch (error) {
+    res.status(500).json({ error: 'Error adding chat' });
   }
-  if (!chatData[userId].has(newUserId)) {
-    chatData[userId].set(newUserId, []);
-  }
-
-  if (!chatData.hasOwnProperty(newUserId)) {
-    chatData[newUserId] = new Map();
-  }
-  if (!chatData[newUserId].has(userId)) {
-    chatData[newUserId].set(userId, []);
-  }
-  res.status(200).send('Users added to chatData');
 });
 
-router.delete('/api/block/:userId1/:userId2', (req, res) => {
-  const userId1 = req.params.userId1;
-  const userId2 = req.params.userId2;
+router.delete('/api/block/:userId1/:userId2', async (req, res) => {
+  const { userId1, userId2 } = req.params;
 
-  // Remove chat data for the first user
-  if (chatData.hasOwnProperty(userId1) && chatData[userId1].has(userId2)) {
-    chatData[userId1].delete(userId2);
+  try {
+    await chatService.deleteChat(userId1, userId2);
+    res.status(200).send('Chats removed for both users');
+  } catch (error) {
+    res.status(500).json({ error: 'Error removing chats' });
   }
-
-  // Remove chat data for the second user
-  if (chatData.hasOwnProperty(userId2) && chatData[userId2].has(userId1)) {
-    chatData[userId2].delete(userId1);
-  }
-
-  res.status(200).send('Chats removed for both users');
 });
 
 // Unmatch users and handle cards
 router.delete('/api/unmatch/:userId1/:userId2', async (req, res) => {
   const { userId1, userId2 } = req.params;
   try {
-    if (chatData.hasOwnProperty(userId1) && chatData[userId1].has(userId2)) {
-      chatData[userId1].delete(userId2);
-    }
-
-    if (chatData.hasOwnProperty(userId2) && chatData[userId2].has(userId1)) {
-      chatData[userId2].delete(userId1);
-    }
+    await chatService.deleteChat(userId1, userId2);
 
     const addCard = async (userId, unmatchedUserId) => {
       const user = await userService.getUserById(userId);
       const render_index = user.render_index;
-      if (cardData.hasOwnProperty(userId) && !cardData[userId].some(user => user.id === unmatchedUserId)) {
-        const userToAdd = { id: unmatchedUserId, likesYou: 0 };
-        if (render_index !== -1) {
-          cardData[userId].splice(render_index, 0, userToAdd);
-        } else {
-          cardData[userId].push(userToAdd);
-        }
+      if (!await cardService.cardExists(userId, unmatchedUserId)) {
+        await cardService.addCard(userId, unmatchedUserId);
       }
 
-      if (render_index !== -1 && cardData[userId].length > 1) {
+      if (render_index !== -1 && (await cardService.getCardsByUserId(userId)).length > 1) {
         user.render_index++;
         await userService.updateUser(userId, { render_index: user.render_index });
       }
@@ -384,25 +320,27 @@ router.delete('/api/unmatch/:userId1/:userId2', async (req, res) => {
     res.status(500).json({ error: 'Error unmatching users' });
   }
 });
-
 router.get('/api/chats/:userId', async (req, res) => {
   const { userId } = req.params;
   try {
     const chatUsers = [];
-    const chatDataForUser = chatData[userId] || [];
+    const chatUserIds = await chatService.getChatUsers(userId);
 
-    for (let [chatId, messages] of chatDataForUser.entries()) {
-      const correspondingUser = await userService.getUserById(chatId);
+    for (let { chat_user_id } of chatUserIds) {
+      const correspondingUser = await userService.getUserById(chat_user_id);
 
       if (correspondingUser) {
         let picture = correspondingUser.pictures && correspondingUser.pictures.length > 0 ? correspondingUser.pictures[0] : null;
-        const firstMessage = messages.length > 0 ? messages[messages.length - 1].text : null;
+        // Fetch the most recent message using the new function
+        const mostRecentMessage = await chatService.getMostRecentMessage(userId, chat_user_id);
+
+        console.log("the first", mostRecentMessage);
 
         chatUsers.push({
-          _id: chatId,
+          _id: chat_user_id,
           name: correspondingUser.name,
           picture,
-          firstMessage
+          firstMessage: mostRecentMessage.length > 0 && !mostRecentMessage[0].initial ? mostRecentMessage[0].text : null // Filter initial message
         });
       }
     }
@@ -418,58 +356,35 @@ router.get('/api/chat/:userId/:chatId', async (req, res) => {
   const offset = parseInt(req.query.offset) || 0;
 
   try {
-    const chatDataForUser = chatData[userId] || [];
-    const messages = chatDataForUser.get(chatId) || [];
-
-    const startIndex = Math.max(messages.length - offset - limit, 0);
-    const endIndex = Math.min(messages.length - offset, messages.length);
-
-    const chat = messages.slice(startIndex, endIndex);
-
+    const messages = await chatService.getMessages(userId, chatId, limit, offset);
+    const filteredMessages = messages.filter(message => !message.initial); // Filter out initial message
     const userProfile = await userService.getUserById(chatId);
 
-    res.json({ messages: chat, userProfile });
+    res.json({ messages: filteredMessages, userProfile });
   } catch (error) {
     res.status(500).json({ error: 'Error fetching chat messages' });
   }
 });
 
 /* POST a new message to a chat. */
-router.post('/api/chat/:userId/:chatId', function (req, res, next) {
-  const userId = req.params.userId;
-  const chatId = req.params.chatId;
+router.post('/api/chat/:userId/:chatId', async (req, res) => {
+  const { userId, chatId } = req.params;
   const newMessage = req.body;
 
-  // Get existing messages for the chat
-  const messages1 = chatData[userId].get(chatId) || [];
-  // Add the new message
-  messages1.push(newMessage);
-  // Update the chatData
-  chatData[userId].set(chatId, messages1);
-  moveChatToTop(userId,chatId);
+  // Log the request body to debug the issue
+  console.log('Received new message:', newMessage);
 
-  const messages2 = chatData[chatId].get(userId) || [];
-  // Add the new message
-  messages2.push(newMessage);
-  // Update the chatData
-  chatData[chatId].set(userId, messages2);
-  moveChatToTop(chatId,userId);
-
-  res.json({ success: true, message: 'Message added successfully' });
-});
-
-function moveChatToTop(userId,chatId) {
-  // Get the chat messages from chatData
-  const chatMessages = chatData[userId].get(chatId);
-
-  if (chatMessages) {
-    // Delete the chat from its current position in chatData
-    chatData[userId].delete(chatId);
-
-    // Set the chat back to the top in chatData
-    chatData[userId].set(chatId, chatMessages);
+  try {
+    if (!newMessage.text) {
+      return res.status(400).json({ error: 'Message content is missing' });
+    }
+    
+    await chatService.addMessage(userId, chatId, newMessage.text);
+    res.json({ success: true, message: 'Message added successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error adding message' });
   }
-}
+});
 
 // --------------------------------------------------------------------------------------
 // global chat
