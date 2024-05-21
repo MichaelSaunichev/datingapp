@@ -3,12 +3,12 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'rea
 import { useNavigation } from '@react-navigation/native';
 import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
-import { useProfile } from './ProfileContext'; // Import useProfile from your context provider
+import { useProfile } from './ProfileContext';
 
 const UploadPictures = () => {
     const navigation = useNavigation();
-    const { profile, setProfile } = useProfile(); // Access profile from ProfileContext
-    const [uploading, setUploading] = useState(false); // Local state for managing upload status
+    const { profile, setProfile } = useProfile();
+    const [uploading, setUploading] = useState(false);
     const [deleteMode, setDeleteMode] = useState(false);
     const [selectedPictures, setSelectedPictures] = useState([]);
 
@@ -61,7 +61,6 @@ const UploadPictures = () => {
 
     const deleteSelectedPictures = async () => {
         try {
-            const storage = getStorage();
             await Promise.all(selectedPictures.map(async (imageUrl) => {
                 const storage = getStorage();
                 const imageRef = ref(storage, imageUrl);
@@ -122,7 +121,7 @@ const UploadPictures = () => {
                 >
                     <Text style={styles.buttonText}>{deleteMode ? "Stop Deleting" : "Delete Picture"}</Text>
                 </TouchableOpacity>
-                {deleteMode && (
+                {deleteMode && selectedPictures.length > 0 && (
                     <TouchableOpacity
                     style={[styles.button, uploading && { opacity: 0.5 }]}
                         onPress={deleteSelectedPictures}

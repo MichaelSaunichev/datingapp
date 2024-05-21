@@ -23,30 +23,24 @@ const io = socketIo(server);
 
 // socket
 io.on('connection', (socket) => {
-  console.log('A client connected');
 
   socket.on('sendMessage', ({ theUserId }) => {
-    console.log('Received sendMessage event from client');
     io.emit('message', { theUserId });
   });
 
   socket.on('updateChats', ({ theUserId1, theUserId2, func }) => {
-    console.log(`${theUserId1} - ${theUserId2}`);
     io.emit('updateTheChats', { theUserId1, theUserId2, func });
   });
 
   socket.on('newMessage', ({ senderId, recipientId }) => {
-    console.log(`New message from ${senderId} to ${recipientId}`);
     io.emit('theNewMessage', { senderId, recipientId });
   });
 
   socket.on('sendLike', ({ updatedMessage, theUserId }) => {
-    console.log(`New like from ${theUserId}`);
     io.emit('like', { updatedMessage, theUserId });
   });
 
   socket.on('disconnect', () => {
-    console.log('A client disconnected');
   });
 });
 

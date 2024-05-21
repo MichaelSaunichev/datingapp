@@ -2,23 +2,13 @@ const db = require('../db');
 
 const addMessage = async (newMessage) => {
   try {
-    console.log("Adding the message");
-    console.log("New message data:", newMessage);
 
     const { _id, text, createdAt, user } = newMessage;
-
-    // Log each variable to ensure they are what you expect
-    console.log("Message ID:", _id);
-    console.log("Text:", text);
-    console.log("Created At:", createdAt);
-    console.log("User:", user);
 
     const result = await db.query(
       'INSERT INTO global_chat (_id, text, createdAt, "user", isAnonymous) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [_id, text, createdAt, JSON.stringify(user), newMessage.isAnonymous || false]
     );
-
-    console.log("Query result:", result);
 
     return result.rows[0];
   } catch (error) {
@@ -44,10 +34,8 @@ const getMessages = async (limit, offset) => {
         user: msg.user, // No need to parse
         isAnonymous: msg.isanonymous,
         likes: msg.likes
-      })).reverse(); // Reverse the order
+      })).reverse();
   
-      // Log messages and their likes for debugging
-      console.log("Fetched messages with likes:", messages);
   
       return { messages, total };
     } catch (error) {
@@ -58,7 +46,6 @@ const getMessages = async (limit, offset) => {
 
   const updateMessageLikes = async (messageId, userId) => {
     try {
-      console.log("Updating likes for message ID:", messageId, "by user ID:", userId);
   
       // Fetch the current likes for the message
       const currentLikesResult = await db.query(
@@ -71,7 +58,6 @@ const getMessages = async (limit, offset) => {
       }
   
       const currentLikes = currentLikesResult.rows[0].likes || [];
-      console.log("Current likes:", currentLikes);
   
       // Ensure userId is a string
       if (Array.isArray(userId)) {
@@ -83,11 +69,9 @@ const getMessages = async (limit, offset) => {
       if (currentLikes.includes(userId)) {
         // Remove the user ID from the likes array
         updatedLikes = currentLikes.filter(id => id !== userId);
-        console.log("User ID removed from likes:", updatedLikes);
       } else {
         // Add the user ID to the likes array
         updatedLikes = [...currentLikes, userId];
-        console.log("User ID added to likes:", updatedLikes);
       }
   
       // Update the likes array in the database
@@ -95,8 +79,6 @@ const getMessages = async (limit, offset) => {
         'UPDATE global_chat SET likes = $1 WHERE _id = $2 RETURNING *',
         [updatedLikes, messageId]
       );
-  
-      console.log("Query result:", result);
   
       return result.rows[0];
     } catch (error) {
