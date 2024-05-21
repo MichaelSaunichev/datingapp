@@ -137,7 +137,6 @@ const NetworkScreen  = () => {
         }
     };
 
-  // Function to convert message dates to local time
   const convertMessageDates = (messages: CustomMessage[]): CustomMessage[] => {
     return messages.map(message => {
       // Get the user's local timezone offset in minutes
