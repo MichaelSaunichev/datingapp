@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { FlatList, TouchableOpacity, Text, View, Image, Button, Modal, StyleSheet, ActivityIndicator } from 'react-native';
-import { GiftedChat, IMessage, User, Send } from 'react-native-gifted-chat';
+import { FlatList, TouchableOpacity, Text, View, Image, Modal, StyleSheet, ActivityIndicator } from 'react-native';
+import { GiftedChat, IMessage, User, Send, MessageProps } from 'react-native-gifted-chat';
 import { useRoute } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -8,7 +8,6 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 import moment from 'moment-timezone';
-
 
 interface CustomMessage extends IMessage {
   user: User;
@@ -167,6 +166,7 @@ const TabTwoScreen = () => {
     }
   };
 
+
   const fetchChats = async () => {
     try {
       const response = await fetch(`http://192.168.1.19:3000/api/chats/${userId}`);
@@ -180,6 +180,7 @@ const TabTwoScreen = () => {
     }
   };
 
+  
   const fetchChatsInitial = async () => {
     try {
       const response = await fetch(`http://192.168.1.19:3000/api/chats/${userId}`);
@@ -196,7 +197,7 @@ const TabTwoScreen = () => {
         }
       }));
       setUserFirstImageBlobs(mapping);
-      setChats(chatUsers.reverse());
+      setChats(chatUsers);
     } catch (error) {
       console.error('Error fetching chat users:', error);
     }
@@ -390,6 +391,56 @@ const TabTwoScreen = () => {
     </TouchableOpacity>
   );
 
+  const renderMessage = (props: MessageProps<IMessage>) => {
+    const { currentMessage, nextMessage, ...originalProps } = props;
+  
+    if (!currentMessage) {
+      return null;
+    }
+  
+    const user = currentMessage.user;
+  
+    // Get time
+    const createdAtDate = new Date(currentMessage.createdAt);
+    let hours = createdAtDate.getHours();
+    const minutes = createdAtDate.getMinutes();
+    const amPM = hours >= 12 ? 'PM' : 'AM';
+    hours %= 12;
+    hours = hours || 12;
+    const messageTime = `${hours}:${minutes < 10 ? '0' + minutes : minutes} ${amPM}`;
+  
+    const currentDate = createdAtDate.toDateString();
+    const previousDate = (props.previousMessage && new Date(props.previousMessage.createdAt).toDateString()) || '';
+    const isNewDay = currentDate !== previousDate;
+
+    return (
+      <View>
+        {isNewDay && (
+          <Text style={{ textAlign: 'center', fontSize: 12, marginBottom: 10 }}>
+            {createdAtDate.toLocaleDateString(undefined, {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </Text>
+        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2, paddingHorizontal: 10 }}>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', justifyContent: originalProps.position === 'right' ? 'flex-end' : 'flex-start', alignItems: 'flex-start' }}>
+              <View style={{ maxWidth: '80%' }}>
+                <View style={{ backgroundColor: originalProps.position === 'right' ? 'lightblue' : 'lightgreen', borderRadius: 10, padding: 10 }}>
+                  <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black' }}>{currentMessage.text}</Text>
+                  <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black', fontSize: 10 }}>{messageTime}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   const renderChatScreen = () => {
     if (selectedChat !== null && readyChat ) {
       return (
@@ -514,7 +565,7 @@ const TabTwoScreen = () => {
                 );
               }
             }}
-            
+            renderMessage={renderMessage}
             inverted = {false}
           />
         </View>
