@@ -45,10 +45,8 @@ const TabOneScreen = () => {
         fetch(`http://192.168.1.19:3000/api/user/${userId}`)
           .then(response => {
             if (response.ok) {
-              console.log("re",response)
               return response.json();
             } else if (response.status === 404) {
-              console.log("retry");
               setTimeout(fetchUser, 500);
             } else {
               throw new Error('Failed to fetch user data');
@@ -56,7 +54,6 @@ const TabOneScreen = () => {
           })
           .then(userData => {
             if(userData){
-              console.log("got the data", userData);
               const { dating_preferences } = userData;
               setPreferences({
                 datingPreferences: dating_preferences,
@@ -108,8 +105,6 @@ const TabOneScreen = () => {
         }
     
         const cardData = await response.json();
-
-        console.log("here", cardData);
 
         if (!cardData) {
           setCard(cardData);
@@ -226,7 +221,6 @@ const TabOneScreen = () => {
       }
     }
     else{
-      console.log("not valid card");
       renderCardUI();
     }
   };
@@ -256,7 +250,6 @@ const TabOneScreen = () => {
         console.error('Error disliking card:', error);
       }
     } else{
-      console.log("not valid card");
       renderCardUI();
     }
   };

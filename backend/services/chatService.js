@@ -7,7 +7,6 @@ const addMessage = async (userId, chatUserId, message, initial = false) => {
         'INSERT INTO chats (user_id, chat_user_id, message, initial) VALUES ($1, $2, $3, $4) RETURNING *',
         [userId, chatUserId, message, initial]
       );
-      console.log("the mess", message);
       return result.rows[0];
     } catch (error) {
       console.error('Error adding message:', error);

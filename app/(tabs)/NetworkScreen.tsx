@@ -38,6 +38,7 @@ const NetworkScreen  = () => {
     const [imageBlobs, setImageBlobs] = useState<string[]>([]);
     const [modalLoading, setModalLoading] = useState<boolean>(false);
     const [alreadyLoadingBlobs, setalreadyLoadingBlobs] = useState(false)
+    const [readyChat, setReadyChat] = useState(false)
 
     const socketRef = useRef(null as Socket | null);
 
@@ -71,6 +72,12 @@ const NetworkScreen  = () => {
             fetchMessages();
         }
     }, [showChat]);
+
+    useEffect(() => {
+        if(showChat){
+            setReadyChat(true);
+        }
+    }, [messages]);
 
     useEffect(() => {
         if(selectedUser){
@@ -347,12 +354,12 @@ const NetworkScreen  = () => {
 
     return (
     <View style={{ flex: 1 }}>
-    {showChat? (
+    {readyChat? (
             <View style={{ flex: 1 , backgroundColor: isAnonymousMode ? '#222222' : '#FFF8E1'}}>
                 <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
                     <View style={{ alignItems: 'center' }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10 }}>
-                            <TouchableOpacity disabled = {modalLoading} style={[styles.backButton, { opacity: modalLoading ? 0.5 : 1 }]} onPress={() => {setMessages([]); setShowChat(false); setPictures({})}}>
+                            <TouchableOpacity disabled = {modalLoading} style={[styles.backButton, { opacity: modalLoading ? 0.5 : 1 }]} onPress={() => {setMessages([]); setShowChat(false); setReadyChat(false); setPictures({})}}>
                                 <Text style={styles.toggleButtonText}>Back</Text>
                             </TouchableOpacity>
                             <Text style={[styles.actionButtonText, { marginRight: 20, marginLeft: 20, marginBottom: 10, color: isAnonymousMode ? 'white' : 'black' }]}>
@@ -373,7 +380,7 @@ const NetworkScreen  = () => {
                     renderSend={renderSend}
                     messages={messages}
                     onSend={messages => onSend(messages as CustomMessage[])}
-                    user={{ _id: userId }}
+                    user={{ _id: userId || ''}}
                     renderMessage={(props) => {
                         const { currentMessage, nextMessage, ...originalProps } = props;
                     
@@ -626,7 +633,8 @@ const NetworkScreen  = () => {
             </View>
     ) : (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: "#FFF8E1"  }}>
-            <TouchableOpacity style={styles.actionButton} onPress={() => setShowChat(true)}>
+            <TouchableOpacity style={[
+            styles.actionButton, { opacity: showChat && !readyChat ? 0.5 : 1 }]}  onPress={() => setShowChat(true)}>
                 <Text style={{ color: 'black', fontSize: 20 }}>Enter Global Chat</Text>
             </TouchableOpacity>
             <Text style={{fontStyle: 'italic', color: '#777'}}>Please be respectful to others in the chat.</Text>
