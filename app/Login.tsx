@@ -17,10 +17,8 @@ const Login = () => {
     const signIn = async () => {
         setLoading(true);
         try {
-            const response = await signInWithEmailAndPassword(auth, email, password);
-            console.log(response);
+            await signInWithEmailAndPassword(auth, email, password);
         } catch (error) {
-            console.log(error);
             alert('Invalid credentials.');
         } finally {
             setLoading(false);
@@ -38,7 +36,6 @@ const Login = () => {
             setModalVisible(false);
             setResetEmail('');
         } catch (error) {
-            console.log(error);
             alert('Failed to send password reset email. Please check the email provided and try again.');
         }
     };

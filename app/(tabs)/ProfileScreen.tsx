@@ -59,7 +59,6 @@ const ProfileScreen: React.FC = ({}) => {
           if (response.ok) {
             return response.json();
           } else if (response.status === 404) {
-            console.log("retry");
             setTimeout(fetchUser, 500);
           } else {
             throw new Error('Failed to fetch user data');
@@ -67,7 +66,6 @@ const ProfileScreen: React.FC = ({}) => {
         })
         .then(async userData => {
           if (userData) {
-            console.log("the data", userData)
             const blobUrl = await fetchImageAndConvertToBlob(userData.pictures[0]);
             setProfileBlob(blobUrl);
             setProfileState(userData);
