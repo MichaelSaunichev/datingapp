@@ -49,16 +49,11 @@ const TabTwoScreen = () => {
   useEffect(() => {
     const userIds = chats.map(chat => chat._id);
     chatUserIdsRef.current = userIds;
-    console.log("yo",chats);
   }, [chats]);
 
   useEffect(() => {
     selectedChatRef.current = selectedChat;
   }, [selectedChat]);
-
-  useEffect(() => {
-    console.log("meq",);;
-  }, [messages]);
 
   useEffect(() => {
       const fetchData = async () => {
@@ -87,14 +82,10 @@ const TabTwoScreen = () => {
       }
       //deleted account
       else if (func == "2" && theUserId1 != userId){
-        console.log("chats", chatUserIdsRef.current);
-        console.log(theUserId1);
-        console.log("got deleted ping");
         const isUserId1InChats = chatUserIdsRef.current.includes(theUserId1);
         if (isUserId1InChats) {
           if (selectedChatRef.current == theUserId1) {
             //in chat
-            console.log("in deleted chat");
             setSelectedChat(null);
           }
           fetchChatsInitial();
@@ -103,21 +94,17 @@ const TabTwoScreen = () => {
     });
 
     socket.on('theNewMessage', ({ senderId, recipientId }) => {
-      console.log("selected chat:", selectedChatRef.current);
       //if person being sent to
       if (recipientId === userId) {
         // if in the chat
         if (selectedChatRef.current === senderId) {
-          console.log("in chat");
           fetchMostRecentMessage();
           setShouldFetchChats(true);
         // in another chat
         } else if (selectedChatRef.current != null){
-          console.log("in another chat");
           setShouldFetchChats(true);
         //outside of chats
         } else{
-          console.log("outside of chats");
           fetchChats();
         }
       }
@@ -132,17 +119,13 @@ const TabTwoScreen = () => {
     return messages.map(message => {
       // Get the user's local timezone offset in minutes
       const localOffsetMinutes = moment().utcOffset();
-      console.log(`Local timezone offset in minutes: ${localOffsetMinutes}`);
       
       // Adjust the createdAt date by the local offset
       const createdAtDate = moment.utc(message.createdAt).add(localOffsetMinutes, 'minutes');
       
-      console.log(`Original UTC date: ${message.createdAt}`);
-      console.log(`Converted local date: ${createdAtDate.toDate()}`);
-      
       return {
         ...message,
-        createdAt: createdAtDate.toDate(), // Keep as Date object
+        createdAt: createdAtDate.toDate(),
       };
     });
   };
@@ -245,7 +228,6 @@ const TabTwoScreen = () => {
 
   const onChatSelect = async (chatId: string) => {
     if(loadingChat){
-      console.log("loading another chat");
       return
     }
     setLoadingChat(true);

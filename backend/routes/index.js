@@ -54,8 +54,6 @@ router.post('/api/user/create', async (req, res) => {
     // Add user to the database
     const createdUser = await userService.createUser(newUser);
 
-    console.log("created user:", createdUser);
-
     // Add existing users to the new user's card data
     const users = await userService.getAllUsers(); // Fetch all users from the database
     users.forEach(async (user) => {
@@ -97,7 +95,6 @@ router.post('/api/user/:userId/update', async (req, res) => {
     const updatedUser = await userService.updateUser(userId, updatedData);
 
     if (updatedUser) {
-      console.log("upda", updatedUser);
       res.json(updatedUser);
     } else {
       res.status(404).json({ message: 'User not found' });
@@ -164,7 +161,6 @@ router.get('/api/cards', async (req, res, next) => {
     let nextCard = null;
 
     while (true) {
-      console.log(`Checking card at index: ${currentIndex}`);
       const card = userCards[currentIndex];
       if (!card) {
         return res.json(null);
@@ -173,7 +169,6 @@ router.get('/api/cards', async (req, res, next) => {
       const checkUserId = card.card_id;
       const checkUser = await userService.getUserById(checkUserId);
       if (!checkUser) {
-        console.log(`User with ID ${checkUserId} not found`);
         currentIndex = (currentIndex + 1) % userCards.length;
         if (currentIndex === originalIndex) {
           return res.json(null);
@@ -181,15 +176,12 @@ router.get('/api/cards', async (req, res, next) => {
         continue;
       }
 
-      console.log("da", dating_preferences);
 
       const meetsPreferences =
         (dating_preferences === 'Everyone') ||
         (checkUser.gender === 'Non-binary') ||
         ((dating_preferences === 'Men' && checkUser.gender === 'Male') ||
           (dating_preferences === 'Women' && checkUser.gender === 'Female'));
-
-      console.log(`User: ${checkUserId}, Meets Preferences: ${meetsPreferences}`);
 
       if (meetsPreferences) {
         nextCard = {
@@ -334,8 +326,6 @@ router.get('/api/chats/:userId', async (req, res) => {
         // Fetch the most recent message using the new function
         const mostRecentMessage = await chatService.getMostRecentMessage(userId, chat_user_id);
 
-        console.log("the first", mostRecentMessage);
-
         chatUsers.push({
           _id: chat_user_id,
           name: correspondingUser.name,
@@ -371,9 +361,6 @@ router.post('/api/chat/:userId/:chatId', async (req, res) => {
   const { userId, chatId } = req.params;
   const newMessage = req.body;
 
-  // Log the request body to debug the issue
-  console.log('Received new message:', newMessage);
-
   try {
     if (!newMessage.text) {
       return res.status(400).json({ error: 'Message content is missing' });
@@ -393,7 +380,6 @@ router.post('/api/chat/:userId/:chatId', async (req, res) => {
 router.post('/api/globalchat', async (req, res, next) => {
   try {
     const newMessage = req.body;
-    console.log("New message createdAt:", newMessage.createdAt); // Log the createdAt value
     const addedMessage = await addMessage(newMessage);
     res.json({ success: true, message: 'Message added successfully', data: addedMessage });
   } catch (error) {
@@ -406,12 +392,7 @@ router.get('/api/globalchat', async (req, res, next) => {
   try {
     const limit = parseInt(req.query.limit) || 20;
     const offset = parseInt(req.query.offset) || 0;
-    console.log("Fetching messages with the following parameters:");
-    console.log("Limit:", limit);
-    console.log("Offset:", offset);
     const { messages, total } = await getMessages(limit, offset);
-    console.log("Fetched messages:", messages);
-    console.log("Total messages count:", total);
     res.json({ messages, total });
   } catch (error) {
     console.error("Error fetching messages:", error);
@@ -424,7 +405,6 @@ router.post('/api/globalchat/:messageId/like', async (req, res, next) => {
   try {
     const messageId = req.params.messageId;
     const { likes } = req.body;
-    console.log("liky", likes);
     const updatedMessage = await updateMessageLikes(messageId, likes);
     if (updatedMessage) {
       res.json({ success: true, message: 'Like status updated successfully', data: updatedMessage });

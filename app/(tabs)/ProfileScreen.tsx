@@ -121,7 +121,6 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const saveChanges = async () => {
-    console.log("a a",tempProfileState.bio.length);
     if (tempProfileState.bio.length < 1){
       alert("Please enter a valid bio");
     }
