@@ -4,7 +4,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
-import { getAuth, deleteUser, User } from "firebase/auth";
+import Welcome from '../Welcome';
+import { getAuth, signOut, deleteUser, User } from "firebase/auth";
+import { useNavigation } from '@react-navigation/native';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 
@@ -20,6 +22,7 @@ type ProfileState = {
 
 const ProfileScreen: React.FC = ({}) => {
   const route = useRoute();
+  const navigation = useNavigation();
   const routeParams = route.params as { userEmail: string | undefined };
   const userEmail = routeParams ? routeParams.userEmail : undefined;
 
@@ -154,7 +157,15 @@ const ProfileScreen: React.FC = ({}) => {
   }
 
   const handleLogOut = async () => {
-    console.log("sign out");
+    const auth = getAuth();
+    try {
+      await signOut(auth);
+      console.log("User signed out successfully");
+      navigation.navigate('Welcome');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      alert('Error signing out. Please try again.');
+    }
   };
 
   const deleteAccount = async () => {
