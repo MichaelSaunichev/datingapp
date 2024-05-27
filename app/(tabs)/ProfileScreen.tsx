@@ -5,9 +5,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 import { getAuth, signOut, deleteUser, User } from "firebase/auth";
-import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
+import { useNavigation, CompositeNavigationProp, RouteProp } from '@react-navigation/native';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type ProfileState = {
   name: string;
@@ -34,6 +35,8 @@ const ProfileScreen: React.FC = ({}) => {
     dating_preferences: 'Everyone',
     account_paused: false,
   });
+
+
   const [tempProfileState, setTempProfileState] = useState<ProfileState>({ ...profileState });
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
