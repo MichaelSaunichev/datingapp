@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { FIREBASE_AUTH } from 'FirebaseConfig'
 import { signInWithEmailAndPassword } from '@firebase/auth';
-import { createUserWithEmailAndPassword } from '@firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from '@firebase/auth';
 import { getFirestore, doc, setDoc } from '@firebase/firestore';
 import { useRoute } from '@react-navigation/native';
 import { useProfile } from './ProfileContext';
@@ -29,7 +29,11 @@ const Signup = () => {
         }
         setLoading(true);
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            await sendEmailVerification(user);
+
             const profileWithId = { ...profile, id: email };
             
             try {
