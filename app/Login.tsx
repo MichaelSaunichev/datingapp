@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableWithoutFeedback, Keyboard, TextInput, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableWithoutFeedback, Keyboard, TextInput, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { signInWithEmailAndPassword } from '@firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from '@firebase/auth';
 import { FIREBASE_AUTH } from '../node_modules/FirebaseConfig';
-import { sendPasswordResetEmail } from '@firebase/auth';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -42,71 +41,73 @@ const Login = () => {
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <View style={styles.container}>
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => {
-                    setModalVisible(!modalVisible);
-                }}
-            >
-                <View style={styles.centeredView}>
-                    <View style={styles.modalView}>
-                        <Text style={styles.modalText}>Enter your email address to reset your password:</Text>
-                        <TextInput
-                            autoFocus={true}
-                            style={styles.input}
-                            onChangeText={setResetEmail}
-                            value={resetEmail}
-                            placeholder="Email"
-                            keyboardType="email-address"
+            <KeyboardAvoidingView behavior="height" style={styles.container}>
+                <ScrollView contentContainerStyle={styles.scrollContainer}>
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={modalVisible}
+                        onRequestClose={() => {
+                            setModalVisible(!modalVisible);
+                        }}
+                    >
+                        <View style={styles.centeredView}>
+                            <View style={styles.modalView}>
+                                <Text style={styles.modalText}>Enter your email address to reset your password:</Text>
+                                <TextInput
+                                    autoFocus={true}
+                                    style={styles.input}
+                                    onChangeText={setResetEmail}
+                                    value={resetEmail}
+                                    placeholder="Email"
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                />
+                                <TouchableOpacity style={styles.button} onPress={resetPassword}>
+                                    <Text style={styles.buttonText}>Send Reset Email</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.button} onPress={() => setModalVisible(false)}>
+                                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </Modal>
+                    <View>
+                        <TextInput 
+                            value={email} 
+                            style={styles.input} 
+                            placeholder="Email" 
+                            placeholderTextColor="#888"
                             autoCapitalize="none"
+                            onChangeText={setEmail}
                         />
-                        <TouchableOpacity style={styles.button} onPress={resetPassword}>
-                            <Text style={styles.buttonText}>Send Reset Email</Text>
+                        <TextInput 
+                            secureTextEntry={true} 
+                            value={password} 
+                            style={styles.input} 
+                            placeholder="Password" 
+                            placeholderTextColor="#888"
+                            autoCapitalize="none"
+                            onChangeText={setPassword}
+                        />
+                        <TouchableOpacity onPress={() => setModalVisible(true)}>
+                            <Text style={styles.resetPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.button} onPress={() => setModalVisible(false)}>
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
-                        </TouchableOpacity>
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#0000ff" />
+                        ) : (
+                            <>
+                                <TouchableOpacity style={styles.button} onPress={signIn}>
+                                    <Text style={styles.buttonText}>Login</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
+                                    <Text style={styles.buttonText}>Back</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
                     </View>
-                </View>
-            </Modal>
-            <KeyboardAvoidingView behavior='padding'>
-                <TextInput 
-                    value={email} 
-                    style={styles.input} 
-                    placeholder="Email" 
-                    placeholderTextColor="#888"
-                    autoCapitalize="none"
-                    onChangeText={setEmail}
-                />
-                <TextInput 
-                    secureTextEntry={true} 
-                    value={password} 
-                    style={styles.input} 
-                    placeholder="Password" 
-                    placeholderTextColor="#888"
-                    autoCapitalize="none"
-                    onChangeText={setPassword}
-                />
-                <TouchableOpacity onPress={() => setModalVisible(true)}>
-                    <Text style={styles.resetPasswordText}>Forgot Password?</Text>
-                </TouchableOpacity>
-                {loading ? (
-                    <ActivityIndicator size="large" color="#0000ff" />
-                ) : (
-                    <>
-                        <TouchableOpacity style={styles.button} onPress={signIn}>
-                            <Text style={styles.buttonText}>Login</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
-                            <Text style={styles.buttonText}>Back</Text>
-                        </TouchableOpacity>
-                    </>
-                )}
+                </ScrollView>
             </KeyboardAvoidingView>
-        </View>
         </TouchableWithoutFeedback>
     );
 }
@@ -118,9 +119,13 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         backgroundColor: '#f0f0f0',
+    },
+    scrollContainer: {
         padding: 20,
-      },
-      input: {
+        flexGrow: 1,
+        justifyContent: 'center',
+    },
+    input: {
         height: 50,
         backgroundColor: 'white',
         borderColor: '#e0e0e0',
@@ -130,7 +135,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         fontSize: 16,
         color: '#333',
-      },
+    },
     button: {
         backgroundColor: '#fff',
         paddingVertical: 15,

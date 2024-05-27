@@ -44,13 +44,25 @@ function InnerLayout({ user }: { user: User | null }) {
 
 export default function RootLayoutNav() {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    onAuthStateChanged(FIREBASE_AUTH, (user) => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
       setUser(user);
+      setLoading(false); // Set loading to false once auth state is determined
     });
+
+    return () => unsubscribe();
   }, []);
+  
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
     <ProfileProvider>
@@ -78,3 +90,12 @@ export default function RootLayoutNav() {
     </ProfileProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+  },
+});

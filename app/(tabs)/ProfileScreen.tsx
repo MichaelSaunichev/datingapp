@@ -4,9 +4,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
-import Welcome from '../Welcome';
 import { getAuth, signOut, deleteUser, User } from "firebase/auth";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 
@@ -204,6 +203,7 @@ const ProfileScreen: React.FC = ({}) => {
         if (currentUser) {
             await deleteUser(currentUser);
             console.log('Firebase user account deleted successfully.');
+            navigation.navigate('Welcome');
         } else {
             console.error('Error: No current user found in Firebase authentication.');
             return; // Exit function if no current user found
