@@ -5,7 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 import { getAuth, signOut, deleteUser, User } from "firebase/auth";
-import { useNavigation, CompositeNavigationProp, RouteProp } from '@react-navigation/native';
+import { useNavigation, useNavigationState , CompositeNavigationProp, RouteProp } from '@react-navigation/native';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -53,6 +53,8 @@ const ProfileScreen: React.FC = ({}) => {
   const [profileBlob, setProfileBlob] = useState<string>('');;
   const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] = useState(false);
   const socketRef = useRef(null as Socket | null);
+
+  const routes = useNavigationState(state => state.routeNames);
 
   const userId = userEmail;
   
@@ -163,7 +165,7 @@ const ProfileScreen: React.FC = ({}) => {
     try {
       await signOut(auth);
       console.log("User signed out successfully");
-      navigation.navigate('Welcome');
+      //navigation.navigate('Welcome');
     } catch (error) {
       console.error('Error signing out:', error);
       alert('Error signing out. Please try again.');
@@ -206,7 +208,7 @@ const ProfileScreen: React.FC = ({}) => {
         if (currentUser) {
             await deleteUser(currentUser);
             console.log('Firebase user account deleted successfully.');
-            navigation.navigate('Welcome');
+            //navigation.navigate('Welcome');
         } else {
             console.error('Error: No current user found in Firebase authentication.');
             return; // Exit function if no current user found

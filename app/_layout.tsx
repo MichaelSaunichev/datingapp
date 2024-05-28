@@ -12,8 +12,8 @@ import EnterName from './EnterName'
 import EnterBio from './EnterBio'
 import EnterDOB from './EnterDOB'
 import SelectGender from './SelectGender'
-import CreateProfile from './CreateProfile';
 import UploadPictures from './UploadPictures'
+import VerifyEmailPrompt from './VerifyEmailPrompt';
 import { Stack } from 'expo-router';
 import { Auth, User } from '@firebase/auth'
 import { FIREBASE_AUTH } from 'FirebaseConfig'
@@ -22,16 +22,11 @@ import { onAuthStateChanged } from '@firebase/auth';
 
 const StackGuy = createNativeStackNavigator();
 
-import { Slot } from 'expo-router';
 import 'react-native-reanimated'
-/*
-export default function HomeLayout() {
-  return <Slot />;
-}*/
-
 
 function InnerLayout({ user }: { user: User | null }) {
   const colorScheme = useColorScheme();
+  
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -46,14 +41,33 @@ export default function RootLayoutNav() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const colorScheme = useColorScheme();
+  const [emailVerified, setEmailVerified] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
-      setUser(user);
-      setLoading(false); // Set loading to false once auth state is determined
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, async (user) => {
+      setLoading(true);
+      if (user) {
+        await user.reload();
+        setUser(user);
+        setEmailVerified(user.emailVerified);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
     });
-
-    return () => unsubscribe();
+  
+    const intervalId = setInterval(async () => {
+      const currentUser = FIREBASE_AUTH.currentUser;
+      if (currentUser) {
+        await currentUser.reload();
+        setEmailVerified(currentUser.emailVerified);
+      }
+    }, 2000);
+  
+    return () => {
+      unsubscribe();
+      clearInterval(intervalId);
+    };
   }, []);
   
   if (loading) {
@@ -66,27 +80,32 @@ export default function RootLayoutNav() {
 
   return (
     <ProfileProvider>
-    <NavigationContainer independent={true} theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <StackGuy.Navigator>
-        {user ? (
-          // User is signed in
-          <StackGuy.Screen name="Tabs" options={{ headerShown: false }}>
-            {() => <InnerLayout user={user} />}
-          </StackGuy.Screen>
-        ) : (
-          <>
-          <StackGuy.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
-          <StackGuy.Screen name="Login" component={Login} options={{ headerShown: false }} />
-          <StackGuy.Screen name="Signup" component={Signup} options={{ headerShown: false }} />
-          <StackGuy.Screen name="EnterName" component={EnterName} options={{ headerShown: false }} />
-          <StackGuy.Screen name="EnterBio" component={EnterBio} options={{ headerShown: false }} />
-          <StackGuy.Screen name="EnterDOB" component={EnterDOB} options={{ headerShown: false }} />
-          <StackGuy.Screen name="SelectGender" component={SelectGender} options={{ headerShown: false }} />
-          <StackGuy.Screen name="UploadPictures" component={UploadPictures} options={{ headerShown: false }} />
-          </>
-        )}
-      </StackGuy.Navigator>
-    </NavigationContainer>
+      <NavigationContainer independent={true} theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <StackGuy.Navigator>
+          {user ? (
+            emailVerified ? (
+              // User is signed in and email is verified
+              <StackGuy.Screen name="Tabs" options={{ headerShown: false }}>
+                {() => <InnerLayout user={user} />}
+              </StackGuy.Screen>
+            ) : (
+              // User is signed in but email is not verified
+              <StackGuy.Screen name="VerifyEmailPrompt" component={VerifyEmailPrompt} options={{ headerShown: false }} />
+            )
+          ) : (
+            <>
+              <StackGuy.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
+              <StackGuy.Screen name="Login" component={Login} options={{ headerShown: false }} />
+              <StackGuy.Screen name="Signup" component={Signup} options={{ headerShown: false }} />
+              <StackGuy.Screen name="EnterName" component={EnterName} options={{ headerShown: false }} />
+              <StackGuy.Screen name="EnterBio" component={EnterBio} options={{ headerShown: false }} />
+              <StackGuy.Screen name="EnterDOB" component={EnterDOB} options={{ headerShown: false }} />
+              <StackGuy.Screen name="SelectGender" component={SelectGender} options={{ headerShown: false }} />
+              <StackGuy.Screen name="UploadPictures" component={UploadPictures} options={{ headerShown: false }} />
+            </>
+          )}
+        </StackGuy.Navigator>
+      </NavigationContainer>
     </ProfileProvider>
   );
 }
