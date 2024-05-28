@@ -10,11 +10,11 @@ const EnterName = () => {
     const [isButtonEnabled, setIsButtonEnabled] = useState(profile.name.trim().length > 0); // State to track button enablement
 
     const handleNameChange = (name) => {
-        const trimmedName = name.trim();
+        const trimmedName = name.trim().substring(0, 15); // Trim and limit to 15 characters
         setIsButtonEnabled(trimmedName.length > 0); // Enable/disable button based on input value
         setProfile(prevProfile => ({
             ...prevProfile,
-            name: name // Update the name property of the profile
+            name: trimmedName // Update the name property of the profile
         }));
     };
 
@@ -28,11 +28,12 @@ const EnterName = () => {
                         style={styles.input}
                         placeholder="Name"
                         placeholderTextColor="#888"
-                        onChangeText={handleNameChange} // Update this to handleNameChange
+                        onChangeText={handleNameChange}
+                        maxLength={15}
                     />
                     {/* Navigation Button to go to the next screen */}
                     <TouchableOpacity
-                        style={[styles.button, !isButtonEnabled && { opacity: 0.5 }]} // Disable button when name is empty
+                        style={[styles.button, !isButtonEnabled && { opacity: 0.5 }]}
                         onPress={() => {
                             if (profile.name.trim().length > 0) {
                                 navigation.navigate('EnterDOB');

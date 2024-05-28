@@ -7,12 +7,21 @@ import { useProfile } from './ProfileContext';
 const EnterDOB = () => {
     const { profile, setProfile } = useProfile();
     const navigation = useNavigation();
-    const [showDatePicker, setShowDatePicker] = useState(false);
     let calculatedAge = 0;
+
+    const calculateAge = (dob) => {
+        const today = new Date();
+        const birthDate = new Date(dob);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    };
 
     const onChangeDate = (event, selectedDate) => {
         if (selectedDate) {
-            setShowDatePicker(Platform.OS === 'ios');
             setProfile(prev => ({ ...prev, dob: selectedDate }));
         }
     };
@@ -20,48 +29,38 @@ const EnterDOB = () => {
     return (
         <View style={styles.container}>
             <Text style={styles.sectionTitle}>What's your birthday?</Text>
-            <TouchableOpacity style={styles.button} onPress={() => setShowDatePicker(true)}>
-                <Text style={styles.buttonText}>Select Date</Text>
-            </TouchableOpacity>
-            {showDatePicker && (
+            <View style={styles.datePickerContainer}>
                 <DateTimePicker
-                    value={profile.dob}
+                    value={profile.dob || new Date()}
                     mode="date"
                     display="default"
                     onChange={onChangeDate}
                 />
-            )}
+            </View>
             <TouchableOpacity
-                style={styles.button}
+                style={[styles.button, { opacity: profile.dob && calculateAge(profile.dob) > 18 && calculateAge(profile.dob) < 100 ? 1 : 0.5 }]}
                 onPress={() => {
                     if (profile.dob) {
-                        const today = new Date();
-                        const dob = new Date(profile.dob);
-                        calculatedAge = today.getFullYear() - dob.getFullYear();
-                        const monthDiff = today.getMonth() - dob.getMonth();
-                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-                            calculatedAge--;
-                        }
+                        calculatedAge = calculateAge(profile.dob);
                     }
                     if (calculatedAge < 18) {
-                        alert("You must be at least 18 years old to use this app.");
                         return;
-                    } else if (calculatedAge > 150) {
-                        alert("Please enter a valid date of birth.");
+                    } else if (calculatedAge > 100) {
                         return;
                     } else{ 
                         navigation.navigate('SelectGender')}}}
+                disabled={!profile.dob || calculateAge(profile.dob) <= 18 || calculateAge(profile.dob) >= 100}
             >
                 <Text style={styles.buttonText}>Next</Text>
             </TouchableOpacity>
             <TouchableOpacity
-                        style={[styles.button]}
-                        onPress={() => {
-                            navigation.navigate('EnterName');
-                        }}
-                    >
-                        <Text style={styles.buttonText}>Back</Text>
-                    </TouchableOpacity>
+                    style={[styles.button]}
+                    onPress={() => {
+                        navigation.navigate('EnterName');
+                    }}
+                >
+                    <Text style={styles.buttonText}>Back</Text>
+                </TouchableOpacity>
         </View>
     );
 };
@@ -95,5 +94,8 @@ const styles = StyleSheet.create({
     buttonText: {
         color: 'black',
         fontSize: 16,
+    },
+    datePickerContainer: {
+        alignItems: 'center',
     },
 });
