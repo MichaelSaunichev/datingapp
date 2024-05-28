@@ -121,14 +121,6 @@ const UploadPictures = () => {
                 >
                     <Text style={styles.buttonText}>{deleteMode ? "Stop Deleting" : "Delete Picture"}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                        style={[styles.button]}
-                        onPress={() => {
-                            navigation.navigate('EnterBio');
-                        }}
-                    >
-                        <Text style={styles.buttonText}>Back</Text>
-                </TouchableOpacity>
                 {deleteMode && selectedPictures.length > 0 && (
                     <TouchableOpacity
                     style={[styles.button, uploading && { opacity: 0.5 }]}
@@ -137,6 +129,14 @@ const UploadPictures = () => {
                         <Text style={styles.buttonText}>Delete Selected</Text>
                     </TouchableOpacity>
                 )}
+                <TouchableOpacity
+                        style={[styles.button]}
+                        onPress={() => {
+                            navigation.navigate('EnterBio');
+                        }}
+                    >
+                        <Text style={styles.buttonText}>Back</Text>
+                </TouchableOpacity>
                 {profile.pictures.length >= 3 && profile.pictures.length <= 5 && (
                     <TouchableOpacity
                         style={[styles.button, uploading && { opacity: 0.5 }]}

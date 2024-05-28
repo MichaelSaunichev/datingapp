@@ -44,7 +44,7 @@ const EnterBio = () => {
                                 setIsButtonEnabled(false);
                             }
                         }}
-                        disabled={!isButtonEnabled} // Button is disabled if u didn't put bio
+                        disabled={!isButtonEnabled}
                     >
                         <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>
