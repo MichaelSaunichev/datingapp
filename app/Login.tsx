@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableWithoutFeedback, Keyboard, TextInput, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity, ScrollView } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableWithoutFeedback, Keyboard, TextInput, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from '@firebase/auth';
 import { FIREBASE_AUTH } from '../node_modules/FirebaseConfig';
@@ -41,16 +41,16 @@ const Login = () => {
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-            <KeyboardAvoidingView behavior="height" style={styles.container}>
-                <ScrollView contentContainerStyle={styles.scrollContainer}>
-                    <Modal
-                        animationType="slide"
-                        transparent={true}
-                        visible={modalVisible}
-                        onRequestClose={() => {
-                            setModalVisible(!modalVisible);
-                        }}
-                    >
+        <View style={styles.container}>
+            <KeyboardAvoidingView behavior='padding'>
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => {
+                        setModalVisible(!modalVisible);
+                    }}
+                >
                         <View style={styles.centeredView}>
                             <View style={styles.modalView}>
                                 <Text style={styles.modalText}>Enter your email address to reset your password:</Text>
@@ -72,9 +72,8 @@ const Login = () => {
                             </View>
                         </View>
                     </Modal>
-                    <View>
                         <TextInput 
-                            value={email} 
+                            value={email}
                             style={styles.input} 
                             placeholder="Email" 
                             placeholderTextColor="#888"
@@ -105,10 +104,9 @@ const Login = () => {
                                 </TouchableOpacity>
                             </>
                         )}
+                        </KeyboardAvoidingView>
                     </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
-        </TouchableWithoutFeedback>
+                    </TouchableWithoutFeedback>
     );
 }
 
@@ -116,14 +114,11 @@ export default Login;
 
 const styles = StyleSheet.create({
     container: {
+        marginVertical: 0,
         flex: 1,
         justifyContent: 'center',
-        backgroundColor: '#f0f0f0',
-    },
-    scrollContainer: {
+        backgroundColor: '#1E4D2B',
         padding: 20,
-        flexGrow: 1,
-        justifyContent: 'center',
     },
     input: {
         height: 50,
@@ -135,7 +130,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         fontSize: 16,
         color: '#333',
-    },
+      },
     button: {
         backgroundColor: '#fff',
         paddingVertical: 15,
@@ -154,7 +149,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     resetPasswordText: {
-        color: 'blue',
+        color: 'white',
         textAlign: 'center',
         marginVertical: 20,
     },

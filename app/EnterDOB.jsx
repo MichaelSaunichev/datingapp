@@ -19,7 +19,7 @@ const EnterDOB = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.sectionTitle}>Set Your Date of Birth</Text>
+            <Text style={styles.sectionTitle}>What's your birthday?</Text>
             <TouchableOpacity style={styles.button} onPress={() => setShowDatePicker(true)}>
                 <Text style={styles.buttonText}>Select Date</Text>
             </TouchableOpacity>
@@ -54,6 +54,14 @@ const EnterDOB = () => {
             >
                 <Text style={styles.buttonText}>Next</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+                        style={[styles.button]}
+                        onPress={() => {
+                            navigation.navigate('EnterName');
+                        }}
+                    >
+                        <Text style={styles.buttonText}>Back</Text>
+                    </TouchableOpacity>
         </View>
     );
 };
@@ -64,18 +72,17 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#1E4D2B',
         padding: 20,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
+        color: 'white',
         marginBottom: 10,
     },
     button: {
-        backgroundColor: '#007aff',
+        backgroundColor: 'white',
         padding: 12,
         borderRadius: 25,
         alignItems: 'center',
@@ -86,7 +93,7 @@ const styles = StyleSheet.create({
         shadowRadius: 1.5,
     },
     buttonText: {
-        color: 'white',
+        color: 'black',
         fontSize: 16,
     },
 });

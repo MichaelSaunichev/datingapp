@@ -107,9 +107,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-        backgroundColor: '#f0f0f0',
+        // alignItems: 'center',
+        backgroundColor: '#1E4D2B',
         padding: 20,
-      },
+    },
       input: {
         height: 50,
         backgroundColor: 'white',
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
         shadowOffset: { height: 3, width: 3 },
         shadowOpacity: 1,
         shadowRadius: 5,
-        alignItems: 'center', // Ensure text is centered
+        alignItems: 'center',
     },
     buttonText: {
         color: '#000',

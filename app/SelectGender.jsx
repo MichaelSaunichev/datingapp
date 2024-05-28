@@ -19,9 +19,11 @@ const SelectGender = () => {
         return selectedOption === option ? styles.selectedButton : styles.button;
     };
 
+    const isNextEnabled = profile.gender && profile.dating_preferences;
+
     return (
         <View style={styles.container}>
-            <Text style={styles.sectionTitle}>Select Your Gender</Text>
+            <Text style={styles.sectionTitle}>Select your gender...</Text>
             <View style={styles.buttonContainer}>
                 <TouchableOpacity 
                     style={getButtonStyle(profile.gender, 'Male')} 
@@ -40,7 +42,7 @@ const SelectGender = () => {
                 </TouchableOpacity>
             </View>
 
-            <Text style={styles.sectionTitle}>Your Dating Preference</Text>
+            <Text style={styles.sectionTitle}>...and your dating preference</Text>
             <View style={styles.buttonContainer}>
                 <TouchableOpacity 
                     style={getButtonStyle(profile.dating_preferences, 'Men')}
@@ -61,10 +63,19 @@ const SelectGender = () => {
 
             {/* Navigation Button */}
             <TouchableOpacity
-                style={styles.button}
-                onPress={() => navigation.navigate('EnterBio')}
+                style={[styles.button, !isNextEnabled && styles.disabledButton]}
+                onPress={() => isNextEnabled && navigation.navigate('EnterBio')}
+                disabled={!isNextEnabled}
             >
                 <Text style={styles.buttonText}>Next</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.button]}
+                onPress={() => {
+                    navigation.navigate('EnterDOB');
+                 }}
+            >
+                <Text style={styles.buttonText}>Back</Text>
             </TouchableOpacity>
         </View>
     );
@@ -76,8 +87,8 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f0f0f0',
+        // alignItems: 'center',
+        backgroundColor: '#1E4D2B',
         padding: 20,
     },
     buttonContainer: {
@@ -86,7 +97,7 @@ const styles = StyleSheet.create({
         marginVertical: 10,
     },
     button: {
-        backgroundColor: '#007aff',
+        backgroundColor: 'white',
         padding: 12,
         borderRadius: 25,
         alignItems: 'center',
@@ -97,8 +108,11 @@ const styles = StyleSheet.create({
         shadowRadius: 1.5,
         marginHorizontal: 5,
     },
+    disabledButton: {
+        backgroundColor: '#cccccc',
+    },
     selectedButton: {
-        backgroundColor: '#ff4081',
+        backgroundColor: 'gray',
         padding: 12,
         borderRadius: 25,
         alignItems: 'center',
@@ -110,13 +124,13 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
     },
     buttonText: {
-        color: 'white',
+        color: 'black',
         fontSize: 16,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
+        color: 'white',
         marginVertical: 10,
     }
 });

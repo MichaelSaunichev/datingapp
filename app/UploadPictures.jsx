@@ -81,7 +81,7 @@ const UploadPictures = () => {
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <Text style={styles.sectionTitle}>
-                    {deleteMode ? 'Select images to delete:' : 'Upload 3 to 5 Pictures'}
+                    {deleteMode ? 'Select images to delete:' : 'Upload some pics! (3 to 5)'}
                 </Text>
                 <View style={styles.imagesContainer}>
                     {profile.pictures.map((url, index) => (
@@ -121,6 +121,14 @@ const UploadPictures = () => {
                 >
                     <Text style={styles.buttonText}>{deleteMode ? "Stop Deleting" : "Delete Picture"}</Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                        style={[styles.button]}
+                        onPress={() => {
+                            navigation.navigate('EnterBio');
+                        }}
+                    >
+                        <Text style={styles.buttonText}>Back</Text>
+                </TouchableOpacity>
                 {deleteMode && selectedPictures.length > 0 && (
                     <TouchableOpacity
                     style={[styles.button, uploading && { opacity: 0.5 }]}
@@ -151,7 +159,10 @@ export default UploadPictures;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        // alignItems: 'center',
+        backgroundColor: '#1E4D2B',
+        padding: 20,
     },
     scrollContainer: {
         flexGrow: 1,
@@ -162,7 +173,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
+        color: 'white',
         marginBottom: 20,
     },
     imagesContainer: {
@@ -178,14 +189,14 @@ const styles = StyleSheet.create({
         margin: 5,
     },
     button: {
-        backgroundColor: '#007aff',
+        backgroundColor: 'white',
         padding: 12,
         borderRadius: 25,
         alignItems: 'center',
         marginBottom: 10,
     },
     buttonText: {
-        color: 'white',
+        color: 'black',
         fontSize: 16,
     },
     deleteText: {

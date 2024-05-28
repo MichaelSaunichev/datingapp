@@ -19,7 +19,7 @@ const EnterBio = () => {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <View style={styles.container}>
                 <KeyboardAvoidingView behavior='padding' style={styles.keyboardView}>
-                    <Text style={styles.sectionTitle}>Enter Your Bio (100 characters max)</Text>
+                    <Text style={styles.sectionTitle}>Enter your bio (100 characters max!)</Text>
                     <TextInput
                         value={profile.bio}
                         onChangeText={handleBioChange}
@@ -48,6 +48,15 @@ const EnterBio = () => {
                     >
                         <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.button]}
+                        onPress={() => {
+                            navigation.navigate('SelectGender');
+                        }}
+                    >
+                        <Text style={styles.buttonText}>Back</Text>
+                    </TouchableOpacity>
                 </KeyboardAvoidingView>
             </View>
         </TouchableWithoutFeedback>
@@ -60,8 +69,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#1E4D2B',
         padding: 20,
     },
     keyboardView: {
@@ -69,10 +77,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     sectionTitle: {
-        alignSelf: 'center',
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
+        color: 'white',
         marginBottom: 10,
     },
     input: {
@@ -93,17 +100,18 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     button: {
-        backgroundColor: '#007aff',
+        backgroundColor: 'white',
         padding: 12,
         borderRadius: 25,
         alignItems: 'center',
+        marginTop: 10,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 1.5,
     },
     buttonText: {
-        color: 'white',
+        color: 'black',
         fontSize: 16,
     }
 });

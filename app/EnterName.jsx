@@ -22,7 +22,7 @@ const EnterName = () => {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <View style={styles.container}>
                 <KeyboardAvoidingView behavior='padding'>
-                    <Text style={styles.sectionTitle}>Enter your name</Text>
+                    <Text style={styles.sectionTitle}>What's your name?</Text>
                     <TextInput
                         value={profile.name}
                         style={styles.input}
@@ -44,6 +44,14 @@ const EnterName = () => {
                     >
                         <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.button]}
+                        onPress={() => {
+                            navigation.navigate('Welcome');
+                        }}
+                    >
+                        <Text style={styles.buttonText}>Back</Text>
+                    </TouchableOpacity>
                 </KeyboardAvoidingView>
             </View>
         </TouchableWithoutFeedback>
@@ -56,7 +64,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#1E4D2B',
         padding: 20,
     },
     input: {
@@ -71,7 +79,7 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     button: {
-        backgroundColor: '#007aff',
+        backgroundColor: 'white',
         padding: 12,
         borderRadius: 25,
         alignItems: 'center',
@@ -82,13 +90,13 @@ const styles = StyleSheet.create({
         shadowRadius: 1.5,
     },
     buttonText: {
-        color: 'white',
+        color: 'black',
         fontSize: 16,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
+        color: 'white',
         paddingVertical: 10,
         marginBottom: 10,
     }
