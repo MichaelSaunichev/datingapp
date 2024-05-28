@@ -6,9 +6,6 @@ const cardService = require('../services/cardService');
 const chatService = require('../services/chatService');
 const { render } = require('../app');
 
-const chatData = {
-}
-
 // --------------------------------------------------------------------------------------
 // User
 
