@@ -25,7 +25,6 @@ const NetworkScreen  = () => {
     const routeParams = route.params as { userEmail: string | undefined };
     const userEmail = routeParams ? routeParams.userEmail : undefined;
 
-    const [temporaryAnonymousMode, setTemporaryAnonymousMode] = useState<boolean>(false);
     const [isAnonymousMode, setIsAnonymousMode] = useState<boolean>(false);
     const [messages, setMessages] = useState<CustomMessage[]>([]);
     const [pictures, setPictures] = useState<{ [userId: string]: string }>({});
@@ -81,6 +80,7 @@ const NetworkScreen  = () => {
 
     useEffect(() => {
         if(selectedUser){
+            console.log("s", selectedUser);
             setTheImageBlobs(selectedUser);
         }
     }, [selectedUser]);
@@ -355,7 +355,7 @@ const NetworkScreen  = () => {
     return (
     <View style={{ flex: 1 }}>
     {readyChat? (
-            <View style={{ flex: 1 , backgroundColor: isAnonymousMode ? '#222222' : '#FFF8E1'}}>
+            <View style={{ flex: 1 , backgroundColor: isAnonymousMode ? '#2C3E50' : '#FFF8E1'}}>
                 <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
                     <View style={{ alignItems: 'center' }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10 }}>
@@ -456,7 +456,7 @@ const NetworkScreen  = () => {
                                                         <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black', fontSize: 10 }}>{messageTime}</Text>
                                                     </View>
                                                     {(currentMessage as CustomMessage).likes && ((currentMessage as CustomMessage).likes?.length ?? 0) > 0 && (
-                                                        <View style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, alignSelf: originalProps.position === 'right' ? 'flex-end' : 'flex-start', marginTop: 0 }}>
+                                                        <View style={{ backgroundColor: '#F08080', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, alignSelf: originalProps.position === 'right' ? 'flex-end' : 'flex-start', marginTop: 0 }}>
                                                             <Text style={{ color: 'white', fontSize: 12 }}> {(currentMessage as CustomMessage).likes?.length ?? 0} {(currentMessage as CustomMessage).likes?.length === 1 ? 'Like' : 'Likes'} </Text>
                                                         </View>
                                                     )}
@@ -464,7 +464,7 @@ const NetworkScreen  = () => {
                                                 {!isCurrentUser && (
                                                 <TouchableOpacity onPress={() => handleLikeToggle(currentMessage as CustomMessage)} style={{alignSelf: 'center', paddingLeft: 8 }}>
                                                     <View style={styles.likeButton}>
-                                                        <FontAwesome name={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'heart' : 'heart-o'} size={24} color={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'red' : 'red'} />
+                                                        <FontAwesome name={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'heart' : 'heart-o'} size={24} color={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? '#F08080' : '#F08080'} />
                                                     </View>
                                                 </TouchableOpacity>
                                                 )}
@@ -519,7 +519,7 @@ const NetworkScreen  = () => {
                                                 <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black', fontSize: 10 }}>{messageTime}</Text>
                                             </View>
                                             {(currentMessage as CustomMessage).likes && ((currentMessage as CustomMessage).likes?.length ?? 0) > 0 && (
-                                                <View style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, alignSelf: originalProps.position === 'right' ? 'flex-end' : 'flex-start', marginTop: 0 }}>
+                                                <View style={{ backgroundColor: '#F08080', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, alignSelf: originalProps.position === 'right' ? 'flex-end' : 'flex-start', marginTop: 0 }}>
                                                     <Text style={{ color: 'white', fontSize: 12 }}> {(currentMessage as CustomMessage).likes?.length ?? 0} {(currentMessage as CustomMessage).likes?.length === 1 ? 'Like' : 'Likes'} </Text>
                                                 </View>
                                             )}
@@ -527,7 +527,7 @@ const NetworkScreen  = () => {
                                         {!isCurrentUser && (
                                         <TouchableOpacity onPress={() => handleLikeToggle(currentMessage as CustomMessage)} style={{alignSelf: 'center', paddingLeft: 8 }}>
                                             <View style={styles.likeButton}>
-                                                <FontAwesome name={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'heart' : 'heart-o'} size={24} color={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'red' : 'red'} />
+                                                <FontAwesome name={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? 'heart' : 'heart-o'} size={24} color={(currentMessage as CustomMessage).likes && (currentMessage as CustomMessage).likes?.includes(userId) ? '#F08080' : '#F08080'} />
                                             </View>
                                         </TouchableOpacity>
                                         )}
@@ -543,7 +543,7 @@ const NetworkScreen  = () => {
                     animationType="slide"
                     transparent={true}
                     visible={modalVisible}
-                    onRequestClose={() => {setModalVisible(false); setImageBlobs([])}}
+                    onRequestClose={() => {setSelectedUser(null); setModalVisible(false); setImageBlobs([])}}
                 >
                     {selectedUser && (
                         <View style={styles.centeredView}>
@@ -574,7 +574,7 @@ const NetworkScreen  = () => {
                                     </View>
                                 </ScrollView>
                                 <View style={styles.buttonContainer}>
-                                    <TouchableOpacity onPress={() => {setModalVisible(false); setImageBlobs([])}} style={styles.cancelButtonProfile}>
+                                    <TouchableOpacity onPress={() => {setSelectedUser(null); setModalVisible(false); setImageBlobs([])}} style={styles.cancelButtonProfile}>
                                         <Text style={styles.actionButtonText}>Close</Text>
                                     </TouchableOpacity>
                                 </View>
@@ -592,17 +592,17 @@ const NetworkScreen  = () => {
                         <View style={styles.modalContent}>
                             <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 20 }}>Anonymous Settings</Text>
                             {/* Button to toggle between temporary anonymous and non-anonymous modes */}
-                            {!temporaryAnonymousMode ? (
-                                <TouchableOpacity style={styles.actionButton} onPress={() => setTemporaryAnonymousMode(true)}>
+                            {!isAnonymousMode ? (
+                                <TouchableOpacity style={styles.actionButton} onPress={() => setIsAnonymousMode(true)}>
                                     <Text style={styles.toggleButtonText}>Go Anonymous</Text>
                                 </TouchableOpacity>
                             ) : (
-                                <TouchableOpacity style={styles.actionButton} onPress={() => setTemporaryAnonymousMode(false)}>
+                                <TouchableOpacity style={styles.actionButton} onPress={() => setIsAnonymousMode(false)}>
                                     <Text style={styles.toggleButtonText}>Go Non-Anonymous</Text>
                                 </TouchableOpacity>
                             )}
                             {/* Render avatar selection if in temporary anonymous mode */}
-                            {temporaryAnonymousMode && (
+                            {isAnonymousMode && (
                                 <View>
                                     <Text style={{ fontSize: 16, marginTop: 20 }}>Choose an Avatar:</Text>
                                     <View style={styles.emojiContainer}>
@@ -621,9 +621,8 @@ const NetworkScreen  = () => {
                                 </View>
                             )}
                             {/* Close button */}
-                            <TouchableOpacity style={styles.cancelButton} onPress={() => {
+                            <TouchableOpacity style={[styles.cancelButton, { marginTop: 20 }]} onPress={() => {
                                 setModal2Visible(false);
-                                setIsAnonymousMode(temporaryAnonymousMode);
                             }}>
                                 <Text style={styles.actionButtonText}>Close</Text>
                             </TouchableOpacity>
@@ -632,14 +631,27 @@ const NetworkScreen  = () => {
                 </Modal>
             </View>
     ) : (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: "#FFF8E1"  }}>
-            <TouchableOpacity style={[
-            styles.actionButton, { opacity: showChat && !readyChat ? 0.5 : 1 }]}  onPress={() => setShowChat(true)}>
-                <Text style={{ color: 'black', fontSize: 20 }}>Enter Global Chat</Text>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1E4D2B', padding: 20 }}>
+            <FontAwesome name="comments" size={64} color="white" style={{ marginBottom: 20 }} />
+            <Text style={{ fontSize: 28, fontWeight: 'bold', color: 'white', marginBottom: 10, textAlign: 'center' }}>
+                Welcome to Global Chat
+            </Text>
+            <TouchableOpacity
+                style={{
+                    backgroundColor: '#FFD700',
+                    paddingVertical: 15,
+                    paddingHorizontal: 30,
+                    borderRadius: 25,
+                    marginBottom: 20,
+                }}
+                onPress={() => setShowChat(true)}
+            >
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1E4D2B' }}>Enter Global Chat</Text>
             </TouchableOpacity>
-            <Text style={{fontStyle: 'italic', color: '#777'}}>Please be respectful to others in the chat.</Text>
+            <Text style={{ fontSize: 16, color: 'white', marginBottom: 30, textAlign: 'center' }}>
+                Connect with fellow Cal Poly students. Please be respectful and enjoy your conversations!
+            </Text>
         </View>
-
     )}
     </View>
     );
@@ -675,17 +687,18 @@ const styles = StyleSheet.create({
         marginBottom: -15,
     },
     cancelButton: {
+        width: '100%',
         backgroundColor: '#4CAF50',
         padding: 10,
-        borderRadius: 5,
+        borderRadius: 50,
         marginTop: 10,
     },
     cancelButtonProfile: {
+        width: '100%',
         backgroundColor: '#888888',
         padding: 10,
-        borderRadius: 5,
+        borderRadius: 50,
         marginTop: 10,
-        width:'50%',
         alignSelf: 'center',
     },
     actionButtonText: {
@@ -721,9 +734,10 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     actionButton: {
+        width: '100%',
         backgroundColor: '#ff6090',
         padding: 10,
-        borderRadius: 5,
+        borderRadius: 50,
         marginTop: 10,
         marginRight: 10,
         marginBottom: 10,
@@ -781,7 +795,7 @@ const styles = StyleSheet.create({
     backButton: {
         backgroundColor: 'grey',
         paddingVertical: 8,
-        borderRadius: 5,
+        borderRadius: 50,
         marginTop: 10,
         marginBottom: 10,
         paddingHorizontal: 14,

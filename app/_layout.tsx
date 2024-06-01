@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useColorScheme } from '@/components/useColorScheme';
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
@@ -15,7 +15,7 @@ import SelectGender from './SelectGender'
 import UploadPictures from './UploadPictures'
 import VerifyEmailPrompt from './VerifyEmailPrompt';
 import { Stack } from 'expo-router';
-import { Auth, User } from '@firebase/auth'
+import { User } from '@firebase/auth'
 import { FIREBASE_AUTH } from 'FirebaseConfig'
 import 'FirebaseConfig'
 import { onAuthStateChanged } from '@firebase/auth';
@@ -73,7 +73,7 @@ export default function RootLayoutNav() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#FFFFFF" />
       </View>
     );
   }
@@ -115,6 +115,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#1E4D2B',
   },
 });

@@ -1,4 +1,4 @@
-import {React, useState, useEffect} from 'react';
+import { useState} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useProfile } from './ProfileContext'; // Ensure you import useProfile from its correct path

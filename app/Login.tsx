@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Modal, View, Text, StyleSheet, TouchableWithoutFeedback, Keyboard, TextInput, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from '@firebase/auth';
@@ -94,7 +94,7 @@ const Login = () => {
                             <Text style={styles.resetPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
                         {loading ? (
-                            <ActivityIndicator size="large" color="#0000ff" />
+                            <ActivityIndicator size="large" color="white" />
                         ) : (
                             <>
                                 <TouchableOpacity style={styles.button} onPress={signIn}>
@@ -146,11 +146,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 35,
         borderRadius: 25,
         marginVertical: 10,
-        elevation: 2,
-        shadowColor: 'rgba(0,0,0, .25)',
-        shadowOffset: { height: 3, width: 3 },
-        shadowOpacity: 1,
-        shadowRadius: 5,
+        borderWidth: 1,
+        borderColor: 'black',
         alignItems: 'center'
     },
     buttonText: {
@@ -189,7 +186,7 @@ const styles = StyleSheet.create({
         textAlign: "center"
     },
     cancelButtonText: {
-        color: 'red', 
+        color: 'black', 
         fontWeight: 'bold',
         textAlign: 'center'
     },

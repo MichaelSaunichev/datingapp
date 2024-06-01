@@ -267,7 +267,7 @@ const TabOneScreen = () => {
   };
 
   const renderCard = (card: Card | null) => (
-    <View style={{ backgroundColor: '#FFF8E1', padding: 20, width: '100%', height: '100%' }}>
+    <View style={{ backgroundColor: '#1E4D2B', padding: 20, width: '100%', height: '100%' }}>
       {matched && <Text style={{fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginTop: -10, marginBottom: 10}}>You Matched!</Text>}
       <ScrollView contentContainerStyle={styles.cardContainer} nestedScrollEnabled showsVerticalScrollIndicator={false}>
         {card ? (
@@ -294,16 +294,20 @@ const TabOneScreen = () => {
             </View>
           </View>
         ) : (
-          <Text>No more users</Text>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ textAlign: 'center', color: 'white', fontSize: 16 }}>
+              That's all for now!{"\n"}Check back later for more matches.
+            </Text>
+          </View>
         )}
       </ScrollView>
       {!matched && card && (
       <View style={styles.buttonContainerChoice}>
-        <TouchableOpacity disabled = {loading} style={[styles.button, { backgroundColor: '#FF6F61', opacity: loading ? 0.5 : 1 }]} onPress={() => { onDislike(); }}>
-          <FontAwesome name="times" size={24} color="white" />
+        <TouchableOpacity disabled = {loading} style={[styles.button, { backgroundColor: '#FF6347', opacity: loading ? 0.5 : 1 }]} onPress={() => { onDislike(); }}>
+          <FontAwesome name="times" size={24} color="#1E4D2B" />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, { backgroundColor: '#4CAF50', opacity: loading ? 0.5 : 1 }]} onPress={() => { onLike(); }}>
-          <FontAwesome name="heart" size={24} color="white" />
+        <TouchableOpacity style={[styles.button, { backgroundColor: '#FFD700', opacity: loading ? 0.5 : 1 }]} onPress={() => { onLike(); }}>
+          <FontAwesome name="heart" size={24} color="#1E4D2B" />
         </TouchableOpacity>
       </View>
       )}
@@ -328,7 +332,7 @@ const TabOneScreen = () => {
   return (
     <View style={styles.container}>
       {getRenderedCard() || (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#FFFFFF" />
       )}
     </View>
   );
@@ -339,7 +343,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFF8E1',
+    backgroundColor: '#1E4D2B',
   },
   cardContainer: {
     flexGrow: 1,
@@ -377,7 +381,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    borderRadius: 8,
+    borderRadius: 25,
     padding: 10,
     marginHorizontal: 5,
     alignItems: 'center',
