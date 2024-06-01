@@ -5,10 +5,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 import { getAuth, signOut, deleteUser, User } from "firebase/auth";
-import { useNavigation, useNavigationState , CompositeNavigationProp, RouteProp } from '@react-navigation/native';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type ProfileState = {
   name: string;
@@ -157,6 +156,9 @@ const ProfileScreen: React.FC = ({}) => {
 
   const saveChangesSettings = async () => {
     updateUserData();
+    setProfileState({
+      ...tempProfileState
+    });
     setIsSettingsModalVisible(false);
   }
 
@@ -313,12 +315,12 @@ const ProfileScreen: React.FC = ({}) => {
   if(loadingProfile){
     return(
       <View style={{
-        backgroundColor:'#FFF8E1',
+        backgroundColor:'#1E4D2B',
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
       }}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#FFFFFF" />
       </View>
     )
   }
@@ -337,14 +339,14 @@ const ProfileScreen: React.FC = ({}) => {
         {/* Settings Button Group */}
         <View style={styles.buttonGroup}>
           <TouchableOpacity disabled = {editModalLoading} onPress={() => setIsSettingsModalVisible(!isSettingsModalVisible)} style={[styles.iconButton, {opacity: editModalLoading ? 0.5 : 1}]}>
-            <MaterialIcons name="settings" size={24} color="white" />
+            <MaterialIcons name="settings" size={24} color="#1E4D2B" />
           </TouchableOpacity>
           <Text style={styles.labelText}>Settings</Text>
         </View>
         {/* Edit Profile Button Group */}
         <View style={styles.buttonGroup}>
           <TouchableOpacity onPress={() => {setTheImageBlobs(); seteditModalLoading(true)}} style={styles.iconButton}>
-            <MaterialIcons name="edit" size={24} color="white" />
+            <MaterialIcons name="edit" size={24} color="#1E4D2B" />
           </TouchableOpacity>
           <Text style={styles.labelText}>Edit Profile</Text>
         </View>
@@ -392,14 +394,17 @@ const ProfileScreen: React.FC = ({}) => {
             </View>
 
             {/* Dating Preferences */}
-            <View style={styles.settingContainer}>
-            <Text style={{ marginBottom: 10 }}>Dating Preferences</Text>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+            <View style={{ width: '100%', marginBottom: 10 }}>
+              <Text style={{ marginBottom: 10, textAlign: 'left', alignSelf: 'flex-start' }}>Dating Preferences</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                 {['Men', 'Women', 'Everyone'].map((preference) => (
                   <TouchableOpacity
                     key={preference}
-                    style={[styles.preferenceButton,
-                      tempProfileState.dating_preferences === preference ? styles.selectedPreference : {}]}
+                    style={[
+                      styles.preferenceButton,
+                      tempProfileState.dating_preferences === preference ? styles.selectedPreference : {},
+                      { marginHorizontal: 3 }
+                    ]}
                     onPress={() => handleDatingPreferenceChange(preference)}
                   >
                     <Text>{preference}</Text>
@@ -539,7 +544,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: '5%',
     paddingHorizontal: 10,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: '#1E4D2B',
   },
   profileImage: {
     marginTop: 40,
@@ -570,13 +575,13 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#ff6090',
+    backgroundColor: '#FFD700',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 5,
   },
   labelText: {
-    color: '#333',
+    color: 'white',
   },
   centeredView: {
     flex: 1,
@@ -588,13 +593,7 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
-  },
-  bioText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom:100,
+    color: 'white',
   },
   modalView: {
     margin: 20,
@@ -678,7 +677,7 @@ const styles = StyleSheet.create({
     padding: 8,
     borderWidth: 1,
     borderColor: '#888888',
-    borderRadius: 5,
+    borderRadius: 50,
   },
   selectedPreference: {
     backgroundColor: 'white',
@@ -689,7 +688,7 @@ const styles = StyleSheet.create({
     marginTop: 10, 
     backgroundColor: '#FF8C00',
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 50,
   },
   editProfileText: {
     marginLeft: 0,
@@ -699,19 +698,19 @@ const styles = StyleSheet.create({
     marginTop: 10, 
     backgroundColor: '#ff6090', 
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 50,
   },
   deleteImageButton: {
     marginTop: 10, 
     backgroundColor: '#ff6090', 
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 50,
   },
   stopDeletingButton: {
     marginTop: 10, 
     backgroundColor: '#ff6090', 
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 50,
   },
   closeButton: {
     position: 'absolute',
@@ -736,7 +735,7 @@ const styles = StyleSheet.create({
     marginTop: 10, 
     backgroundColor: '#4CAF50', 
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 50,
   },
 
   cancelButton: {
@@ -744,7 +743,7 @@ const styles = StyleSheet.create({
     marginTop: 10, 
     backgroundColor: '#888888', 
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 50,
   },
   deleteAccountButtonContainer: {
     position: 'absolute',
@@ -756,7 +755,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6F61',
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 5,
+    borderRadius: 50,
   },
   deleteConfirmationText: {
     fontSize: 16,

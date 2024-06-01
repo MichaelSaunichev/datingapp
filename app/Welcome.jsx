@@ -1,7 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Button, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Login from './Login';
 
 const Welcome = () => {
   const navigation = useNavigation();
@@ -62,7 +60,7 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 3, width: 3 },
     shadowOpacity: 1,
     shadowRadius: 5,
-    alignItems: 'center', // Ensure text is centered
+    alignItems: 'center',
 },
   buttonText: {
     color: '#000',

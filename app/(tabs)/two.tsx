@@ -378,15 +378,17 @@ const TabTwoScreen = () => {
 
   const renderChats = ({ item }: { item: { name: string; picture?: string; _id: string, firstMessage: string } }) => (
     <TouchableOpacity onPress={() => onChatSelect(item._id)}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#888888' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, marginVertical: 5 }}>
         <Image
           source={{ uri: userFirstImageBlobs[item._id] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
           style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
         />
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black' }}>{item.name}</Text>
-        <Text numberOfLines={2} style={{ fontSize: 14, color: '#555', marginLeft: 10, marginTop: 5, flexShrink: 1 }}>
-          {item.firstMessage ? (item.firstMessage.length > 100 ? item.firstMessage.slice(0, 100) + '...' : item.firstMessage) : ''}
-        </Text>
+        <View style={{ flexShrink: 1 }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black' }}>{item.name}</Text>
+          <Text numberOfLines={2} style={{ fontSize: 14, color: 'black', marginTop: 5 }}>
+            {item.firstMessage ? (item.firstMessage.length > 100 ? item.firstMessage.slice(0, 100) + '...' : item.firstMessage) : ''}
+          </Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -440,7 +442,6 @@ const TabTwoScreen = () => {
       </View>
     );
   };
-
   const renderChatScreen = () => {
     if (selectedChat !== null && readyChat ) {
       return (
@@ -570,13 +571,24 @@ const TabTwoScreen = () => {
           />
         </View>
       );
+    } else if (chats.length === 0) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1E4D2B', padding: 20 }}>
+          <Text style={{ color: 'white', fontSize: 16, textAlign: 'center' }}>
+            You have no matches yet. {'\n'}Keep swiping to find your match!
+          </Text>
+        </View>
+      );
     } else {
       return (
         <FlatList
           data={chats}
           renderItem={renderChats}
           keyExtractor={(item) => item._id.toString()}
-          style={{ backgroundColor: '#FFF8E1' }}
+          style={{ backgroundColor: '#1E4D2B' }}
+          ListHeaderComponent={() => <View style={{ height: 1, backgroundColor: 'black' }} />}
+          ListFooterComponent={() => <View style={{ height: 1, backgroundColor: 'black' }} />}
+          ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: 'black' }} />}
         />
       );
     }
@@ -643,19 +655,19 @@ const TabTwoScreen = () => {
     unmatchButton: {
       backgroundColor: '#FFFACD',
       padding: 10,
-      borderRadius: 5,
+      borderRadius: 50,
       marginTop: 10,
     },
     blockButton: {
       backgroundColor: '#FF6F61',
       padding: 10,
-      borderRadius: 5,
+      borderRadius: 50,
       marginTop: 10,
     },
     cancelButton: {
       backgroundColor: '#888888',
       padding: 10,
-      borderRadius: 5,
+      borderRadius: 50,
       marginTop: 10,
     },
     cancelButtonProfile: {
@@ -688,8 +700,8 @@ const TabTwoScreen = () => {
       {initialRender ? (
         renderChatScreen()
       ) : (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF8E1' }}>
-          <ActivityIndicator size="large" color="#0000ff" />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1E4D2B' }}>
+          <ActivityIndicator size="large" color="#FFFFFF" />
         </View>
       )}
     </View>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import { FIREBASE_AUTH } from 'FirebaseConfig';
 import { sendEmailVerification } from '@firebase/auth';

@@ -1,10 +1,8 @@
-import { Button, View, Text, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { FIREBASE_AUTH } from 'FirebaseConfig'
-import { signInWithEmailAndPassword } from '@firebase/auth';
 import { createUserWithEmailAndPassword, sendEmailVerification } from '@firebase/auth';
-import { getFirestore, doc, setDoc } from '@firebase/firestore';
 import { useRoute } from '@react-navigation/native';
 import { useProfile } from './ProfileContext';
 
