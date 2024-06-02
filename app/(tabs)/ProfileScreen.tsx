@@ -54,6 +54,8 @@ const ProfileScreen: React.FC = ({}) => {
   const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] = useState(false);
   const socketRef = useRef(null as Socket | null);
 
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+
   const routes = useNavigationState(state => state.routeNames);
 
   const userId = userEmail;
@@ -82,7 +84,13 @@ const ProfileScreen: React.FC = ({}) => {
       }
     };
   
+    const timeout = setTimeout(() => {
+      setLoadingTimeout(true);
+    }, 5000);
+  
     fetchUser();
+  
+    return () => clearTimeout(timeout); // Clear timeout if component unmounts
   }, [userId]);
 
   useEffect(() => {
@@ -286,7 +294,7 @@ const ProfileScreen: React.FC = ({}) => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
+      aspect: [1,1],
       quality: 1,
     });
     if (!result.canceled) {
@@ -309,17 +317,26 @@ const ProfileScreen: React.FC = ({}) => {
       setIsImageUploading(false);
     }
   };
-  if(loadingProfile){
-    return(
+  if (loadingProfile) {
+    return (
       <View style={{
-        backgroundColor:'#1E4D2B',
+        backgroundColor: '#1E4D2B',
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
       }}>
+        {loadingTimeout ? (
+        <>
+          <Text style={{ color: '#FFFFFF', marginBottom: 10 }}>Loading is taking longer than expected...</Text>
+          <TouchableOpacity onPress={handleLogOut} style={[styles.logOutButton, { width: '50%' }]}>
+            <Text style={styles.buttonText}>Log Out</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
         <ActivityIndicator size="large" color="#FFFFFF" />
+      )}
       </View>
-    )
+    );
   }
   return (
     <View style={styles.profileContainer}>
