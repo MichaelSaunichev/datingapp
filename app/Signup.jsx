@@ -3,9 +3,8 @@ import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { FIREBASE_AUTH } from 'FirebaseConfig'
 import { createUserWithEmailAndPassword, sendEmailVerification } from '@firebase/auth';
-import { useRoute } from '@react-navigation/native';
 import { useProfile } from './ProfileContext';
-
+import { API_URL } from '@env';
 
 const Signup = () => {
     const [email, setEmail] = useState('');
@@ -34,7 +33,7 @@ const Signup = () => {
             const profileWithId = { ...profile, id: email };
             
             try {
-                const response = await fetch('http://192.168.1.19:3000/api/user/create', {
+                const response = await fetch(`${API_URL}/api/user/create`, {
                     method: 'POST',
                     headers: {
                     'Content-Type': 'application/json',

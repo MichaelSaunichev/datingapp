@@ -8,6 +8,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 import moment from 'moment-timezone';
+import { API_URL } from '@env';
 
 interface CustomMessage extends IMessage {
   user: User;
@@ -55,15 +56,21 @@ const TabTwoScreen = () => {
   }, [selectedChat]);
 
   useEffect(() => {
-      const fetchData = async () => {
+    const fetchData = async () => {
+      try {
         await fetchChatsInitial();
         setInitialRender(true);
-      };
-      fetchData();
+      } catch (error) {
+        setTimeout(fetchData, 1000);
+      }
+    };
+  
+    fetchData();
+  
   }, []);
 
   useEffect(() => {
-    const socket = io('http://192.168.1.19:3000');
+    const socket = io(`${API_URL}`);
     socketRef.current = socket;
     
     socket.on('updateTheChats', ({ theUserId1, theUserId2, func }) => {
@@ -132,7 +139,7 @@ const TabTwoScreen = () => {
   const fetchMostRecentMessage = async () => {
     try {
       const chatId = selectedChatRef.current?.toString();
-      const response = await fetch(`http://192.168.1.19:3000/api/chat/${userId}/${chatId}?limit=1`);
+      const response = await fetch(`${API_URL}/api/chat/${userId}/${chatId}?limit=1`);
       if (!response.ok) {
         throw new Error('Failed to fetch most recent message');
       }
@@ -161,7 +168,7 @@ const TabTwoScreen = () => {
 
   const loadEarlierMessages = async () => {
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/chat/${userId}/${selectedChat}?limit=20&offset=${messages.length}`);
+      const response = await fetch(`${API_URL}/api/chat/${userId}/${selectedChat}?limit=20&offset=${messages.length}`);
       if (!response.ok) {
         throw new Error('Failed to fetch earlier messages');
       }
@@ -180,7 +187,7 @@ const TabTwoScreen = () => {
 
   const fetchChats = async () => {
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/chats/${userId}`);
+      const response = await fetch(`${API_URL}/api/chats/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch chat users');
       }
@@ -194,7 +201,7 @@ const TabTwoScreen = () => {
   
   const fetchChatsInitial = async () => {
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/chats/${userId}`);
+      const response = await fetch(`${API_URL}/api/chats/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch chat users');
       }
@@ -210,7 +217,7 @@ const TabTwoScreen = () => {
       setUserFirstImageBlobs(mapping);
       setChats(chatUsers);
     } catch (error) {
-      console.error('Error fetching chat users:', error);
+      throw error;
     }
   };
 
@@ -246,7 +253,7 @@ const TabTwoScreen = () => {
     setSelectedChat(chatId);
   
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/chat/${userId}/${chatId}`);
+      const response = await fetch(`${API_URL}/api/chat/${userId}/${chatId}`);
   
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
@@ -286,7 +293,7 @@ const TabTwoScreen = () => {
     };
   
     try {
-      await fetch(`http://192.168.1.19:3000/api/chat/${userId}/${chatId}`, {
+      await fetch(`${API_URL}/api/chat/${userId}/${chatId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -306,7 +313,7 @@ const TabTwoScreen = () => {
 
   const handleUnmatch = async (userId2: string) => {
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/unmatch/${userId}/${userId2}`, {
+      const response = await fetch(`${API_URL}/api/unmatch/${userId}/${userId2}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -329,7 +336,7 @@ const TabTwoScreen = () => {
 
   const handleBlock = async (userId2: string) => {
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/block/${userId}/${userId2}`, {
+      const response = await fetch(`${API_URL}/api/block/${userId}/${userId2}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
