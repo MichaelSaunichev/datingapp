@@ -13,7 +13,6 @@ const Signup = () => {
     const [loading, setLoading] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState('');
 
-    const route = useRoute();
     const { profile } = useProfile();
 
     const auth = FIREBASE_AUTH;
@@ -81,7 +80,7 @@ const Signup = () => {
                     autoCapitalize="none" 
                     onChangeText={setConfirmPassword} />
                 {loading ? (
-                    <ActivityIndicator size="large" color="#0000ff" />
+                    <ActivityIndicator size="large" color="white" />
                 ) : (
                     <>
                         <TouchableOpacity style={styles.button} onPress={signUp}>
