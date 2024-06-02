@@ -8,7 +8,7 @@ const Welcome = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f6f6f6" />
       <Text style={styles.icon}>🐎</Text>
-      <Text style={styles.appName}>PolyDates</Text>
+      <Text style={styles.appName}>Mustang Matches</Text>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.button}
@@ -50,21 +50,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   button: {
-    backgroundColor: '#fff',
-    paddingVertical: 15,
-    paddingHorizontal: 35,
+    backgroundColor: 'white',
+    padding: 12,
     borderRadius: 25,
-    marginVertical: 10,
-    elevation: 2,
-    shadowColor: 'rgba(0,0,0, .25)',
-    shadowOffset: { height: 3, width: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 5,
     alignItems: 'center',
+    marginBottom: 10,
 },
   buttonText: {
     color: '#000',
-    fontWeight: 'bold',
+    fontSize: 16,
     textAlign: 'center',
   },
 });

@@ -74,6 +74,8 @@ const UploadPictures = () => {
         } catch (error) {
             console.error('Error deleting image from Firebase Storage:', error);
             alert("Failed to delete image: " + error.message);
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -124,13 +126,13 @@ const UploadPictures = () => {
                 {deleteMode && selectedPictures.length > 0 && (
                     <TouchableOpacity
                     style={[styles.button, uploading && { opacity: 0.5 }]}
-                        onPress={deleteSelectedPictures}
+                        onPress={() => {setUploading(true); deleteSelectedPictures()}}
                     >
                         <Text style={styles.buttonText}>Delete Selected</Text>
                     </TouchableOpacity>
                 )}
                 <TouchableOpacity
-                        style={[styles.button]}
+                        style={[styles.button, uploading && { opacity: 0.5 }]}
                         onPress={() => {
                             navigation.navigate('EnterBio');
                         }}
@@ -201,7 +203,7 @@ const styles = StyleSheet.create({
     },
     deleteText: {
         color: 'white',
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: 'bold',
     },
     selectedImageContainer: {

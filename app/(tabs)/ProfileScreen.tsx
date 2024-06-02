@@ -166,8 +166,6 @@ const ProfileScreen: React.FC = ({}) => {
     const auth = getAuth();
     try {
       await signOut(auth);
-      console.log("User signed out successfully");
-      //navigation.navigate('Welcome');
     } catch (error) {
       console.error('Error signing out:', error);
       alert('Error signing out. Please try again.');
@@ -371,11 +369,11 @@ const ProfileScreen: React.FC = ({}) => {
                 <Text style={styles.modalTitle}>Confirm Account Deletion</Text>
                 <Text style= {styles.deleteConfirmationText}>Are you sure you want to delete your account?</Text>
                 <View style={styles.buttonContainer}>
-                  <TouchableOpacity onPress={() => setIsDeleteConfirmationVisible(false)} style={styles.cancelButton}>
-                    <Text style={styles.buttonText}>Cancel</Text>
-                  </TouchableOpacity>
                   <TouchableOpacity onPress={deleteAccount} style={[styles.logOutButton, {backgroundColor: "#FF6F61"}]}>
                     <Text style={styles.buttonText}>Delete</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsDeleteConfirmationVisible(false)} style={styles.cancelButton}>
+                    <Text style={styles.buttonText}>Cancel</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -419,10 +417,10 @@ const ProfileScreen: React.FC = ({}) => {
             <TouchableOpacity onPress={() => {setIsSettingsModalVisible(!isSettingsModalVisible), setTempProfileState(profileState)}} style={styles.cancelButton}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleLogOut} style={styles.logOutButton}>
-              <Text style={styles.buttonText}>Log Out</Text>
-            </TouchableOpacity>
             <View style={styles.deleteAccountButtonContainer}>
+              <TouchableOpacity onPress={handleLogOut} style={styles.logOutButton}>
+                <Text style={styles.buttonText}>Log Out</Text>
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => setIsDeleteConfirmationVisible(true)} style={styles.deleteAccountButton}>
                 <Text style={styles.buttonText}>Delete Account</Text>
               </TouchableOpacity>
@@ -685,8 +683,8 @@ const styles = StyleSheet.create({
   },
   logOutButton: {
     width: '100%',
-    marginTop: 10, 
-    backgroundColor: '#FF8C00',
+    marginBottom: 10, 
+    backgroundColor: '#97A9A9',
     padding: 10,
     borderRadius: 50,
   },
@@ -752,6 +750,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   deleteAccountButton: {
+    width: '100%',
     backgroundColor: '#FF6F61',
     paddingVertical: 10,
     paddingHorizontal: 20,

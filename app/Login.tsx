@@ -90,7 +90,7 @@ const Login = () => {
                             autoCapitalize="none"
                             onChangeText={setPassword}
                         />
-                        <TouchableOpacity onPress={() => setModalVisible(true)}>
+                        <TouchableOpacity style={styles.resetPasswordButton} onPress={() => setModalVisible(true)}>
                             <Text style={styles.resetPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
                         {loading ? (
@@ -146,18 +146,26 @@ const styles = StyleSheet.create({
         paddingHorizontal: 35,
         borderRadius: 25,
         marginVertical: 10,
-        borderWidth: 1,
-        borderColor: 'black',
-        alignItems: 'center'
+        elevation: 2,
+        shadowColor: 'rgba(0,0,0, .25)',
+        shadowOffset: { height: 3, width: 3 },
+        shadowOpacity: 1,
+        shadowRadius: 5,
+        alignItems: 'center',
     },
     buttonText: {
+        fontSize: 16,
         color: '#000',
-        fontWeight: 'bold',
+    },
+    resetPasswordButton: {
+        alignSelf: 'center',
+        paddingVertical: 5,
+        paddingHorizontal: 10,
     },
     resetPasswordText: {
+        fontSize: 16,
         color: 'white',
         textAlign: 'center',
-        marginVertical: 20,
     },
     centeredView: {
         flex: 1,
@@ -187,7 +195,6 @@ const styles = StyleSheet.create({
     },
     cancelButtonText: {
         color: 'black', 
-        fontWeight: 'bold',
         textAlign: 'center'
     },
 });
