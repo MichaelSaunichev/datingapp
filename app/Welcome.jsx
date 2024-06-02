@@ -8,7 +8,7 @@ const Welcome = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f6f6f6" />
       <Text style={styles.icon}>🐎</Text>
-      <Text style={styles.appName}>Mustang Matches</Text>
+      <Text style={styles.appName}>Mustang Match</Text>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.button}
