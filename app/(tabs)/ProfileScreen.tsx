@@ -8,6 +8,7 @@ import { getAuth, signOut, deleteUser, User } from "firebase/auth";
 import { useNavigation, useNavigationState } from '@react-navigation/native';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
+import { API_URL } from '@env';
 
 type ProfileState = {
   name: string;
@@ -59,34 +60,33 @@ const ProfileScreen: React.FC = ({}) => {
   
 
   useEffect(() => {
-    const fetchUser = () => {
-      fetch(`http://192.168.1.19:3000/api/user/${userId}`)
-        .then(response => {
-          if (response.ok) {
-            return response.json();
-          } else if (response.status === 404) {
-            setTimeout(fetchUser, 500);
-          } else {
-            throw new Error('Failed to fetch user data');
-          }
-        })
-        .then(async userData => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/user/${userId}`);
+        if (response.ok) {
+          const userData = await response.json();
           if (userData) {
             const blobUrl = await fetchImageAndConvertToBlob(userData.pictures[0]);
             setProfileBlob(blobUrl);
             setProfileState(userData);
             setTempProfileState(userData);
+            setLoadingProfile(false);
           }
-        })
-        .catch(error => console.error('Error fetching user data:', error))
-        .finally(() => setLoadingProfile(false));
+        } else if (response.status === 404) {
+          setTimeout(fetchUser, 500);
+        } else {
+          throw new Error('Failed to fetch user data');
+        }
+      } catch (error) {
+        setTimeout(fetchUser, 500);
+      }
     };
   
     fetchUser();
   }, [userId]);
 
   useEffect(() => {
-    const socket = io('http://192.168.1.19:3000');
+    const socket = io(`${API_URL}`);
     socketRef.current = socket;
     
     return () => {
@@ -113,7 +113,7 @@ const ProfileScreen: React.FC = ({}) => {
   
   const updateUserData = () => {
     // Send a request to update user data
-    fetch(`http://192.168.1.19:3000/api/user/${userId}/update`, {
+    fetch(`${API_URL}/api/user/${userId}/update`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -187,7 +187,7 @@ const ProfileScreen: React.FC = ({}) => {
         }
       }));
 
-      const response = await fetch(`http://192.168.1.19:3000/api/user/delete/${userId}`, {
+      const response = await fetch(`${API_URL}/api/user/delete/${userId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -208,10 +208,9 @@ const ProfileScreen: React.FC = ({}) => {
         if (currentUser) {
             await deleteUser(currentUser);
             console.log('Firebase user account deleted successfully.');
-            //navigation.navigate('Welcome');
         } else {
             console.error('Error: No current user found in Firebase authentication.');
-            return; // Exit function if no current user found
+            return;
         }
     } catch (error) {
       console.error('Error deleting user account:', error);

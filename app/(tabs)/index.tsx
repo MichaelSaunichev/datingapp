@@ -5,6 +5,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRoute } from '@react-navigation/native';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
+import { API_URL } from '@env';
 
 interface Card {
   id: number;
@@ -41,26 +42,27 @@ const TabOneScreen = () => {
       setLoading(false);
       setMatched(false);
   
-      const fetchUser = () => {
-        fetch(`http://192.168.1.19:3000/api/user/${userId}`)
-          .then(response => {
-            if (response.ok) {
-              return response.json();
-            } else if (response.status === 404) {
-              setTimeout(fetchUser, 500);
+      const fetchUser = async () => {
+        try {
+          console.log("asdasd", API_URL);
+          const response = await fetch(`${API_URL}/api/user/${userId}`);
+          if (!response.ok) {
+            if (response.status === 404) {
+              throw new Error('User not found');
             } else {
               throw new Error('Failed to fetch user data');
             }
-          })
-          .then(userData => {
-            if(userData){
-              const { dating_preferences } = userData;
-              setPreferences({
-                datingPreferences: dating_preferences,
-              });
-            }
-          })
-          .catch(error => console.error('Error fetching user data:', error));
+          }
+          const userData = await response.json();
+          if (userData) {
+            const { dating_preferences } = userData;
+            setPreferences({
+              datingPreferences: dating_preferences,
+            });
+          }
+        } catch (error) {
+          setTimeout(fetchUser, 1000);
+        }
       };
   
       fetchUser();
@@ -74,7 +76,7 @@ const TabOneScreen = () => {
   }, [preferences]);
 
   useEffect(() => {
-    const socket = io('http://192.168.1.19:3000');
+    const socket = io(`${API_URL}`);
     socketRef.current = socket;
     
     socket.on('updateTheChats', ({ theUserId1, theUserId2, func }) => {
@@ -98,7 +100,7 @@ const TabOneScreen = () => {
       try {
         const { datingPreferences } = preferences;
         // Fetch card data from the backend with filtering parameters
-        const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&dating_preferences=${datingPreferences}`);
+        const response = await fetch(`${API_URL}/api/cards?userId=${userId}&dating_preferences=${datingPreferences}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch card data');
@@ -133,7 +135,7 @@ const TabOneScreen = () => {
 
   const removeCard = async (card: Card) => {
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/cards/${userId}/${card.id}`, {
+      const response = await fetch(`${API_URL}/api/cards/${userId}/${card.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -150,7 +152,7 @@ const TabOneScreen = () => {
 
   const addChat = async (userId: string | undefined, chatAddId: number) => {
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/addchat/${userId}/${chatAddId}`, {
+      const response = await fetch(`${API_URL}/api/addchat/${userId}/${chatAddId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -168,7 +170,7 @@ const TabOneScreen = () => {
 
   const addLike = async (likedUser: number) => {
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/addlike/${userId}/${likedUser}`, {
+      const response = await fetch(`${API_URL}/api/addlike/${userId}/${likedUser}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -190,7 +192,7 @@ const TabOneScreen = () => {
     setLoading(true); 
     const { datingPreferences } = preferences;
 
-    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&dating_preferences=${datingPreferences}`);
+    const response = await fetch(`${API_URL}/api/cards?userId=${userId}&dating_preferences=${datingPreferences}`);
         
     if (!response.ok) {
       throw new Error('Failed to fetch card data');
@@ -231,14 +233,14 @@ const TabOneScreen = () => {
     }
     setLoading(true);
     const { datingPreferences } = preferences;
-    const response = await fetch(`http://192.168.1.19:3000/api/cards?userId=${userId}&dating_preferences=${datingPreferences}`);
+    const response = await fetch(`${API_URL}/api/cards?userId=${userId}&dating_preferences=${datingPreferences}`);
     if (!response.ok) {
       throw new Error('Failed to fetch card data');
     }
     const cardData = await response.json();
     if (cardData != null){
       try {
-        await fetch('http://192.168.1.19:3000/api/incrementIndex', {
+        await fetch(`${API_URL}/api/incrementIndex`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

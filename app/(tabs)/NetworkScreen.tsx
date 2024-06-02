@@ -8,6 +8,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 import moment from 'moment-timezone';
+import { API_URL } from '@env';
 
 interface CustomMessage extends IMessage {
   user: User;
@@ -42,7 +43,7 @@ const NetworkScreen  = () => {
     const socketRef = useRef(null as Socket | null);
 
     useEffect(() => {
-        const socket = io('http://192.168.1.19:3000');
+        const socket = io(`${API_URL}`);
         socketRef.current = socket;
         
         socket.on('message', ( {theUserId} ) => {
@@ -67,10 +68,16 @@ const NetworkScreen  = () => {
     }, []);
 
     useEffect(() => {
-        if(showChat){
-            fetchMessages();
+        if (showChat) {
+          const fetchMessagesWithRetry = () => {
+            fetchMessages().catch(error => {
+              setTimeout(fetchMessagesWithRetry, 1000);
+            });
+          };
+      
+          fetchMessagesWithRetry();
         }
-    }, [showChat]);
+      }, [showChat]);
 
     useEffect(() => {
         if(showChat){
@@ -80,7 +87,6 @@ const NetworkScreen  = () => {
 
     useEffect(() => {
         if(selectedUser){
-            console.log("s", selectedUser);
             setTheImageBlobs(selectedUser);
         }
     }, [selectedUser]);
@@ -126,7 +132,7 @@ const NetworkScreen  = () => {
         try {
             const newPictures: { [userId: string]: string } = {};
             for (const userId of userIds) {
-                const response = await fetch(`http://192.168.1.19:3000/api/uri/${userId}`);
+                const response = await fetch(`${API_URL}/api/uri/${userId}`);
                 const pictures = await response.json();
     
                 if (pictures.length > 0) {
@@ -159,7 +165,7 @@ const NetworkScreen  = () => {
   
   const fetchMessages = async () => {
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/globalchat`);
+      const response = await fetch(`${API_URL}/api/globalchat`);
       if (!response.ok) {
         throw new Error('Failed to fetch global chat');
       }
@@ -170,13 +176,13 @@ const NetworkScreen  = () => {
   
       setMessages(localMessages);
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      throw error;
     }
   };
 
   const fetchMostRecentMessage = async () => {
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/globalchat?limit=1`);
+      const response = await fetch(`${API_URL}/api/globalchat?limit=1`);
       if (!response.ok) {
         throw new Error('Failed to fetch most recent message');
       }
@@ -206,7 +212,7 @@ const NetworkScreen  = () => {
 
   const loadEarlierMessages = async () => {
     try {
-      const response = await fetch(`http://192.168.1.19:3000/api/globalchat?limit=20&offset=${messages.length}`);
+      const response = await fetch(`${API_URL}/api/globalchat?limit=20&offset=${messages.length}`);
       if (!response.ok) {
         throw new Error('Failed to fetch earlier messages');
       }
@@ -242,7 +248,7 @@ const NetworkScreen  = () => {
             ));
     
             // Send the updated likes to the backend
-            const response = await fetch(`http://192.168.1.19:3000/api/globalchat/${updatedMessage._id}/like`, {
+            const response = await fetch(`${API_URL}/api/globalchat/${updatedMessage._id}/like`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -287,7 +293,7 @@ const NetworkScreen  = () => {
 
         try {
             // Send the new message to the server
-            const response = await fetch(`http://192.168.1.19:3000/api/globalchat`, {
+            const response = await fetch(`${API_URL}/api/globalchat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -313,7 +319,7 @@ const NetworkScreen  = () => {
         if (!modalLoading){
             setModalLoading(true);
             try {
-                const response = await fetch(`http://192.168.1.19:3000/api/user/${user._id}`);
+                const response = await fetch(`${API_URL}/api/user/${user._id}`);
                 if (!response.ok) {
                     setModalLoading(false);
                     return
