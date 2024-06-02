@@ -59,6 +59,14 @@ const SelectGender = () => {
                     <Text style={styles.buttonText}>Everyone</Text>
                 </TouchableOpacity>
             </View>
+            <TouchableOpacity
+                style={[styles.button]}
+                onPress={() => {
+                    navigation.navigate('EnterDOB');
+                 }}
+            >
+                <Text style={styles.buttonText}>Back</Text>
+            </TouchableOpacity>
 
             {/* Navigation Button */}
             <TouchableOpacity
@@ -67,14 +75,6 @@ const SelectGender = () => {
                 disabled={!isNextEnabled}
             >
                 <Text style={styles.buttonText}>Next</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                style={[styles.button]}
-                onPress={() => {
-                    navigation.navigate('EnterDOB');
-                 }}
-            >
-                <Text style={styles.buttonText}>Back</Text>
             </TouchableOpacity>
         </View>
     );

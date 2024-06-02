@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Button } from 'react-native';
 import { FIREBASE_AUTH } from 'FirebaseConfig';
-import { sendEmailVerification } from '@firebase/auth';
+import { sendEmailVerification, signOut } from '@firebase/auth';
 
 const VerifyEmailPrompt = () => {
   const user = FIREBASE_AUTH.currentUser;
@@ -20,10 +20,19 @@ const VerifyEmailPrompt = () => {
     }
   };
 
+  const handleLogOut = async () => {
+    try {
+      await signOut(FIREBASE_AUTH);
+    } catch (error) {
+      alert('Failed to log out: ' + error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Please verify your email to continue.</Text>
       <Button title="Resend Verification Email" onPress={resendVerificationEmail} />
+      <Button title="Back" onPress={handleLogOut} />
     </View>
   );
 };

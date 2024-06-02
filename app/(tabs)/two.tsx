@@ -140,9 +140,20 @@ const TabTwoScreen = () => {
       const mostRecentMessage = messages[0];
       const localMostRecentMessage = convertMessageDates([mostRecentMessage])[0];
 
-    if (localMostRecentMessage) {
-      setMessages(previousMessages => [...previousMessages, localMostRecentMessage]);
-    }
+      if (localMostRecentMessage) {
+        setMessages(previousMessages => {
+          // Check if the most recent message already exists in previousMessages
+          const isMessageAlreadyFetched = previousMessages.some(msg => msg._id === localMostRecentMessage._id);
+  
+          // If the message is already fetched, return the previous messages
+          if (isMessageAlreadyFetched) {
+            return previousMessages;
+          }
+  
+          // Otherwise, append the new message
+          return [...previousMessages, localMostRecentMessage];
+        });
+      }
     } catch (error) {
       console.error('Error fetching most recent message:', error);
     }
