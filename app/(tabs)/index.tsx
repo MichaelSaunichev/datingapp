@@ -44,7 +44,6 @@ const TabOneScreen = () => {
   
       const fetchUser = async () => {
         try {
-          console.log("asdasd", API_URL);
           const response = await fetch(`${API_URL}/api/user/${userId}`);
           if (!response.ok) {
             if (response.status === 404) {
