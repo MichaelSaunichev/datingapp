@@ -7,7 +7,6 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
-import moment from 'moment-timezone';
 import { API_URL } from '@env';
 
 interface CustomMessage extends IMessage {
@@ -121,20 +120,6 @@ const TabTwoScreen = () => {
     };
   }, []);
 
-  const convertMessageDates = (messages: CustomMessage[]): CustomMessage[] => {
-    return messages.map(message => {
-      // Get the user's local timezone offset in minutes
-      const localOffsetMinutes = moment().utcOffset();
-      
-      // Adjust the createdAt date by the local offset
-      const createdAtDate = moment.utc(message.createdAt).add(localOffsetMinutes, 'minutes');
-      
-      return {
-        ...message,
-        createdAt: createdAtDate.toDate(),
-      };
-    });
-  };
 
   const fetchMostRecentMessage = async () => {
     try {
@@ -145,12 +130,11 @@ const TabTwoScreen = () => {
       }
       const { messages } = await response.json();      
       const mostRecentMessage = messages[0];
-      const localMostRecentMessage = convertMessageDates([mostRecentMessage])[0];
-
-      if (localMostRecentMessage) {
+  
+      if (mostRecentMessage) {
         setMessages(previousMessages => {
           // Check if the most recent message already exists in previousMessages
-          const isMessageAlreadyFetched = previousMessages.some(msg => msg._id === localMostRecentMessage._id);
+          const isMessageAlreadyFetched = previousMessages.some(msg => msg._id === mostRecentMessage._id);
   
           // If the message is already fetched, return the previous messages
           if (isMessageAlreadyFetched) {
@@ -158,7 +142,7 @@ const TabTwoScreen = () => {
           }
   
           // Otherwise, append the new message
-          return [...previousMessages, localMostRecentMessage];
+          return [...previousMessages, mostRecentMessage];
         });
       }
     } catch (error) {
@@ -174,11 +158,7 @@ const TabTwoScreen = () => {
       }
       const { messages: earlierMessages } = await response.json() as { messages: CustomMessage[] };
   
-      // Convert message dates to local time
-      const localEarlierMessages = convertMessageDates(earlierMessages);
-  
-      // Update state with the newly loaded messages
-      setMessages(previousMessages => [...localEarlierMessages, ...previousMessages]);
+      setMessages(previousMessages => [...earlierMessages, ...previousMessages]);
     } catch (error) {
       console.error('Error loading earlier messages:', error);
     }
@@ -206,12 +186,11 @@ const TabTwoScreen = () => {
         throw new Error('Failed to fetch chat users');
       }
       const chatUsers = await response.json();
-
+  
       const mapping: { [userId: string]: string } = {};
       await Promise.all(chatUsers.map(async (user: { picture?: string; _id: string }) => {
         if (user.picture) {
-          const blobUrl = await fetchImageAndConvertToBlob(user.picture);
-          mapping[user._id] = blobUrl;
+          mapping[user._id] = user.picture;
         }
       }));
       setUserFirstImageBlobs(mapping);
@@ -221,53 +200,25 @@ const TabTwoScreen = () => {
     }
   };
 
-  const setTheImageBlobs = async () => {
-    const imageUrls = userProfile.pictures || [];
-    try {
-      const blobs = await Promise.all(imageUrls.map(fetchImageAndConvertToBlob));
-      setImageBlobs(blobs);
-    } catch (error) {
-      console.error('Error fetching images and converting to blobs:', error);
-    } finally {
-      setModal2Ready(true);
-      setModal2Loading(false);
-    }
-  };
-
-  const fetchImageAndConvertToBlob = async (url: string): Promise<string> => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      return URL.createObjectURL(blob);
-    } catch (error) {
-      console.error('Error fetching image and converting to blob:', error);
-      return '';
-    }
-  };
-
   const onChatSelect = async (chatId: string) => {
     if(loadingChat){
-      return
+      return;
     }
     setLoadingChat(true);
     setSelectedChat(chatId);
   
     try {
       const response = await fetch(`${API_URL}/api/chat/${userId}/${chatId}`);
-  
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
+      const { messages, userProfile } = await response.json();
   
-      const {messages, userProfile} = await response.json();
-      const localMessages = convertMessageDates(messages);
-
-    setMessages(localMessages);
+      setMessages(messages);
       setUserProfile(userProfile);
     } catch (error) {
       console.error('Error loading messages:', error);
-    }
-    finally {
+    } finally {
       setReadyChat(true);
       setLoadingChat(false);
     }
@@ -480,7 +431,7 @@ const TabTwoScreen = () => {
               <Text style={{ color: 'black', fontSize: 16 }}>Back</Text>
             </TouchableOpacity>
             <View style={{ position: 'absolute', top: 7, left: '50%', marginLeft: -10 }}>
-              <TouchableOpacity onPress={() => {setmodal2Visible(true); setTheImageBlobs(); setModal2Loading(true)}}>
+              <TouchableOpacity onPress={() => {setmodal2Visible(true); setModal2Loading(true)}}>
                 {userProfile && (
                   <Image
                     source={{ uri: userFirstImageBlobs[userProfile.id] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
@@ -518,38 +469,26 @@ const TabTwoScreen = () => {
             <Modal
               animationType="slide"
               transparent={true}
-              visible={modal2Visible && modal2Ready}
-              onRequestClose={() => {setmodal2Visible(false); setModal2Ready(false); setImageBlobs([])}}
+              visible={modal2Visible}
+              onRequestClose={() => setmodal2Visible(false)}
             >
               <View style={styles.centeredView}>
                 <View style={styles.modalContent}>
                   <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
                     <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{userProfile.name}, {calculateAgeFromDOB(userProfile.dob) || ''}</Text>
-                    {/* Render the first profile image */}
                     <View style={{ alignItems: 'center' }}>
-                    {imageBlobs.length > 0 && (
-                      <Image
-                        key={imageBlobs[0]}
-                        source={{ uri: imageBlobs[0] }}
-                        style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
-                      />
-                    )}
-                    </View>
-                    {/* Render the bio after the first picture */}
-                    <Text style={{ fontSize: 14, marginTop: 10, textAlign: 'center' }}>{userProfile.bio}</Text>
-                    {/* Render additional profile pictures */}
-                    <View style={{ alignItems: 'center' }}>
-                      {imageBlobs.slice(1).map((uri: string, index: number) => (
+                      {userProfile.pictures && userProfile.pictures.map((url: string, index: number) => (
                         <Image
-                          key={uri}
-                          source={{ uri }}
+                          key={index}
+                          source={{ uri: url }}
                           style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
                         />
                       ))}
                     </View>
+                    <Text style={{ fontSize: 14, marginTop: 10, textAlign: 'center' }}>{userProfile.bio}</Text>
                   </ScrollView>
                   <View style={styles.buttonContainer}>
-                    <TouchableOpacity onPress={() => {setmodal2Visible(false); setModal2Ready(false); setImageBlobs([])}} style={styles.cancelButtonProfile}>
+                    <TouchableOpacity onPress={() => {setModal2Loading(false); setmodal2Visible(false)}} style={styles.cancelButtonProfile}>
                       <Text style={styles.actionButtonText}>Close</Text>
                     </TouchableOpacity>
                   </View>
@@ -571,9 +510,8 @@ const TabTwoScreen = () => {
               if (props.currentMessage?.user?._id === userId) {
                 return null;
               } else {
-                // Render profile picture
                 return (
-                  <TouchableOpacity onPress={() => {setmodal2Visible(true); setTheImageBlobs(); setModal2Loading(true)}}>
+                  <TouchableOpacity onPress={() => setmodal2Visible(true)}>
                     <View style={styles.avatarContainer}>
                       <Image
                         style={styles.avatar}

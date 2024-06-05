@@ -5,7 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 import { getAuth, signOut, deleteUser, User } from "firebase/auth";
-import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { useNavigationState } from '@react-navigation/native';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -48,10 +48,8 @@ const ProfileScreen: React.FC = ({}) => {
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
 
   const [imageBlobs, setImageBlobs] = useState<string[]>([]);
-  const [editModalLoading, seteditModalLoading] = useState<boolean>(false);
   const [alreadyLoadingBlobs, setalreadyLoadingBlobs] = useState(false)
 
-  const [profileBlob, setProfileBlob] = useState<string>('');;
   const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] = useState(false);
   const socketRef = useRef(null as Socket | null);
 
@@ -69,8 +67,6 @@ const ProfileScreen: React.FC = ({}) => {
         if (response.ok) {
           const userData = await response.json();
           if (userData) {
-            const blobUrl = await fetchImageAndConvertToBlob(userData.pictures[0]);
-            setProfileBlob(blobUrl);
             setProfileState(userData);
             setTempProfileState(userData);
             setLoadingProfile(false);
@@ -134,23 +130,19 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const saveChanges = async () => {
-    if (tempProfileState.bio.length < 1){
+    if (tempProfileState.bio.length < 1) {
       alert("Please enter a valid bio");
-    }
-    else if (tempProfileState.pictures.length < 3 || tempProfileState.pictures.length > 5){
+    } else if (tempProfileState.pictures.length < 3 || tempProfileState.pictures.length > 5) {
       alert("Please use 3 to 5 images");
-    }else{
+    } else {
       setProfileState({
         ...tempProfileState
       });
       setIsDeleting(false);
       updateUserData();
       setIsEditModalVisible(false);
-      setImagesToDelete([]);
-
-      const blobUrl = await fetchImageAndConvertToBlob(tempProfileState.pictures[0]);
-      setProfileBlob(blobUrl);
   
+      // Delete images from Firebase Storage
       await Promise.all(imagesToDelete.map(async (imageUrl) => {
         try {
           const storage = getStorage();
@@ -160,6 +152,8 @@ const ProfileScreen: React.FC = ({}) => {
           console.error('Error deleting image from Firebase Storage:', error);
         }
       }));
+  
+      setImagesToDelete([]);
     }
   };
 
@@ -239,7 +233,6 @@ const ProfileScreen: React.FC = ({}) => {
     } finally {
       setalreadyLoadingBlobs(false);
       setIsEditModalVisible(true);
-      seteditModalLoading(false);
     }
   };
 
@@ -286,45 +279,44 @@ const ProfileScreen: React.FC = ({}) => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
   
     if (permissionResult.granted === false) {
-        alert("Please allow access to your camera roll in Settings.");
-        setIsImageUploading(false);
-        return;
+      alert("Please allow access to your camera roll in Settings.");
+      setIsImageUploading(false);
+      return;
     }
   
     let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
     });
-
+  
     if (!result.canceled) {
-        const uri = result.assets[0].uri;
-
-        // Resize and compress the image
-        const manipulatedImage = await ImageManipulator.manipulateAsync(
-            uri,
-            [{ resize: { width: 800 } }],
-            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-        );
-
-        const resizedUri = manipulatedImage.uri;
-        const response = await fetch(resizedUri);
-        const blob = await response.blob();
-        const storage = getStorage();
-        const storageRef = ref(storage, `pictures/${Date.now()}`);
-        await uploadBytes(storageRef, blob);
-        const imageUrl = await getDownloadURL(storageRef);
-
-        setTempProfileState((prevState) => ({
-            ...prevState,
-            pictures: [...prevState.pictures, imageUrl],
-        }));
-        const localImageUrl = URL.createObjectURL(blob);
-        setImageBlobs((prevBlobs) => [...prevBlobs, localImageUrl]);
-        setIsImageUploading(false);
+      const uri = result.assets[0].uri;
+  
+      // Resize and compress the image
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 800 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
+  
+      const resizedUri = manipulatedImage.uri;
+      const response = await fetch(resizedUri);
+      const blob = await response.blob();
+      const storage = getStorage();
+      const storageRef = ref(storage, `pictures/${Date.now()}`);
+      await uploadBytes(storageRef, blob);
+      const imageUrl = await getDownloadURL(storageRef);
+  
+      setTempProfileState((prevState) => ({
+        ...prevState,
+        pictures: [...prevState.pictures, imageUrl],
+      }));
+  
+      setIsImageUploading(false);
     } else {
-        setIsImageUploading(false);
+      setIsImageUploading(false);
     }
   };
 
@@ -353,7 +345,7 @@ const ProfileScreen: React.FC = ({}) => {
     <View style={styles.profileContainer}>
       {/* Profile Image */}
       <Image
-        source={{ uri: profileBlob || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
+        source={{ uri: profileState.pictures[0] || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
         style={styles.profileImage}
       />
       <View style={styles.textContainerName}>
@@ -363,26 +355,26 @@ const ProfileScreen: React.FC = ({}) => {
       <View style={styles.buttonAndLabelContainer}>
         {/* Settings Button Group */}
         <View style={styles.buttonGroup}>
-          <TouchableOpacity disabled = {editModalLoading} onPress={() => setIsSettingsModalVisible(!isSettingsModalVisible)} style={[styles.iconButton, {opacity: editModalLoading ? 0.5 : 1}]}>
+          <TouchableOpacity onPress={() => setIsSettingsModalVisible(!isSettingsModalVisible)} style={styles.iconButton}>
             <MaterialIcons name="settings" size={24} color="#1E4D2B" />
           </TouchableOpacity>
           <Text style={styles.labelText}>Settings</Text>
         </View>
         {/* Edit Profile Button Group */}
         <View style={styles.buttonGroup}>
-          <TouchableOpacity onPress={() => {setTheImageBlobs(); seteditModalLoading(true)}} style={styles.iconButton}>
+          <TouchableOpacity onPress={() => setIsEditModalVisible(true)} style={styles.iconButton}>
             <MaterialIcons name="edit" size={24} color="#1E4D2B" />
           </TouchableOpacity>
           <Text style={styles.labelText}>Edit Profile</Text>
         </View>
       </View>
-
-      {/* Settings*/}
+  
+      {/* Settings */}
       <Modal
-        animationType ="slide"
+        animationType="slide"
         transparent={true}
         visible={isSettingsModalVisible}
-        onRequestClose={()=> setIsSettingsModalVisible(!isSettingsModalVisible)}
+        onRequestClose={() => setIsSettingsModalVisible(!isSettingsModalVisible)}
       >
         <View style={styles.centeredView}>
           <Modal
@@ -392,11 +384,11 @@ const ProfileScreen: React.FC = ({}) => {
             onRequestClose={() => setIsDeleteConfirmationVisible(false)}
           >
             <View style={styles.centeredView}>
-              <View style={[styles.modalView, {width: '81%', height: '81%'}]}>
+              <View style={[styles.modalView, { width: '81%', height: '81%' }]}>
                 <Text style={styles.modalTitle}>Confirm Account Deletion</Text>
-                <Text style= {styles.deleteConfirmationText}>Are you sure you want to delete your account?</Text>
+                <Text style={styles.deleteConfirmationText}>Are you sure you want to delete your account?</Text>
                 <View style={styles.buttonContainer}>
-                  <TouchableOpacity onPress={deleteAccount} style={[styles.logOutButton, {backgroundColor: "#FF6F61"}]}>
+                  <TouchableOpacity onPress={deleteAccount} style={[styles.logOutButton, { backgroundColor: "#FF6F61" }]}>
                     <Text style={styles.buttonText}>Delete</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setIsDeleteConfirmationVisible(false)} style={styles.cancelButton}>
@@ -408,8 +400,8 @@ const ProfileScreen: React.FC = ({}) => {
           </Modal>
           <View style={styles.modalView}>
             <Text style={styles.modalTitle}>Settings</Text>
-
-            {/*pause account*/}
+  
+            {/* Pause account */}
             <View style={styles.settingContainer}>
               <Text>Pause my account</Text>
               <Switch
@@ -417,7 +409,7 @@ const ProfileScreen: React.FC = ({}) => {
                 onValueChange={(value) => setTempProfileState((prevState) => ({ ...prevState, account_paused: value }))}
               />
             </View>
-
+  
             {/* Dating Preferences */}
             <View style={{ width: '100%', marginBottom: 10 }}>
               <Text style={{ marginBottom: 10, textAlign: 'left', alignSelf: 'flex-start' }}>Dating Preferences</Text>
@@ -437,11 +429,11 @@ const ProfileScreen: React.FC = ({}) => {
                 ))}
               </View>
             </View>
-
+  
             <TouchableOpacity onPress={saveChangesSettings} style={styles.saveChangesButton}>
               <Text style={styles.buttonText}>Save Changes</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {setIsSettingsModalVisible(!isSettingsModalVisible), setTempProfileState(profileState)}} style={styles.cancelButton}>
+            <TouchableOpacity onPress={() => { setIsSettingsModalVisible(!isSettingsModalVisible); setTempProfileState(profileState); }} style={styles.cancelButton}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
             <View style={styles.deleteAccountButtonContainer}>
@@ -455,8 +447,8 @@ const ProfileScreen: React.FC = ({}) => {
           </View>
         </View>
       </Modal>
-      
-      {/* Edit Profile*/}
+  
+      {/* Edit Profile */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -466,106 +458,103 @@ const ProfileScreen: React.FC = ({}) => {
           setIsEditModalVisible(false);
           setTempProfileState(profileState);
           setImagesToDelete([]);
-          setImageBlobs([]);
         }}
-      > 
-          <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <ScrollView style = {styles.modalScrollView} showsVerticalScrollIndicator={false}>
-                <Text style={styles.modalTitle}>Edit Profile</Text>
-                <View style={styles.editProfileContainer}>
-                    <Text style={styles.editProfileText}>Bio:</Text>
-                </View>
-                <TextInput
-                  style={[styles.input, { height: 100 }]}
-                  placeholder="Edit Bio"
-                  placeholderTextColor="grey"
-                  multiline
-                  value={tempProfileState.bio}
-                  onChangeText={(text) => {
-                    const maxLines = 1;
-                    const maxCharacters = 100;
-
-                    const lines = text.split('\n');
-                    if (lines.length <= maxLines && text.length <= maxCharacters) {
-                      setTempProfileState({ ...tempProfileState, bio: text });
-                    }
-                  }}
-                />
-                <Text style={styles.charCount}>{tempProfileState.bio.length}/100</Text>
-                <Text style={styles.editProfileText}>Images:</Text>
-                <View style={styles.editProfileContainer}>
-                  {!isDeleting ? (
-                    <>
-                      <TouchableOpacity
-                          onPress={handleImageUpload}
-                          style={[styles.addImageButton, { opacity: isImageUploading ? 0.5 : 1 }]}
-                          disabled={isImageUploading}
-                      >
-                          <Text style={styles.buttonText}>Add Image</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                          onPress={() => { setIsDeleting(true) }}
-                          style={[styles.deleteImageButton, { opacity: isImageUploading ? 0.5 : 1 }]}
-                          disabled={isImageUploading}
-                      >
-                          <Text style={styles.buttonText}>Delete Image</Text>
-                      </TouchableOpacity>
-                    </>
-                    
-                  ) : (
-                    <TouchableOpacity onPress={() => {setIsDeleting(false)}} style={styles.stopDeletingButton}>
-                      <Text style={styles.buttonText}>Done</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-
-                <View style={styles.imagePreviewContainer}>
-                  {imageBlobs.length > 0 ? (
-                    imageBlobs.map((uri, index) => (
-                      <View key={index}>
-                        {isDeleting ? (
-                          <TouchableOpacity onPress={() => deleteImage(index)}>
-                            <Image source={{ uri }} style={styles.thumbnail} />
-                            <TouchableOpacity style={styles.closeButton} onPress={() => deleteImage(index)}>
-                              <Text style={styles.closeButtonText}>x</Text>
-                            </TouchableOpacity>
-                          </TouchableOpacity>
-                        ) : (
-                          <Image source={{ uri }} style={styles.thumbnail} />
-                        )}
-                      </View>
-                    ))
-                  ) : (
-                    <Text>No images selected</Text>
-                  )}
-                </View>
-              </ScrollView>
-              <View style = {styles.buttonContainer}>
-                <TouchableOpacity
-                    onPress={saveChanges}
-                    style={[styles.saveChangesButton, { opacity: isImageUploading ? 0.5 : 1 }]}
-                    disabled={isImageUploading}
-                  >
-                    <Text style={styles.buttonText}>Save Changes</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => {
-                      setIsDeleting(false);
-                      setIsEditModalVisible(false);
-                      setTempProfileState(profileState);
-                      setImagesToDelete([]);
-                      setImageBlobs([]);
-                    }}
-                    style={[styles.cancelButton, { opacity: isImageUploading ? 0.5 : 1 }]}
-                    disabled={isImageUploading}
-                  >
-                    <Text style={styles.buttonText}>Cancel</Text>
-                  </TouchableOpacity>
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <View style={styles.editProfileContainer}>
+                <Text style={styles.editProfileText}>Bio:</Text>
               </View>
+              <TextInput
+                style={[styles.input, { height: 100 }]}
+                placeholder="Edit Bio"
+                placeholderTextColor="grey"
+                multiline
+                value={tempProfileState.bio}
+                onChangeText={(text) => {
+                  const maxLines = 1;
+                  const maxCharacters = 100;
+  
+                  const lines = text.split('\n');
+                  if (lines.length <= maxLines && text.length <= maxCharacters) {
+                    setTempProfileState({ ...tempProfileState, bio: text });
+                  }
+                }}
+              />
+              <Text style={styles.charCount}>{tempProfileState.bio.length}/100</Text>
+              <Text style={styles.editProfileText}>Images:</Text>
+              <View style={styles.editProfileContainer}>
+                {!isDeleting ? (
+                  <>
+                    <TouchableOpacity
+                      onPress={handleImageUpload}
+                      style={[styles.addImageButton, { opacity: isImageUploading ? 0.5 : 1 }]}
+                      disabled={isImageUploading}
+                    >
+                      <Text style={styles.buttonText}>Add Image</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setIsDeleting(true)}
+                      style={[styles.deleteImageButton, { opacity: isImageUploading ? 0.5 : 1 }]}
+                      disabled={isImageUploading}
+                    >
+                      <Text style={styles.buttonText}>Delete Image</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <TouchableOpacity onPress={() => setIsDeleting(false)} style={styles.stopDeletingButton}>
+                    <Text style={styles.buttonText}>Done</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+  
+              <View style={styles.imagePreviewContainer}>
+                {tempProfileState.pictures.length > 0 ? (
+                  tempProfileState.pictures.map((uri, index) => (
+                    <View key={index}>
+                      {isDeleting ? (
+                        <TouchableOpacity onPress={() => deleteImage(index)}>
+                          <Image source={{ uri }} style={styles.thumbnail} />
+                          <TouchableOpacity style={styles.closeButton} onPress={() => deleteImage(index)}>
+                            <Text style={styles.closeButtonText}>x</Text>
+                          </TouchableOpacity>
+                        </TouchableOpacity>
+                      ) : (
+                        <Image source={{ uri }} style={styles.thumbnail} />
+                      )}
+                    </View>
+                  ))
+                ) : (
+                  <Text>No images selected</Text>
+                )}
+              </View>
+            </ScrollView>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                onPress={saveChanges}
+                style={[styles.saveChangesButton, { opacity: isImageUploading ? 0.5 : 1 }]}
+                disabled={isImageUploading}
+              >
+                <Text style={styles.buttonText}>Save Changes</Text>
+              </TouchableOpacity>
+  
+              <TouchableOpacity
+                onPress={() => {
+                  setIsDeleting(false);
+                  setIsEditModalVisible(false);
+                  setTempProfileState(profileState);
+                  setImagesToDelete([]);
+                }}
+                style={[styles.cancelButton, { opacity: isImageUploading ? 0.5 : 1 }]}
+                disabled={isImageUploading}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
             </View>
           </View>
+        </View>
       </Modal>
     </View>
   );
