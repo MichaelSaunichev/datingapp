@@ -8,7 +8,9 @@ import { getAuth, signOut, deleteUser, User } from "firebase/auth";
 import { useNavigation, useNavigationState } from '@react-navigation/native';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { API_URL } from '@env';
+
 
 type ProfileState = {
   name: string;
@@ -22,7 +24,6 @@ type ProfileState = {
 
 const ProfileScreen: React.FC = ({}) => {
   const route = useRoute();
-  const navigation = useNavigation();
   const routeParams = route.params as { userEmail: string | undefined };
   const userEmail = routeParams ? routeParams.userEmail : undefined;
 
@@ -181,7 +182,6 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const deleteAccount = async () => {
-    
     try {
 
       await Promise.all(profileState.pictures.map(async (imageUrl) => {
@@ -286,37 +286,48 @@ const ProfileScreen: React.FC = ({}) => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
   
     if (permissionResult.granted === false) {
-      alert("Please allow access to your camera roll in Settings.");
-      setIsImageUploading(false);
-      return;
+        alert("Please allow access to your camera roll in Settings.");
+        setIsImageUploading(false);
+        return;
     }
   
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1,1],
-      quality: 1,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
     });
+
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const storage = getStorage();
-      const storageRef = ref(storage, `pictures/${Date.now()}`);
-      await uploadBytes(storageRef, blob);
-      const imageUrl = await getDownloadURL(storageRef);
-      setTempProfileState((prevState) => ({
-        ...prevState,
-        pictures: [...prevState.pictures, imageUrl],
-      }));
-      const localImageUrl = URL.createObjectURL(blob);
-      setImageBlobs((prevBlobs) => [...prevBlobs, localImageUrl]);
-      setIsImageUploading(false);
-    }
-    else{
-      setIsImageUploading(false);
+        const uri = result.assets[0].uri;
+
+        // Resize and compress the image
+        const manipulatedImage = await ImageManipulator.manipulateAsync(
+            uri,
+            [{ resize: { width: 800 } }],
+            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+        );
+
+        const resizedUri = manipulatedImage.uri;
+        const response = await fetch(resizedUri);
+        const blob = await response.blob();
+        const storage = getStorage();
+        const storageRef = ref(storage, `pictures/${Date.now()}`);
+        await uploadBytes(storageRef, blob);
+        const imageUrl = await getDownloadURL(storageRef);
+
+        setTempProfileState((prevState) => ({
+            ...prevState,
+            pictures: [...prevState.pictures, imageUrl],
+        }));
+        const localImageUrl = URL.createObjectURL(blob);
+        setImageBlobs((prevBlobs) => [...prevBlobs, localImageUrl]);
+        setIsImageUploading(false);
+    } else {
+        setIsImageUploading(false);
     }
   };
+
   if (loadingProfile) {
     return (
       <View style={{
@@ -486,11 +497,19 @@ const ProfileScreen: React.FC = ({}) => {
                 <View style={styles.editProfileContainer}>
                   {!isDeleting ? (
                     <>
-                      <TouchableOpacity onPress={handleImageUpload} style={styles.addImageButton}>
-                        <Text style={styles.buttonText}>Add Image</Text>
+                      <TouchableOpacity
+                          onPress={handleImageUpload}
+                          style={[styles.addImageButton, { opacity: isImageUploading ? 0.5 : 1 }]}
+                          disabled={isImageUploading}
+                      >
+                          <Text style={styles.buttonText}>Add Image</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => {setIsDeleting(true)}} style={styles.deleteImageButton}>
-                        <Text style={styles.buttonText}>Delete Image</Text>
+                      <TouchableOpacity
+                          onPress={() => { setIsDeleting(true) }}
+                          style={[styles.deleteImageButton, { opacity: isImageUploading ? 0.5 : 1 }]}
+                          disabled={isImageUploading}
+                      >
+                          <Text style={styles.buttonText}>Delete Image</Text>
                       </TouchableOpacity>
                     </>
                     

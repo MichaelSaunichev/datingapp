@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 import { useProfile } from './ProfileContext';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 const UploadPictures = () => {
     const navigation = useNavigation();
@@ -24,13 +25,20 @@ const UploadPictures = () => {
             result = await launchImageLibraryAsync({
                 mediaTypes: MediaTypeOptions.Images,
                 allowsEditing: true,
-                aspect: [1,1],
+                aspect: [1, 1],
                 quality: 1,
             });
 
             if (!result.canceled) {
                 const uri = result.assets[0].uri;
-                const response = await fetch(uri);
+                const manipulatedImage = await ImageManipulator.manipulateAsync(
+                    uri,
+                    [{ resize: { width: 800 } }],
+                    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+                );
+
+                const resizedUri = manipulatedImage.uri;
+                const response = await fetch(resizedUri);
                 const blob = await response.blob();
                 const storage = getStorage();
                 const storageRef = ref(storage, `pictures/${Date.now()}`);
@@ -50,7 +58,7 @@ const UploadPictures = () => {
             setUploading(false);
         }
     };
-
+    
     const toggleSelectPicture = (imageUrl) => {
         if (selectedPictures.includes(imageUrl)) {
             setSelectedPictures(selectedPictures.filter(url => url !== imageUrl));
