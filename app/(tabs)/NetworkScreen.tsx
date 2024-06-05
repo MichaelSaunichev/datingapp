@@ -7,7 +7,6 @@ import { useRoute } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
-import moment from 'moment-timezone';
 import { API_URL } from '@env';
 
 interface CustomMessage extends IMessage {
@@ -35,9 +34,7 @@ const NetworkScreen  = () => {
     const [selectedEmoji, setSelectedEmoji] = useState<string>('');
     const userId = userEmail || '';
     const [showChat, setShowChat] = useState<boolean>(false);
-    const [imageBlobs, setImageBlobs] = useState<string[]>([]);
     const [modalLoading, setModalLoading] = useState<boolean>(false);
-    const [alreadyLoadingBlobs, setalreadyLoadingBlobs] = useState(false)
     const [readyChat, setReadyChat] = useState(false)
 
     const socketRef = useRef(null as Socket | null);
@@ -86,49 +83,13 @@ const NetworkScreen  = () => {
     }, [messages]);
 
     useEffect(() => {
-        if(selectedUser){
-            setTheImageBlobs(selectedUser);
-        }
-    }, [selectedUser]);
-
-    useEffect(() => {
         const userIdsToFetch = messages
             .map((message) => message.user?._id)
             .filter((id, index, array) => id && array.indexOf(id) === index && !pictures[id]);
         fetchProfileImageUris(userIdsToFetch.map(String))
     }, [messages]);
 
-    const setTheImageBlobs = async (user: SelectedUser) => {
-        if (alreadyLoadingBlobs){
-            return
-        }
-        setalreadyLoadingBlobs(true);
-        const imageUrls = user.pictures || [];
-        try {
-        const blobs = await Promise.all(imageUrls.map(fetchImageAndConvertToBlob));
-        setImageBlobs(blobs);
-        } catch (error) {
-        console.error('Error fetching images and converting to blobs:', error);
-        } finally {
-            setModalVisible(true);
-            setalreadyLoadingBlobs(false);
-            setModalLoading(false); 
-        }
-
-      };
-    
-      const fetchImageAndConvertToBlob = async (url: string): Promise<string> => {
-        try {
-          const response = await fetch(url);
-          const blob = await response.blob();
-          return URL.createObjectURL(blob);
-        } catch (error) {
-          console.error('Error fetching image and converting to blob:', error);
-          return '';
-        }
-      };
-
-      const fetchProfileImageUris = async (userIds: string[]) => {
+    const fetchProfileImageUris = async (userIds: string[]) => {
         try {
             const newPictures: { [userId: string]: string } = {};
             for (const userId of userIds) {
@@ -136,97 +97,66 @@ const NetworkScreen  = () => {
                 const pictures = await response.json();
     
                 if (pictures.length > 0) {
-                    const blobs = await Promise.all(pictures.map(fetchImageAndConvertToBlob));
-                    const blobUrl = blobs[0] || ''; // Get the blob URL
-    
-                    // Update the newPictures object with blob URLs
-                    newPictures[userId] = blobUrl;
+                    // Directly use the first picture URL
+                    const imageUrl = pictures[0];
+                    newPictures[userId] = imageUrl;
                 }
             }
-            // Update the pictures state with the newPictures object
             setPictures((prevPictures) => ({ ...prevPictures, ...newPictures }));
         } catch (error) {
             console.error('Error fetching profile images:', error);
         }
     };
 
-  const convertMessageDates = (messages: CustomMessage[]): CustomMessage[] => {
-    return messages.map(message => {
-      // Get the user's local timezone offset in minutes
-      const localOffsetMinutes = moment().utcOffset();
-      // Adjust the createdAt date by the local offset
-      const createdAtDate = moment.utc(message.createdAt).add(localOffsetMinutes, 'minutes');
-      return {
-        ...message,
-        createdAt: createdAtDate.toDate(), // Keep as Date object
-      };
-    });
-  };
   
-  const fetchMessages = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/globalchat`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch global chat');
-      }
-      const { messages, total } = await response.json() as { messages: CustomMessage[], total: number };
-  
-      // Convert message dates to local time
-      const localMessages = convertMessageDates(messages);
-  
-      setMessages(localMessages);
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const fetchMostRecentMessage = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/globalchat?limit=1`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch most recent message');
-      }
-      const { messages } = await response.json() as { messages: CustomMessage[] };
-      const mostRecentMessage = messages[0];
-
-      // Convert message date to local time
-      const localMostRecentMessage = convertMessageDates([mostRecentMessage])[0];
-
-      setMessages(previousMessages => {
-        // Check if the most recent message already exists in previousMessages
-        const isMessageAlreadyFetched = previousMessages.some(msg => msg._id === localMostRecentMessage._id);
-  
-        // If the message is already fetched, return the previous messages
-        if (isMessageAlreadyFetched) {
-          return previousMessages;
+    const fetchMessages = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/globalchat`);
+            if (!response.ok) {
+            throw new Error('Failed to fetch global chat');
+            }
+            const { messages, total } = await response.json() as { messages: CustomMessage[], total: number };
+        
+            setMessages(messages);
+        } catch (error) {
+            throw error;
         }
-  
-        // Otherwise, append the new message
-        return GiftedChat.append(previousMessages, [localMostRecentMessage], false);
-      });
-      
-    } catch (error) {
-      console.error('Error fetching most recent message:', error);
-    }
-  };
+        };
 
-  const loadEarlierMessages = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/globalchat?limit=20&offset=${messages.length}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch earlier messages');
-      }
-      const { messages: earlierMessages } = await response.json() as { messages: CustomMessage[] };
-
-      // Convert message dates to local time
-      const localEarlierMessages = convertMessageDates(earlierMessages);
+    const fetchMostRecentMessage = async () => {
+        try {
+          const response = await fetch(`${API_URL}/api/globalchat?limit=1`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch most recent message');
+          }
+          const { messages } = await response.json() as { messages: CustomMessage[] };
+          const mostRecentMessage = messages[0];
       
-      // Update state with the newly loaded messages
-      setMessages(previousMessages => GiftedChat.prepend(previousMessages, localEarlierMessages, false));
-    } catch (error) {
-      console.error('Error loading earlier messages:', error);
-    }
-  };
+          setMessages(previousMessages => {
+            const isMessageAlreadyFetched = previousMessages.some(msg => msg._id === mostRecentMessage._id);
+            if (isMessageAlreadyFetched) {
+              return previousMessages;
+            }
+            return GiftedChat.append(previousMessages, [mostRecentMessage], false);
+          });
+          
+        } catch (error) {
+          console.error('Error fetching most recent message:', error);
+        }
+    };
+
+    const loadEarlierMessages = async () => {
+        try {
+          const response = await fetch(`${API_URL}/api/globalchat?limit=20&offset=${messages.length}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch earlier messages');
+          }
+          const { messages: earlierMessages } = await response.json() as { messages: CustomMessage[] };
+          setMessages(previousMessages => GiftedChat.prepend(previousMessages, earlierMessages, false));
+        } catch (error) {
+          console.error('Error loading earlier messages:', error);
+        }
+    };
 
 
     const handleLikeToggle = async (message: CustomMessage) => {
@@ -292,7 +222,6 @@ const NetworkScreen  = () => {
         };
 
         try {
-            // Send the new message to the server
             const response = await fetch(`${API_URL}/api/globalchat`, {
                 method: 'POST',
                 headers: {
@@ -322,12 +251,15 @@ const NetworkScreen  = () => {
                 const response = await fetch(`${API_URL}/api/user/${user._id}`);
                 if (!response.ok) {
                     setModalLoading(false);
-                    return
+                    return;
                 }
                 const userProfile = await response.json();
                 setSelectedUser(userProfile);
+                setModalVisible(true);
+                setModalLoading(false);
             } catch (error) {
                 console.error('Error fetching user profile:', error);
+                setModalLoading(false);
             }
         }
     };
@@ -561,38 +493,35 @@ const NetworkScreen  = () => {
                     animationType="slide"
                     transparent={true}
                     visible={modalVisible}
-                    onRequestClose={() => {setSelectedUser(null); setModalVisible(false); setImageBlobs([])}}
+                    onRequestClose={() => {setSelectedUser(null); setModalVisible(false);}}
                 >
                     {selectedUser && (
                         <View style={styles.centeredView}>
                             <View style={styles.modalContent}>
                                 <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
                                     <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{selectedUser.name}, {calculateAgeFromDOB(selectedUser.dob) !== null && calculateAgeFromDOB(selectedUser.dob)}</Text>
-                                    {/* Render the first profile image */}
                                     <View style={{ alignItems: 'center' }}>
-                                    {imageBlobs.length > 0 && (
-                                        <Image
-                                        key={imageBlobs[0]}
-                                        source={{ uri: imageBlobs[0] }}
-                                        style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
-                                        />
-                                    )}
+                                        {selectedUser.pictures && selectedUser.pictures.length > 0 && (
+                                            <Image
+                                                key={selectedUser.pictures[0]}
+                                                source={{ uri: selectedUser.pictures[0] }}
+                                                style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
+                                            />
+                                        )}
                                     </View>
-                                    {/* Render the bio after the first picture */}
                                     <Text style={{ fontSize: 14, marginTop: 10, textAlign: 'center' }}>{selectedUser.bio}</Text>
-                                    {/* Render additional profile pictures */}
                                     <View style={{ alignItems: 'center' }}>
-                                        {imageBlobs.slice(1).map((uri: string, index: number) => (
-                                        <Image
-                                            key={uri}
-                                            source={{ uri }}
-                                            style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
-                                        />
+                                        {selectedUser.pictures && selectedUser.pictures.slice(1).map((uri: string, index: number) => (
+                                            <Image
+                                                key={uri}
+                                                source={{ uri }}
+                                                style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
+                                            />
                                         ))}
                                     </View>
                                 </ScrollView>
                                 <View style={styles.buttonContainer}>
-                                    <TouchableOpacity onPress={() => {setSelectedUser(null); setModalVisible(false); setImageBlobs([])}} style={styles.cancelButtonProfile}>
+                                    <TouchableOpacity onPress={() => {setSelectedUser(null); setModalVisible(false);}} style={styles.cancelButtonProfile}>
                                         <Text style={styles.actionButtonText}>Close</Text>
                                     </TouchableOpacity>
                                 </View>

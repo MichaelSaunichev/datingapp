@@ -91,11 +91,11 @@ const TabOneScreen = () => {
 
 
   const renderCardUI = async () => {
-    if (loadingMatched){
-      return
+    if (loadingMatched) {
+      return;
     }
     setLoadingMatched(true);
-    if (preferences){
+    if (preferences) {
       try {
         const { datingPreferences } = preferences;
         // Fetch card data from the backend with filtering parameters
@@ -106,29 +106,20 @@ const TabOneScreen = () => {
         }
     
         const cardData = await response.json();
-
+  
         if (!cardData) {
           setCard(cardData);
-        } else{
-          const imageUrls = cardData.pictures;
-          // Load images
-          const images = await Promise.all(imageUrls.map(async (url: string) => {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            return URL.createObjectURL(blob); // Convert blob to object URL
-          }));
-
-          // Once all images are loaded, set the card data and images
-          setCard({ ...cardData, pictures: images });
+        } else {
+          setCard(cardData);
         }
-
+  
       } catch (error) {
         console.error('Error fetching card data:', error);
-      } finally{
-          setLoadingMatched(false);
-          setLoading(false);
-          setMatched(false);
-        }
+      } finally {
+        setLoadingMatched(false);
+        setLoading(false);
+        setMatched(false);
+      }
     }
   };
 
@@ -304,7 +295,7 @@ const TabOneScreen = () => {
       </ScrollView>
       {!matched && card && (
       <View style={styles.buttonContainerChoice}>
-        <TouchableOpacity disabled = {loading} style={[styles.button, { backgroundColor: '#FF6347', opacity: loading ? 0.5 : 1 }]} onPress={() => { onDislike(); }}>
+        <TouchableOpacity disabled={loading} style={[styles.button, { backgroundColor: '#FF6347', opacity: loading ? 0.5 : 1 }]} onPress={() => { onDislike(); }}>
           <FontAwesome name="times" size={24} color="#1E4D2B" />
         </TouchableOpacity>
         <TouchableOpacity style={[styles.button, { backgroundColor: '#FFD700', opacity: loading ? 0.5 : 1 }]} onPress={() => { onLike(); }}>
@@ -314,7 +305,7 @@ const TabOneScreen = () => {
       )}
       {matched && (
         <View style={styles.buttonContainer}>
-          <TouchableOpacity disabled = {loadingMatched} style={[styles.button, { opacity: loadingMatched ? 0.5 : 1, backgroundColor: '#3498db', marginTop: 10}]} onPress={() => { renderCardUI() } }>
+          <TouchableOpacity disabled={loadingMatched} style={[styles.button, { opacity: loadingMatched ? 0.5 : 1, backgroundColor: '#3498db', marginTop: 10 }]} onPress={() => { renderCardUI() }}>
             <Text style={styles.buttonText}>Next</Text>
           </TouchableOpacity>
         </View>
