@@ -502,7 +502,17 @@ const TabTwoScreen = () => {
                   <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
                     <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{userProfile.name}, {calculateAgeFromDOB(userProfile.dob) || ''}</Text>
                     <View style={{ alignItems: 'center' }}>
-                      {userProfile.pictures && userProfile.pictures.map((url: string, index: number) => (
+                      {/* Display the first picture */}
+                      {userProfile.pictures && userProfile.pictures.length > 0 && (
+                        <Image
+                          source={{ uri: userProfile.pictures[0] }}
+                          style={{ width: 250, height: 250, borderRadius: 25, marginTop: 10 }}
+                        />
+                      )}
+                      {/* Display the bio */}
+                      <Text style={{ fontSize: 14, marginTop: 10, textAlign: 'center' }}>{userProfile.bio}</Text>
+                      {/* Display the rest of the pictures */}
+                      {userProfile.pictures && userProfile.pictures.slice(1).map((url: string, index: number) => (
                         <Image
                           key={index}
                           source={{ uri: url }}
@@ -510,7 +520,6 @@ const TabTwoScreen = () => {
                         />
                       ))}
                     </View>
-                    <Text style={{ fontSize: 14, marginTop: 10, textAlign: 'center' }}>{userProfile.bio}</Text>
                   </ScrollView>
                   <View style={styles.buttonContainer}>
                     <TouchableOpacity onPress={() => {setModal2Loading(false); setmodal2Visible(false)}} style={styles.cancelButtonProfile}>
