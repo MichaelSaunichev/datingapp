@@ -133,7 +133,6 @@ const TabTwoScreen = () => {
         };
 
         if (mostRecentMessage.createdAt > now) {
-            console.warn('Discarding future message:', mostRecentMessage);
             return;
         }
 
@@ -249,7 +248,7 @@ const TabTwoScreen = () => {
         setReadyChat(true);
         setLoadingChat(false);
     }
-};
+  };
 
   const onSend = async (newMessages: CustomMessage[] = []) => {
     const chatId = selectedChat?.toString();

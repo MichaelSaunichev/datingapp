@@ -16,10 +16,6 @@ interface CustomMessage extends IMessage {
   likes?: string[];
 }
 
-interface SelectedUser {
-    pictures: string[];
-  }
-
 const NetworkScreen  = () => {
     const route = useRoute();
     const routeParams = route.params as { userEmail: string | undefined };
@@ -145,7 +141,6 @@ const NetworkScreen  = () => {
             };
     
             if (mostRecentMessage.createdAt > now) {
-                console.warn('Discarding future message:', mostRecentMessage);
                 return;
             }
     
