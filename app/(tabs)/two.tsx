@@ -27,11 +27,8 @@ const TabTwoScreen = () => {
   const [modal1Visible, setmodal1Visible] = useState(false);
   const [modal2Visible, setmodal2Visible] = useState(false);
 
-  const [imageBlobs, setImageBlobs] = useState<string[]>([]);
-
   const [loadingChat, setLoadingChat] = useState<boolean>(false);
 
-  const [modal2Ready, setModal2Ready] = useState<boolean>(false);
   const [modal2Loading, setModal2Loading] = useState<boolean>(false);
 
   const [userFirstImageBlobs, setUserFirstImageBlobs] = useState<{ [userId: string]: string }>({});
@@ -123,44 +120,66 @@ const TabTwoScreen = () => {
 
   const fetchMostRecentMessage = async () => {
     try {
-      const chatId = selectedChatRef.current?.toString();
-      const response = await fetch(`${API_URL}/api/chat/${userId}/${chatId}?limit=1`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch most recent message');
-      }
-      const { messages } = await response.json();      
-      const mostRecentMessage = messages[0];
-  
-      if (mostRecentMessage) {
+        const chatId = selectedChatRef.current?.toString();
+        const response = await fetch(`${API_URL}/api/chat/${userId}/${chatId}?limit=1`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch most recent message');
+        }
+        const { messages } = await response.json();
+        const now = new Date();
+        const mostRecentMessage = {
+            ...messages[0],
+            createdAt: new Date(messages[0].createdAt)
+        };
+
+        if (mostRecentMessage.createdAt > now) {
+            console.warn('Discarding future message:', mostRecentMessage);
+            return;
+        }
+
         setMessages(previousMessages => {
-          // Check if the most recent message already exists in previousMessages
-          const isMessageAlreadyFetched = previousMessages.some(msg => msg._id === mostRecentMessage._id);
-  
-          // If the message is already fetched, return the previous messages
-          if (isMessageAlreadyFetched) {
-            return previousMessages;
-          }
-  
-          // Otherwise, append the new message
-          return [...previousMessages, mostRecentMessage];
+            const isMessageAlreadyFetched = previousMessages.some(msg => msg._id === mostRecentMessage._id);
+            if (isMessageAlreadyFetched) {
+                return previousMessages;
+            }
+            return GiftedChat.append(previousMessages, [mostRecentMessage], false);
         });
-      }
     } catch (error) {
-      console.error('Error fetching most recent message:', error);
+        console.error('Error fetching most recent message:', error);
     }
   };
 
   const loadEarlierMessages = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/chat/${userId}/${selectedChat}?limit=20&offset=${messages.length}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch earlier messages');
-      }
-      const { messages: earlierMessages } = await response.json() as { messages: CustomMessage[] };
-  
-      setMessages(previousMessages => [...earlierMessages, ...previousMessages]);
+        const response = await fetch(`${API_URL}/api/chat/${userId}/${selectedChat}?limit=20&offset=${messages.length}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch earlier messages');
+        }
+        const { messages: earlierMessages } = await response.json() as { messages: CustomMessage[] };
+
+        const now = new Date();
+        const localEarlierMessages = earlierMessages
+            .map(message => ({
+                ...message,
+                createdAt: new Date(message.createdAt)
+            }))
+            .filter(message => message.createdAt <= now);
+
+        setMessages(previousMessages => {
+            const combinedMessages = [...previousMessages, ...localEarlierMessages];
+
+            const uniqueMessagesMap = new Map();
+            combinedMessages.forEach(message => {
+                uniqueMessagesMap.set(message._id, message);
+            });
+
+            const uniqueMessages = Array.from(uniqueMessagesMap.values());
+            uniqueMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+            return uniqueMessages;
+        });
     } catch (error) {
-      console.error('Error loading earlier messages:', error);
+        console.error('Error loading earlier messages:', error);
     }
   };
 
@@ -201,28 +220,36 @@ const TabTwoScreen = () => {
   };
 
   const onChatSelect = async (chatId: string) => {
-    if(loadingChat){
-      return;
+    if (loadingChat) {
+        return;
     }
     setLoadingChat(true);
     setSelectedChat(chatId);
-  
+
     try {
-      const response = await fetch(`${API_URL}/api/chat/${userId}/${chatId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch messages');
-      }
-      const { messages, userProfile } = await response.json();
-  
-      setMessages(messages);
-      setUserProfile(userProfile);
+        const response = await fetch(`${API_URL}/api/chat/${userId}/${chatId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch messages');
+        }
+        const { messages, userProfile } = await response.json();
+
+        const now = new Date();
+        const localMessages = messages
+            .map((message: CustomMessage) => ({
+                ...message,
+                createdAt: new Date(message.createdAt)
+            }))
+            .filter((message: CustomMessage) => message.createdAt <= now);
+
+        setMessages(localMessages);
+        setUserProfile(userProfile);
     } catch (error) {
-      console.error('Error loading messages:', error);
+        console.error('Error loading messages:', error);
     } finally {
-      setReadyChat(true);
-      setLoadingChat(false);
+        setReadyChat(true);
+        setLoadingChat(false);
     }
-  };
+};
 
   const onSend = async (newMessages: CustomMessage[] = []) => {
     const chatId = selectedChat?.toString();
@@ -364,14 +391,13 @@ const TabTwoScreen = () => {
 
   const renderMessage = (props: MessageProps<IMessage>) => {
     const { currentMessage, nextMessage, ...originalProps } = props;
-  
+
     if (!currentMessage) {
-      return null;
+        return null;
     }
-  
+
     const user = currentMessage.user;
-  
-    // Get time
+
     const createdAtDate = new Date(currentMessage.createdAt);
     let hours = createdAtDate.getHours();
     const minutes = createdAtDate.getMinutes();
@@ -379,36 +405,36 @@ const TabTwoScreen = () => {
     hours %= 12;
     hours = hours || 12;
     const messageTime = `${hours}:${minutes < 10 ? '0' + minutes : minutes} ${amPM}`;
-  
+
     const currentDate = createdAtDate.toDateString();
     const previousDate = (props.previousMessage && new Date(props.previousMessage.createdAt).toDateString()) || '';
     const isNewDay = currentDate !== previousDate;
 
     return (
-      <View>
-        {isNewDay && (
-          <Text style={{ textAlign: 'center', fontSize: 12, marginBottom: 10 }}>
-            {createdAtDate.toLocaleDateString(undefined, {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </Text>
-        )}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2, paddingHorizontal: 10 }}>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', justifyContent: originalProps.position === 'right' ? 'flex-end' : 'flex-start', alignItems: 'flex-start' }}>
-              <View style={{ maxWidth: '80%' }}>
-                <View style={{ backgroundColor: originalProps.position === 'right' ? 'lightblue' : 'lightgreen', borderRadius: 10, padding: 10 }}>
-                  <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black' }}>{currentMessage.text}</Text>
-                  <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black', fontSize: 10 }}>{messageTime}</Text>
+        <View>
+            {isNewDay && (
+                <Text style={{ textAlign: 'center', fontSize: 12, marginBottom: 10 }}>
+                    {createdAtDate.toLocaleDateString(undefined, {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    })}
+                </Text>
+            )}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2, paddingHorizontal: 10 }}>
+                <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: originalProps.position === 'right' ? 'flex-end' : 'flex-start', alignItems: 'flex-start' }}>
+                        <View style={{ maxWidth: '80%' }}>
+                            <View style={{ backgroundColor: originalProps.position === 'right' ? 'lightblue' : 'lightgreen', borderRadius: 10, padding: 10 }}>
+                                <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black' }}>{currentMessage.text}</Text>
+                                <Text style={{ color: originalProps.position === 'right' ? 'white' : 'black', fontSize: 10 }}>{messageTime}</Text>
+                            </View>
+                        </View>
+                    </View>
                 </View>
-              </View>
             </View>
-          </View>
         </View>
-      </View>
     );
   };
   const renderChatScreen = () => {

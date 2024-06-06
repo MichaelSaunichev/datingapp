@@ -113,51 +113,92 @@ const NetworkScreen  = () => {
         try {
             const response = await fetch(`${API_URL}/api/globalchat`);
             if (!response.ok) {
-            throw new Error('Failed to fetch global chat');
+                throw new Error('Failed to fetch global chat');
             }
             const { messages, total } = await response.json() as { messages: CustomMessage[], total: number };
-        
-            setMessages(messages);
+            
+            const now = new Date();
+            const localMessages = messages
+                .map(message => ({
+                    ...message,
+                    createdAt: new Date(message.createdAt)
+                }))
+                .filter(message => message.createdAt <= now);
+    
+            setMessages(localMessages);
         } catch (error) {
-            throw error;
+            console.error('Error fetching messages:', error);
         }
-        };
-
+    };
+    
     const fetchMostRecentMessage = async () => {
         try {
-          const response = await fetch(`${API_URL}/api/globalchat?limit=1`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch most recent message');
-          }
-          const { messages } = await response.json() as { messages: CustomMessage[] };
-          const mostRecentMessage = messages[0];
-      
-          setMessages(previousMessages => {
-            const isMessageAlreadyFetched = previousMessages.some(msg => msg._id === mostRecentMessage._id);
-            if (isMessageAlreadyFetched) {
-              return previousMessages;
+            const response = await fetch(`${API_URL}/api/globalchat?limit=1`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch most recent message');
             }
-            return GiftedChat.append(previousMessages, [mostRecentMessage], false);
-          });
-          
+            const { messages } = await response.json() as { messages: CustomMessage[] };
+            const now = new Date();
+            const mostRecentMessage = {
+                ...messages[0],
+                createdAt: new Date(messages[0].createdAt)
+            };
+    
+            if (mostRecentMessage.createdAt > now) {
+                console.warn('Discarding future message:', mostRecentMessage);
+                return;
+            }
+    
+            setMessages(previousMessages => {
+                const isMessageAlreadyFetched = previousMessages.some(msg => msg._id === mostRecentMessage._id);
+                if (isMessageAlreadyFetched) {
+                    return previousMessages;
+                }
+                return GiftedChat.append(previousMessages, [mostRecentMessage], false);
+            });
         } catch (error) {
-          console.error('Error fetching most recent message:', error);
+            console.error('Error fetching most recent message:', error);
         }
     };
-
+    
     const loadEarlierMessages = async () => {
         try {
-          const response = await fetch(`${API_URL}/api/globalchat?limit=20&offset=${messages.length}`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch earlier messages');
-          }
-          const { messages: earlierMessages } = await response.json() as { messages: CustomMessage[] };
-          setMessages(previousMessages => GiftedChat.prepend(previousMessages, earlierMessages, false));
+            const response = await fetch(`${API_URL}/api/globalchat?limit=20&offset=${messages.length}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch earlier messages');
+            }
+            const { messages: earlierMessages } = await response.json() as { messages: CustomMessage[] };
+    
+            const now = new Date();
+            const localEarlierMessages = earlierMessages
+                .map(message => ({
+                    ...message,
+                    createdAt: new Date(message.createdAt)
+                }))
+                .filter(message => message.createdAt <= now);
+    
+            setMessages(previousMessages => {
+                // Combine previous messages with the new messages
+                const combinedMessages = [...previousMessages, ...localEarlierMessages];
+                
+                // Create a map to remove duplicates based on the message _id
+                const uniqueMessagesMap = new Map();
+                combinedMessages.forEach(message => {
+                    uniqueMessagesMap.set(message._id, message);
+                });
+    
+                // Convert the map back to an array of unique messages
+                const uniqueMessages = Array.from(uniqueMessagesMap.values());
+    
+                // Sort messages by createdAt to maintain order
+                uniqueMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    
+                return uniqueMessages;
+            });
         } catch (error) {
-          console.error('Error loading earlier messages:', error);
+            console.error('Error loading earlier messages:', error);
         }
     };
-
 
     const handleLikeToggle = async (message: CustomMessage) => {
         try {
