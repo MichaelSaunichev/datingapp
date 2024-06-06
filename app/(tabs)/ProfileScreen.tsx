@@ -5,7 +5,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 import { getAuth, signOut, deleteUser, User } from "firebase/auth";
-import { useNavigationState } from '@react-navigation/native';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -54,8 +53,6 @@ const ProfileScreen: React.FC = ({}) => {
   const socketRef = useRef(null as Socket | null);
 
   const [loadingTimeout, setLoadingTimeout] = useState(false);
-
-  const routes = useNavigationState(state => state.routeNames);
 
   const userId = userEmail;
   
