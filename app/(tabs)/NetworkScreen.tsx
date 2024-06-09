@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, Image, StyleSheet, Modal, ScrollView, TouchableOpacity, TouchableWithoutFeedback, } from 'react-native';
+import { View, Text, Image, StyleSheet, Modal, ScrollView, TouchableOpacity, TouchableWithoutFeedback, Alert } from 'react-native';
 import { GiftedChat, IMessage, User, Send  } from 'react-native-gifted-chat';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Keyboard } from 'react-native';
@@ -280,22 +280,26 @@ const NetworkScreen  = () => {
         }
     };
 
-    const handleAvatarPress = async (user: User) => {
-        if (!modalLoading){
-            setModalLoading(true);
-            try {
-                const response = await fetch(`${API_URL}/api/user/${user._id}`);
-                if (!response.ok) {
+    const handleAvatarPress = async (user: User, isAnonymous: boolean) => {
+        if (isAnonymous) {
+            showReportDialog(user, true);
+        } else {
+            if (!modalLoading) {
+                setModalLoading(true);
+                try {
+                    const response = await fetch(`${API_URL}/api/user/${user._id}`);
+                    if (!response.ok) {
+                        setModalLoading(false);
+                        return;
+                    }
+                    const userProfile = await response.json();
+                    setSelectedUser(userProfile);
+                    setModalVisible(true);
                     setModalLoading(false);
-                    return;
+                } catch (error) {
+                    console.error('Error fetching user profile:', error);
+                    setModalLoading(false);
                 }
-                const userProfile = await response.json();
-                setSelectedUser(userProfile);
-                setModalVisible(true);
-                setModalLoading(false);
-            } catch (error) {
-                console.error('Error fetching user profile:', error);
-                setModalLoading(false);
             }
         }
     };
@@ -336,7 +340,49 @@ const NetworkScreen  = () => {
           age--;
         }
         return age;
-      };
+    };
+
+    const showReportDialog = (user: User, isAnonymous: boolean = false) => {
+        Alert.alert(
+            'Report',
+            'Please select a reason for reporting:',
+            [
+                { text: 'Inappropriate Content', onPress: () => handleReport(user, 'inappropriate content', isAnonymous) },
+                { text: 'Abusive Behavior', onPress: () => handleReport(user, 'abusive behavior', isAnonymous) },
+                { text: 'Cancel', style: 'cancel' },
+            ]
+        );
+    };
+    
+    const handleReport = async (reportedItem: User, reason: string, isAnonymous: boolean) => {
+        const reportedUserId = isAnonymous ? reportedItem._id || (reportedItem as CustomMessage).user._id : (reportedItem as User as any).id || (reportedItem as User)._id;
+    
+        // Log the reported user ID
+        console.log('Reported User ID:', reportedUserId);
+    
+        try {
+            const response = await fetch(`${API_URL}/api/report`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    reportedUserId,
+                    reportingUserId: userId,
+                    timestamp: new Date().toISOString(),
+                    reason,
+                }),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to report');
+            }
+            Alert.alert('Report submitted', 'Thank you for your feedback.');
+        } catch (error) {
+            console.error('Error reporting:', error);
+            Alert.alert('Report failed', 'There was an issue submitting your report.');
+        }
+    };
+    
 
     return (
     <View style={{ flex: 1 }}>
@@ -420,12 +466,14 @@ const NetworkScreen  = () => {
                                                             <Text style={styles.emojiText}>{(currentMessage as CustomMessage).emoji}</Text>
                                                         </View>
                                                     ) : (
-                                                        <View style = {styles.avataremoji}>
-                                                            <Text style={styles.emojiText}>😊</Text>
-                                                        </View>
+                                                        <TouchableOpacity onPress={() => handleAvatarPress(user, true)}>
+                                                            <View style={styles.avataremoji}>
+                                                                <Text style={styles.emojiText}>{(currentMessage as CustomMessage).emoji || '😊'}</Text>
+                                                            </View>
+                                                        </TouchableOpacity>
                                                     )
                                                 ) : (
-                                                    <TouchableOpacity onPress={() => handleAvatarPress(user)}>
+                                                    <TouchableOpacity onPress={() => handleAvatarPress(user, false)}>
                                                         <Image
                                                             style={styles.avatar}
                                                             source={{ uri: userAvatarUri || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
@@ -470,7 +518,7 @@ const NetworkScreen  = () => {
                                                         </View>
                                                     )
                                                 ) : (
-                                                    <TouchableOpacity onPress={() => handleAvatarPress(user)}>
+                                                    <TouchableOpacity onPress={() => handleAvatarPress(user, false)}>
                                                         <Image
                                                             style={[styles.avatar, {marginLeft: 8}]}
                                                             source={{ uri: userAvatarUri || 'https://via.placeholder.com/300/CCCCCC/FFFFFF/?text=No+Image' }}
@@ -534,6 +582,11 @@ const NetworkScreen  = () => {
                     {selectedUser && (
                         <View style={styles.centeredView}>
                             <View style={styles.modalContent}>
+                                {selectedUser.id !== userId && (
+                                    <TouchableOpacity style={styles.flagButton} onPress={() => showReportDialog(selectedUser)}>
+                                        <FontAwesome name="flag" size={24} color="#FF6347" />
+                                    </TouchableOpacity>
+                                )}
                                 <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
                                     <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>{selectedUser.name}, {calculateAgeFromDOB(selectedUser.dob) !== null && calculateAgeFromDOB(selectedUser.dob)}</Text>
                                     <View style={{ alignItems: 'center' }}>
@@ -784,6 +837,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         alignSelf: 'flex-start',
         marginLeft: 10
+    },
+    flagButton: {
+        position: 'absolute',
+        top: 15,
+        right: 15,
+        zIndex: 1,
     },
 })
 

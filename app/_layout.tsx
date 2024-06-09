@@ -14,6 +14,7 @@ import EnterDOB from './EnterDOB'
 import SelectGender from './SelectGender'
 import UploadPictures from './UploadPictures'
 import VerifyEmailPrompt from './VerifyEmailPrompt';
+import WebViewScreen from './WebViewScreen';
 import { Stack } from 'expo-router';
 import { User } from '@firebase/auth'
 import { FIREBASE_AUTH } from 'FirebaseConfig'
@@ -102,6 +103,7 @@ export default function RootLayoutNav() {
               <StackGuy.Screen name="EnterDOB" component={EnterDOB} options={{ headerShown: false }} />
               <StackGuy.Screen name="SelectGender" component={SelectGender} options={{ headerShown: false }} />
               <StackGuy.Screen name="UploadPictures" component={UploadPictures} options={{ headerShown: false }} />
+              <StackGuy.Screen name="WebView" component={WebViewScreen} options={{ headerShown: true }} />
             </>
           )}
         </StackGuy.Navigator>
