@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { FlatList, TouchableOpacity, Text, View, Image, Modal, StyleSheet, ActivityIndicator } from 'react-native';
+import { FlatList, TouchableOpacity, Text, View, Image, Modal, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { GiftedChat, IMessage, User, Send, MessageProps } from 'react-native-gifted-chat';
 import { useRoute } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
@@ -333,6 +333,48 @@ const TabTwoScreen = () => {
       }
     }
   };
+
+  const showReportDialog = (userId2: string) => {
+    Alert.alert(
+      'Report User',
+      'Please select a reason for reporting this user:',
+      [
+        { text: 'Inappropriate Content', onPress: () => handleReport(userId2, 'inappropriate content') },
+        { text: 'Abusive Behavior', onPress: () => handleReport(userId2, 'abusive behavior') },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+  
+  const handleReport = async (reportedUserId: string, reason: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportedUserId,
+          reportingUserId: userId,
+          timestamp: new Date().toISOString(),
+          reason,
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to report user');
+      }
+  
+      // Block the user after reporting
+      handleBlock(reportedUserId);
+  
+      Alert.alert('Report submitted', 'Thank you for your feedback.');
+    } catch (error) {
+      console.error('Error reporting user:', error);
+      Alert.alert('Report failed', 'There was an issue submitting your report.');
+    }
+  };
+
   const scrollToBottomComponent = () => {
       return (
           <FontAwesome name="angle-double-down" size={24} color="#333" />
@@ -484,6 +526,9 @@ const TabTwoScreen = () => {
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => { setMessages([]); setReadyChat(false); setSelectedChat(null); setUserProfile(null); handleBlock(selectedChat.toString()); setmodal1Visible(false); }} style={styles.blockButton}>
                     <Text style={styles.actionButtonText}>Block</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => showReportDialog(selectedChat.toString())} style={styles.reportButton}>
+                    <Text style={styles.actionButtonText}>Report</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setmodal1Visible(false)} style={styles.cancelButton}>
                     <Text style={styles.actionButtonText}>Cancel</Text>
@@ -649,6 +694,12 @@ const TabTwoScreen = () => {
       marginTop: 10,
     },
     blockButton: {
+      backgroundColor: '#FFA07A',
+      padding: 10,
+      borderRadius: 50,
+      marginTop: 10,
+    },
+    reportButton: {
       backgroundColor: '#FF6F61',
       padding: 10,
       borderRadius: 50,

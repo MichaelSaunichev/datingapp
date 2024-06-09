@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRoute } from '@react-navigation/native';
@@ -98,7 +98,6 @@ const TabOneScreen = () => {
     if (preferences) {
       try {
         const { datingPreferences } = preferences;
-        // Fetch card data from the backend with filtering parameters
         const response = await fetch(`${API_URL}/api/cards?userId=${userId}&dating_preferences=${datingPreferences}`);
         
         if (!response.ok) {
@@ -258,6 +257,48 @@ const TabOneScreen = () => {
     return age;
   };
 
+  const showReportDialog = (card: Card) => {
+    Alert.alert(
+        'Report User',
+        'Please select a reason for reporting this user:',
+        [
+            { text: 'Inappropriate Content', onPress: () => handleReport(card, 'inappropriate content') },
+            { text: 'Abusive Behavior', onPress: () => handleReport(card, 'abusive behavior') },
+            { text: 'Cancel', style: 'cancel' },
+        ]
+    );
+};
+
+  const handleReport = async (card: Card, reason: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/report`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              reportedUserId: card.id,
+              reportingUserId: userId,
+              timestamp: new Date().toISOString(),
+              reason,
+          }),
+      });
+
+      if (!response.ok) {
+          throw new Error('Failed to report user');
+      }
+
+      // Remove the card and re-render the UI
+      await removeCard(card);
+      renderCardUI();
+
+      Alert.alert('Report submitted', 'Thank you for your feedback.');
+    } catch (error) {
+        console.error('Error reporting user:', error);
+        Alert.alert('Report failed', 'There was an issue submitting your report.');
+    }
+  };
+
   const renderCard = (card: Card | null) => (
     <View style={{ backgroundColor: '#1E4D2B', padding: 20, width: '100%', height: '100%' }}>
       {matched && <Text style={{fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginTop: -10, marginBottom: 10}}>You Matched!</Text>}
@@ -284,6 +325,9 @@ const TabOneScreen = () => {
                 />
               ))}
             </View>
+            <TouchableOpacity style={styles.flagButton} onPress={() => showReportDialog(card)}>
+              <FontAwesome name="flag" size={24} color="#FF6347" />
+            </TouchableOpacity>
           </View>
         ) : (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -381,6 +425,12 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  flagButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
   },
 });
 
