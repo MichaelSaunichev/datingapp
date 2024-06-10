@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Switch, Modal, View, Text, TextInput, ActivityIndicator, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { Switch, Modal, View, Text, TextInput, ActivityIndicator, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
@@ -53,6 +53,8 @@ const ProfileScreen: React.FC = ({}) => {
   const socketRef = useRef(null as Socket | null);
 
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [hasCameraRollAccess, setHasCameraRollAccess] = useState<boolean>(false);
+  const [tempCameraRollAccess, setTempCameraRollAccess] = useState<boolean>(false);
 
   const userId = userEmail;
   
@@ -95,6 +97,18 @@ const ProfileScreen: React.FC = ({}) => {
         socket.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    const checkPermissions = async () => {
+      const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
+      setHasCameraRollAccess(status === 'granted');
+    };
+    checkPermissions();
+  }, []);
+
+  useEffect(() => {
+    setTempCameraRollAccess(hasCameraRollAccess);
+  }, [hasCameraRollAccess]);
   
 
   useEffect(() => {
@@ -156,11 +170,28 @@ const ProfileScreen: React.FC = ({}) => {
 
   const saveChangesSettings = async () => {
     updateUserData();
+  
+    // Check if the camera roll access state needs to be updated
+    if (tempCameraRollAccess !== hasCameraRollAccess) {
+      if (tempCameraRollAccess) {
+        // Request permission if enabling access
+        const permissionGranted = await requestPermissions();
+        setHasCameraRollAccess(permissionGranted);
+      } else {
+        // Notify user to manually disable permission in device settings if disabling access
+        Alert.alert(
+          "Access Disabled",
+          "You have disabled camera roll access. To enable it again, please go to your app settings."
+        );
+        setHasCameraRollAccess(false);
+      }
+    }
+  
     setProfileState({
       ...tempProfileState
     });
     setIsSettingsModalVisible(false);
-  }
+  };
 
   const handleLogOut = async () => {
     const auth = getAuth();
@@ -243,15 +274,26 @@ const ProfileScreen: React.FC = ({}) => {
     }
   };
 
-  const handleImageUpload = async () => {
-    setIsImageUploading(true);
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permissionResult.granted === false) {
-        alert("This app needs access to your photo library to upload profile pictures.");
-        setIsImageUploading(false);
-        return;
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('This app needs access to your photo library to upload profile pictures.');
+      return false;
     }
+    setHasCameraRollAccess(true);
+    return true;
+  };
+
+  const handleImageUpload = async () => {
+    if (!hasCameraRollAccess) {
+        const permissionGranted = await requestPermissions();
+        if (!permissionGranted) {
+            setIsImageUploading(false);
+            return;
+        }
+    }
+
+    setIsImageUploading(true);
 
     let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -292,7 +334,7 @@ const ProfileScreen: React.FC = ({}) => {
     } else {
         setIsImageUploading(false);
     }
-  };
+  };  
 
   if (loadingProfile) {
     return (
@@ -374,6 +416,19 @@ const ProfileScreen: React.FC = ({}) => {
           </Modal>
           <View style={styles.modalView}>
             <Text style={styles.modalTitle}>Settings</Text>
+            <View style={styles.settingContainer}>
+              <Text>Camera Roll Access</Text>
+              <Switch
+                value={tempCameraRollAccess}
+                onValueChange={async (value) => {
+                  if (value) {
+                    setTempCameraRollAccess(true);
+                  } else {
+                    setTempCameraRollAccess(false);
+                  }
+                }}
+              />
+            </View>
   
             {/* Pause account */}
             <View style={styles.settingContainer}>
@@ -407,7 +462,7 @@ const ProfileScreen: React.FC = ({}) => {
             <TouchableOpacity onPress={saveChangesSettings} style={styles.saveChangesButton}>
               <Text style={styles.buttonText}>Save Changes</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { setIsSettingsModalVisible(!isSettingsModalVisible); setTempProfileState(profileState); }} style={styles.cancelButton}>
+            <TouchableOpacity onPress={() => { setTempCameraRollAccess(hasCameraRollAccess); setIsSettingsModalVisible(!isSettingsModalVisible); setTempProfileState(profileState); }} style={styles.cancelButton}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
             <View style={styles.deleteAccountButtonContainer}>

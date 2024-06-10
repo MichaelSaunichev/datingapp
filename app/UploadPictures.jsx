@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
@@ -13,12 +13,23 @@ const UploadPictures = () => {
     const [deleteMode, setDeleteMode] = useState(false);
     const [selectedPictures, setSelectedPictures] = useState([]);
 
+    const [hasCameraRollAccess, setHasCameraRollAccess] = useState(false);
+
+    useEffect(() => {
+        const checkPermissions = async () => {
+            const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
+            setHasCameraRollAccess(status === 'granted');
+        };
+        checkPermissions();
+    }, []);
+
     const requestPermissions = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
           alert('This app needs access to your photo library to upload profile pictures.');
           return false;
         }
+        setHasCameraRollAccess(true);
         return true;
     };
       
@@ -99,6 +110,19 @@ const UploadPictures = () => {
         }
     };
 
+    const savePermissionChanges = async (newAccess) => {
+        if (newAccess) {
+            const permissionGranted = await requestPermissions();
+            setHasCameraRollAccess(permissionGranted);
+        } else {
+            Alert.alert(
+                "Access Disabled",
+                "You have disabled camera roll access."
+            );
+            setHasCameraRollAccess(false);
+        }
+    };
+
     return (
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -127,6 +151,15 @@ const UploadPictures = () => {
                             )}
                         </TouchableOpacity>
                     ))}
+                </View>
+                <View style={styles.switchContainer}>
+                    <Text style={styles.switchLabel}>Camera Roll Access</Text>
+                    <Switch
+                        value={hasCameraRollAccess}
+                        onValueChange={async (value) => {
+                            await savePermissionChanges(value);
+                        }}
+                    />
                 </View>
                 {profile.pictures.length < 5 && !deleteMode && (
                     <TouchableOpacity
@@ -228,5 +261,15 @@ const styles = StyleSheet.create({
     },
     selectedImageContainer: {
         opacity: 0.5,
-    }
+    },
+    switchContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    switchLabel: {
+        color: 'white',
+        fontSize: 16,
+    },
 });
