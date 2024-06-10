@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert } from 'react-native';
+import { useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import * as ImagePicker from 'expo-image-picker';
+import { launchImageLibraryAsync, MediaTypeOptions, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 import { useProfile } from './ProfileContext';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -13,72 +13,63 @@ const UploadPictures = () => {
     const [deleteMode, setDeleteMode] = useState(false);
     const [selectedPictures, setSelectedPictures] = useState([]);
 
-    const [hasCameraRollAccess, setHasCameraRollAccess] = useState(false);
-
-    useEffect(() => {
-        const checkPermissions = async () => {
-            const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
-            setHasCameraRollAccess(status === 'granted');
-        };
-        checkPermissions();
-    }, []);
-
-    const requestPermissions = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-          alert('This app needs access to your photo library to upload profile pictures.');
-          return false;
-        }
-        setHasCameraRollAccess(true);
-        return true;
-    };
-      
     const uploadPicture = async () => {
         if (profile.pictures.length >= 5) {
-          alert("You can only upload up to 5 pictures.");
-          return;
+            alert("You can only upload up to 5 pictures.");
+            return;
         }
+    
+        const permissionResult = await requestMediaLibraryPermissionsAsync();
       
-        const hasPermission = await requestPermissions();
-        if (!hasPermission) return;
-      
+        if (permissionResult.granted === false) {
+            Alert.alert(
+                "Permission Required",
+                "Camera roll access is needed to upload pictures. Please enable access in your phone's settings.",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  { text: "Open Settings", onPress: () => Linking.openSettings() }
+                ]
+            );
+            return;
+        }
+    
         setUploading(true);
         let result;
         try {
-          result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 1,
-          });
-      
-          if (!result.canceled) {
-            const uri = result.assets[0].uri;
-            const manipulatedImage = await ImageManipulator.manipulateAsync(
-              uri,
-              [{ resize: { width: 800 } }],
-              { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-            );
-      
-            const resizedUri = manipulatedImage.uri;
-            const response = await fetch(resizedUri);
-            const blob = await response.blob();
-            const storage = getStorage();
-            const storageRef = ref(storage, `pictures/${Date.now()}`);
-            await uploadBytes(storageRef, blob);
-            const imageUrl = await getDownloadURL(storageRef);
-      
-            // Update the global profile state with the new image URL
-            setProfile(prevProfile => ({
-              ...prevProfile,
-              pictures: [...prevProfile.pictures, imageUrl]
-            }));
-          }
+            result = await launchImageLibraryAsync({
+                mediaTypes: MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 1,
+            });
+    
+            if (!result.canceled) {
+                const uri = result.assets[0].uri;
+                const manipulatedImage = await ImageManipulator.manipulateAsync(
+                    uri,
+                    [{ resize: { width: 800 } }],
+                    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+                );
+    
+                const resizedUri = manipulatedImage.uri;
+                const response = await fetch(resizedUri);
+                const blob = await response.blob();
+                const storage = getStorage();
+                const storageRef = ref(storage, `pictures/${Date.now()}`);
+                await uploadBytes(storageRef, blob);
+                const imageUrl = await getDownloadURL(storageRef);
+    
+                // Update the global profile state with the new image URL
+                setProfile(prevProfile => ({
+                    ...prevProfile,
+                    pictures: [...prevProfile.pictures, imageUrl]
+                }));
+            }
         } catch (error) {
-          console.error("Error uploading image:", error);
-          alert("Failed to upload image: " + error.message);
+            console.error("Error uploading image:", error);
+            alert("Failed to upload image: " + error.message);
         } finally {
-          setUploading(false);
+            setUploading(false);
         }
     };
     
@@ -110,19 +101,6 @@ const UploadPictures = () => {
         }
     };
 
-    const savePermissionChanges = async (newAccess) => {
-        if (newAccess) {
-            const permissionGranted = await requestPermissions();
-            setHasCameraRollAccess(permissionGranted);
-        } else {
-            Alert.alert(
-                "Access Disabled",
-                "You have disabled camera roll access."
-            );
-            setHasCameraRollAccess(false);
-        }
-    };
-
     return (
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -151,15 +129,6 @@ const UploadPictures = () => {
                             )}
                         </TouchableOpacity>
                     ))}
-                </View>
-                <View style={styles.switchContainer}>
-                    <Text style={styles.switchLabel}>Camera Roll Access</Text>
-                    <Switch
-                        value={hasCameraRollAccess}
-                        onValueChange={async (value) => {
-                            await savePermissionChanges(value);
-                        }}
-                    />
                 </View>
                 {profile.pictures.length < 5 && !deleteMode && (
                     <TouchableOpacity
@@ -261,15 +230,5 @@ const styles = StyleSheet.create({
     },
     selectedImageContainer: {
         opacity: 0.5,
-    },
-    switchContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    switchLabel: {
-        color: 'white',
-        fontSize: 16,
-    },
+    }
 });

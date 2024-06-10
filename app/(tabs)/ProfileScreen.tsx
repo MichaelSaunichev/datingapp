@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Switch, Modal, View, Text, TextInput, ActivityIndicator, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { Switch, Modal, View, Text, TextInput, ActivityIndicator, StyleSheet, Image, TouchableOpacity, ScrollView, Linking, Alert  } from 'react-native';
+import { requestMediaLibraryPermissionsAsync, launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
-import { getAuth, signOut, deleteUser, User } from "firebase/auth";
+import { getAuth, signOut, deleteUser } from "firebase/auth";
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -53,8 +53,6 @@ const ProfileScreen: React.FC = ({}) => {
   const socketRef = useRef(null as Socket | null);
 
   const [loadingTimeout, setLoadingTimeout] = useState(false);
-  const [hasCameraRollAccess, setHasCameraRollAccess] = useState<boolean>(false);
-  const [tempCameraRollAccess, setTempCameraRollAccess] = useState<boolean>(false);
 
   const userId = userEmail;
   
@@ -97,18 +95,6 @@ const ProfileScreen: React.FC = ({}) => {
         socket.disconnect();
     };
   }, []);
-
-  useEffect(() => {
-    const checkPermissions = async () => {
-      const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
-      setHasCameraRollAccess(status === 'granted');
-    };
-    checkPermissions();
-  }, []);
-
-  useEffect(() => {
-    setTempCameraRollAccess(hasCameraRollAccess);
-  }, [hasCameraRollAccess]);
   
 
   useEffect(() => {
@@ -170,28 +156,11 @@ const ProfileScreen: React.FC = ({}) => {
 
   const saveChangesSettings = async () => {
     updateUserData();
-  
-    // Check if the camera roll access state needs to be updated
-    if (tempCameraRollAccess !== hasCameraRollAccess) {
-      if (tempCameraRollAccess) {
-        // Request permission if enabling access
-        const permissionGranted = await requestPermissions();
-        setHasCameraRollAccess(permissionGranted);
-      } else {
-        // Notify user to manually disable permission in device settings if disabling access
-        Alert.alert(
-          "Access Disabled",
-          "You have disabled camera roll access. To enable it again, please go to your app settings."
-        );
-        setHasCameraRollAccess(false);
-      }
-    }
-  
     setProfileState({
       ...tempProfileState
     });
     setIsSettingsModalVisible(false);
-  };
+  }
 
   const handleLogOut = async () => {
     const auth = getAuth();
@@ -274,67 +243,58 @@ const ProfileScreen: React.FC = ({}) => {
     }
   };
 
-  const requestPermissions = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('This app needs access to your photo library to upload profile pictures.');
-      return false;
-    }
-    setHasCameraRollAccess(true);
-    return true;
-  };
-
   const handleImageUpload = async () => {
-    if (!hasCameraRollAccess) {
-        const permissionGranted = await requestPermissions();
-        if (!permissionGranted) {
-            setIsImageUploading(false);
-            return;
-        }
-    }
-
     setIsImageUploading(true);
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
-    });
-
-    if (!result.canceled) {
-        try {
-            const uri = result.assets[0].uri;
-
-            // Resize and compress the image
-            const manipulatedImage = await ImageManipulator.manipulateAsync(
-                uri,
-                [{ resize: { width: 800 } }],
-                { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-            );
-
-            const resizedUri = manipulatedImage.uri;
-            const response = await fetch(resizedUri);
-            const blob = await response.blob();
-            const storage = getStorage();
-            const storageRef = ref(storage, `pictures/${Date.now()}`);
-            await uploadBytes(storageRef, blob);
-            const imageUrl = await getDownloadURL(storageRef);
-
-            setTempProfileState((prevState) => ({
-                ...prevState,
-                pictures: [...prevState.pictures, imageUrl],
-            }));
-        } catch (error) {
-            console.error("Error uploading image:", error instanceof Error ? error.message : error);
-            alert("Failed to upload image: " + (error instanceof Error ? error.message : 'Unknown error'));
-        } finally {
-            setIsImageUploading(false);
-        }
-    } else {
-        setIsImageUploading(false);
+    const permissionResult = await requestMediaLibraryPermissionsAsync();
+  
+    if (permissionResult.granted === false) {
+      Alert.alert(
+        "Permission Required",
+        "Camera roll access is needed to upload pictures. Please enable access in your phone's settings.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings() }
+        ]
+      );
+      setIsImageUploading(false);
+      return;
     }
-  };  
+  
+    let result = await launchImageLibraryAsync({
+      mediaTypes: MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+  
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+  
+      // Resize and compress the image
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 800 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
+  
+      const resizedUri = manipulatedImage.uri;
+      const response = await fetch(resizedUri);
+      const blob = await response.blob();
+      const storage = getStorage();
+      const storageRef = ref(storage, `pictures/${Date.now()}`);
+      await uploadBytes(storageRef, blob);
+      const imageUrl = await getDownloadURL(storageRef);
+  
+      setTempProfileState((prevState) => ({
+        ...prevState,
+        pictures: [...prevState.pictures, imageUrl],
+      }));
+  
+      setIsImageUploading(false);
+    } else {
+      setIsImageUploading(false);
+    }
+  };
 
   if (loadingProfile) {
     return (
@@ -416,19 +376,6 @@ const ProfileScreen: React.FC = ({}) => {
           </Modal>
           <View style={styles.modalView}>
             <Text style={styles.modalTitle}>Settings</Text>
-            <View style={styles.settingContainer}>
-              <Text>Camera Roll Access</Text>
-              <Switch
-                value={tempCameraRollAccess}
-                onValueChange={async (value) => {
-                  if (value) {
-                    setTempCameraRollAccess(true);
-                  } else {
-                    setTempCameraRollAccess(false);
-                  }
-                }}
-              />
-            </View>
   
             {/* Pause account */}
             <View style={styles.settingContainer}>
@@ -462,7 +409,7 @@ const ProfileScreen: React.FC = ({}) => {
             <TouchableOpacity onPress={saveChangesSettings} style={styles.saveChangesButton}>
               <Text style={styles.buttonText}>Save Changes</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { setTempCameraRollAccess(hasCameraRollAccess); setIsSettingsModalVisible(!isSettingsModalVisible); setTempProfileState(profileState); }} style={styles.cancelButton}>
+            <TouchableOpacity onPress={() => { setIsSettingsModalVisible(!isSettingsModalVisible); setTempProfileState(profileState); }} style={styles.cancelButton}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
             <View style={styles.deleteAccountButtonContainer}>
