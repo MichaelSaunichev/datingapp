@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 import { useProfile } from './ProfileContext';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -13,49 +13,61 @@ const UploadPictures = () => {
     const [deleteMode, setDeleteMode] = useState(false);
     const [selectedPictures, setSelectedPictures] = useState([]);
 
+    const requestPermissions = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          alert('This app needs access to your photo library to upload profile pictures.');
+          return false;
+        }
+        return true;
+    };
+      
     const uploadPicture = async () => {
         if (profile.pictures.length >= 5) {
-            alert("You can only upload up to 5 pictures.");
-            return;
+          alert("You can only upload up to 5 pictures.");
+          return;
         }
-
+      
+        const hasPermission = await requestPermissions();
+        if (!hasPermission) return;
+      
         setUploading(true);
         let result;
         try {
-            result = await launchImageLibraryAsync({
-                mediaTypes: MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [1, 1],
-                quality: 1,
-            });
-
-            if (!result.canceled) {
-                const uri = result.assets[0].uri;
-                const manipulatedImage = await ImageManipulator.manipulateAsync(
-                    uri,
-                    [{ resize: { width: 800 } }],
-                    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-                );
-
-                const resizedUri = manipulatedImage.uri;
-                const response = await fetch(resizedUri);
-                const blob = await response.blob();
-                const storage = getStorage();
-                const storageRef = ref(storage, `pictures/${Date.now()}`);
-                await uploadBytes(storageRef, blob);
-                const imageUrl = await getDownloadURL(storageRef);
-
-                // Update the global profile state with the new image URL
-                setProfile(prevProfile => ({
-                    ...prevProfile,
-                    pictures: [...prevProfile.pictures, imageUrl]
-                }));
-            }
+          result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
+          });
+      
+          if (!result.canceled) {
+            const uri = result.assets[0].uri;
+            const manipulatedImage = await ImageManipulator.manipulateAsync(
+              uri,
+              [{ resize: { width: 800 } }],
+              { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+            );
+      
+            const resizedUri = manipulatedImage.uri;
+            const response = await fetch(resizedUri);
+            const blob = await response.blob();
+            const storage = getStorage();
+            const storageRef = ref(storage, `pictures/${Date.now()}`);
+            await uploadBytes(storageRef, blob);
+            const imageUrl = await getDownloadURL(storageRef);
+      
+            // Update the global profile state with the new image URL
+            setProfile(prevProfile => ({
+              ...prevProfile,
+              pictures: [...prevProfile.pictures, imageUrl]
+            }));
+          }
         } catch (error) {
-            console.error("Error uploading image:", error);
-            alert("Failed to upload image: " + error.message);
+          console.error("Error uploading image:", error);
+          alert("Failed to upload image: " + error.message);
         } finally {
-            setUploading(false);
+          setUploading(false);
         }
     };
     

@@ -216,34 +216,6 @@ const ProfileScreen: React.FC = ({}) => {
     }
   };
 
-  const setTheImageBlobs = async () => {
-    if (alreadyLoadingBlobs){
-      return
-    }
-    setalreadyLoadingBlobs(true);
-    const imageUrls = tempProfileState.pictures || [];
-    try {
-      const blobs = await Promise.all(imageUrls.map(fetchImageAndConvertToBlob));
-      setImageBlobs(blobs);
-    } catch (error) {
-      console.error('Error fetching images and converting to blobs:', error);
-    } finally {
-      setalreadyLoadingBlobs(false);
-      setIsEditModalVisible(true);
-    }
-  };
-
-  const fetchImageAndConvertToBlob = async (url: string): Promise<string> => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      return URL.createObjectURL(blob);
-    } catch (error) {
-      console.error('Error fetching image and converting to blob:', error);
-      return '';
-    }
-  };
-
   const deleteImage = (index: number) => {
     const imageUrlToDelete = tempProfileState.pictures[index];
     setTempProfileState(prevState => ({
@@ -274,46 +246,51 @@ const ProfileScreen: React.FC = ({}) => {
   const handleImageUpload = async () => {
     setIsImageUploading(true);
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  
+
     if (permissionResult.granted === false) {
-      alert("Please allow access to your camera roll in Settings.");
-      setIsImageUploading(false);
-      return;
+        alert("This app needs access to your photo library to upload profile pictures.");
+        setIsImageUploading(false);
+        return;
     }
-  
+
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
     });
-  
+
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-  
-      // Resize and compress the image
-      const manipulatedImage = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 800 } }],
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-      );
-  
-      const resizedUri = manipulatedImage.uri;
-      const response = await fetch(resizedUri);
-      const blob = await response.blob();
-      const storage = getStorage();
-      const storageRef = ref(storage, `pictures/${Date.now()}`);
-      await uploadBytes(storageRef, blob);
-      const imageUrl = await getDownloadURL(storageRef);
-  
-      setTempProfileState((prevState) => ({
-        ...prevState,
-        pictures: [...prevState.pictures, imageUrl],
-      }));
-  
-      setIsImageUploading(false);
+        try {
+            const uri = result.assets[0].uri;
+
+            // Resize and compress the image
+            const manipulatedImage = await ImageManipulator.manipulateAsync(
+                uri,
+                [{ resize: { width: 800 } }],
+                { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+            );
+
+            const resizedUri = manipulatedImage.uri;
+            const response = await fetch(resizedUri);
+            const blob = await response.blob();
+            const storage = getStorage();
+            const storageRef = ref(storage, `pictures/${Date.now()}`);
+            await uploadBytes(storageRef, blob);
+            const imageUrl = await getDownloadURL(storageRef);
+
+            setTempProfileState((prevState) => ({
+                ...prevState,
+                pictures: [...prevState.pictures, imageUrl],
+            }));
+        } catch (error) {
+            console.error("Error uploading image:", error instanceof Error ? error.message : error);
+            alert("Failed to upload image: " + (error instanceof Error ? error.message : 'Unknown error'));
+        } finally {
+            setIsImageUploading(false);
+        }
     } else {
-      setIsImageUploading(false);
+        setIsImageUploading(false);
     }
   };
 
