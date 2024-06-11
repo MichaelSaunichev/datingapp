@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Switch, Modal, View, Text, TextInput, ActivityIndicator, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { Switch, Modal, View, Text, TextInput, ActivityIndicator, StyleSheet, Image, TouchableOpacity, ScrollView, Linking, Alert  } from 'react-native';
+import { requestMediaLibraryPermissionsAsync, launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
-import { getAuth, signOut, deleteUser, User } from "firebase/auth";
+import { getAuth, signOut, deleteUser } from "firebase/auth";
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -173,46 +173,50 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const deleteAccount = async () => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+        console.error('Error: No current user found in Firebase authentication.');
+        return;
+    }
+
     try {
+        await deleteUser(currentUser);
+        await Promise.all(profileState.pictures.map(async (imageUrl) => {
+            try {
+                const storage = getStorage();
+                const imageRef = ref(storage, imageUrl);
+                await deleteObject(imageRef);
+            } catch (error) {
+                console.error('Error deleting image from Firebase Storage:', error);
+            }
+        }));
 
-      await Promise.all(profileState.pictures.map(async (imageUrl) => {
-        try {
-          const storage = getStorage();
-          const imageRef = ref(storage, imageUrl);
-          await deleteObject(imageRef);
-          console.log('Image deleted successfully from Firebase Storage:', imageUrl);
-        } catch (error) {
-          console.error('Error deleting image from Firebase Storage:', error);
-        }
-      }));
+        const response = await fetch(`http://3.133.25.164:3000/api/user/delete/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
 
-      const response = await fetch(`${API_URL}/api/user/delete/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-  
-      if (response.ok) {
-        console.log(`User account with userId ${userId} deleted successfully!`);
-        if (socketRef.current) {
-          socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: "all", func: "2" });
-        }
-      } else {
-        console.error(`Failed to delete user account with userId ${userId}.`);
-      }
-
-      const auth = getAuth();
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-            await deleteUser(currentUser);
-            console.log('Firebase user account deleted successfully.');
+        if (response.ok) {
+            if (socketRef.current) {
+                socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: "all", func: "2" });
+            }
         } else {
-            console.error('Error: No current user found in Firebase authentication.');
-            return;
+            console.error(`Failed to delete user account with userId ${userId}.`);
         }
-    } catch (error) {
-      console.error('Error deleting user account:', error);
+    } catch (firebaseError) {
+        console.error('Error deleting Firebase user account:', firebaseError);
+        Alert.alert('Account Deletion Failed', 'Failed to delete your Firebase account. Please try again.');
+    } finally {
+        try {
+            await signOut(auth);
+        } catch (signOutError) {
+            console.error('Error signing out:', signOutError);
+            Alert.alert('Sign Out Failed', 'Failed to sign out. Please try again.');
+        }
     }
   };
 
@@ -245,52 +249,54 @@ const ProfileScreen: React.FC = ({}) => {
 
   const handleImageUpload = async () => {
     setIsImageUploading(true);
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
+    const permissionResult = await requestMediaLibraryPermissionsAsync();
+  
     if (permissionResult.granted === false) {
-        alert("This app needs access to your photo library to upload profile pictures.");
-        setIsImageUploading(false);
-        return;
+      Alert.alert(
+        "Permission Required",
+        "Camera roll access is needed to upload pictures. Please enable access in your phone's settings.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings() }
+        ]
+      );
+      setIsImageUploading(false);
+      return;
     }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
+  
+    let result = await launchImageLibraryAsync({
+      mediaTypes: MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
     });
-
+  
     if (!result.canceled) {
-        try {
-            const uri = result.assets[0].uri;
-
-            // Resize and compress the image
-            const manipulatedImage = await ImageManipulator.manipulateAsync(
-                uri,
-                [{ resize: { width: 800 } }],
-                { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-            );
-
-            const resizedUri = manipulatedImage.uri;
-            const response = await fetch(resizedUri);
-            const blob = await response.blob();
-            const storage = getStorage();
-            const storageRef = ref(storage, `pictures/${Date.now()}`);
-            await uploadBytes(storageRef, blob);
-            const imageUrl = await getDownloadURL(storageRef);
-
-            setTempProfileState((prevState) => ({
-                ...prevState,
-                pictures: [...prevState.pictures, imageUrl],
-            }));
-        } catch (error) {
-            console.error("Error uploading image:", error instanceof Error ? error.message : error);
-            alert("Failed to upload image: " + (error instanceof Error ? error.message : 'Unknown error'));
-        } finally {
-            setIsImageUploading(false);
-        }
+      const uri = result.assets[0].uri;
+  
+      // Resize and compress the image
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 800 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
+  
+      const resizedUri = manipulatedImage.uri;
+      const response = await fetch(resizedUri);
+      const blob = await response.blob();
+      const storage = getStorage();
+      const storageRef = ref(storage, `pictures/${Date.now()}`);
+      await uploadBytes(storageRef, blob);
+      const imageUrl = await getDownloadURL(storageRef);
+  
+      setTempProfileState((prevState) => ({
+        ...prevState,
+        pictures: [...prevState.pictures, imageUrl],
+      }));
+  
+      setIsImageUploading(false);
     } else {
-        setIsImageUploading(false);
+      setIsImageUploading(false);
     }
   };
 
