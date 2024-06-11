@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "datingapp",
+    "name": "Mustang Match",
     "slug": "datingapp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,11 +13,37 @@
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
-      "**/*"
+      "**/*",
+      "node_modules/@expo/vector-icons/fonts/*",
+      "node_modules/react-native-vector-icons/Fonts/*"
     ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.michaelsaunichev.datingapp"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.michaelsaunichev.datingapp",
+      "buildNumber": "10",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSExceptionDomains": {
+            "ec2-3-135-241-67.us-east-2.compute.amazonaws.com": {
+              "NSIncludesSubdomains": true,
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSExceptionMinimumTLSVersion": "TLSv1.0",
+              "NSExceptionRequiresForwardSecrecy": false,
+              "NSRequiresCertificateTransparency": false
+            },
+            "3.135.241.67": {
+              "NSIncludesSubdomains": true,
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSExceptionMinimumTLSVersion": "TLSv1.0",
+              "NSExceptionRequiresForwardSecrecy": false,
+              "NSRequiresCertificateTransparency": false
+            }
+          }
+        },
+        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to allow you to upload profile pictures. You can change this permission in the general settings at any time.",
+        "NSPhotoLibraryAddUsageDescription": "This app requires access to your photo library to save profile pictures. You can change this permission in the general settings at any time."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -32,7 +58,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true

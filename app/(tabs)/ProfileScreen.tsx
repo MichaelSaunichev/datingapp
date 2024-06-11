@@ -173,46 +173,50 @@ const ProfileScreen: React.FC = ({}) => {
   };
 
   const deleteAccount = async () => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+        console.error('Error: No current user found in Firebase authentication.');
+        return;
+    }
+
     try {
+        await deleteUser(currentUser);
+        await Promise.all(profileState.pictures.map(async (imageUrl) => {
+            try {
+                const storage = getStorage();
+                const imageRef = ref(storage, imageUrl);
+                await deleteObject(imageRef);
+            } catch (error) {
+                console.error('Error deleting image from Firebase Storage:', error);
+            }
+        }));
 
-      await Promise.all(profileState.pictures.map(async (imageUrl) => {
-        try {
-          const storage = getStorage();
-          const imageRef = ref(storage, imageUrl);
-          await deleteObject(imageRef);
-          console.log('Image deleted successfully from Firebase Storage:', imageUrl);
-        } catch (error) {
-          console.error('Error deleting image from Firebase Storage:', error);
-        }
-      }));
+        const response = await fetch(`http://3.133.25.164:3000/api/user/delete/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
 
-      const response = await fetch(`${API_URL}/api/user/delete/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-  
-      if (response.ok) {
-        console.log(`User account with userId ${userId} deleted successfully!`);
-        if (socketRef.current) {
-          socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: "all", func: "2" });
-        }
-      } else {
-        console.error(`Failed to delete user account with userId ${userId}.`);
-      }
-
-      const auth = getAuth();
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-            await deleteUser(currentUser);
-            console.log('Firebase user account deleted successfully.');
+        if (response.ok) {
+            if (socketRef.current) {
+                socketRef.current.emit('updateChats', { theUserId1: userId, theUserId2: "all", func: "2" });
+            }
         } else {
-            console.error('Error: No current user found in Firebase authentication.');
-            return;
+            console.error(`Failed to delete user account with userId ${userId}.`);
         }
-    } catch (error) {
-      console.error('Error deleting user account:', error);
+    } catch (firebaseError) {
+        console.error('Error deleting Firebase user account:', firebaseError);
+        Alert.alert('Account Deletion Failed', 'Failed to delete your Firebase account. Please try again.');
+    } finally {
+        try {
+            await signOut(auth);
+        } catch (signOutError) {
+            console.error('Error signing out:', signOutError);
+            Alert.alert('Sign Out Failed', 'Failed to sign out. Please try again.');
+        }
     }
   };
 
