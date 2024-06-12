@@ -10,7 +10,7 @@ const EnterName = () => {
     const [isButtonEnabled, setIsButtonEnabled] = useState(profile.name.trim().length > 0); // State to track button enablement
 
     const handleNameChange = (name) => {
-        const trimmedName = name.trim().substring(0, 15); // Trim and limit to 15 characters
+        const trimmedName = name.trim().substring(0, 10); // Trim and limit to 10 characters
         setIsButtonEnabled(trimmedName.length > 0); // Enable/disable button based on input value
         setProfile(prevProfile => ({
             ...prevProfile,
@@ -29,7 +29,7 @@ const EnterName = () => {
                         placeholder="Name"
                         placeholderTextColor="#888"
                         onChangeText={handleNameChange}
-                        maxLength={15}
+                        maxLength={10}
                     />
                     <TouchableOpacity
                         style={[styles.button]}
