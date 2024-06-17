@@ -153,14 +153,6 @@ const UploadPictures = () => {
                         <Text style={styles.buttonText}>Delete Selected</Text>
                     </TouchableOpacity>
                 )}
-                <TouchableOpacity
-                        style={[styles.button, uploading && { opacity: 0.5 }]}
-                        onPress={() => {
-                            navigation.navigate('EnterBio');
-                        }}
-                    >
-                        <Text style={styles.buttonText}>Back</Text>
-                </TouchableOpacity>
                 {profile.pictures.length >= 3 && profile.pictures.length <= 5 && (
                     <TouchableOpacity
                         style={[styles.button, uploading && { opacity: 0.5 }]}
@@ -173,6 +165,14 @@ const UploadPictures = () => {
                         <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>
                 )}
+                <TouchableOpacity
+                        style={[styles.button, uploading && { opacity: 0.5 }]}
+                        onPress={() => {
+                            navigation.navigate('EnterBio');
+                        }}
+                    >
+                        <Text style={styles.buttonText}>Back</Text>
+                </TouchableOpacity>
             </ScrollView>
         </View>
     );

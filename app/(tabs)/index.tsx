@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRoute } from '@react-navigation/native';
 import io from 'socket.io-client';
@@ -37,36 +36,32 @@ const TabOneScreen = () => {
 
   const userId = userEmail;
 
-  useFocusEffect(
-    React.useCallback(() => {
-      setLoading(false);
-      setMatched(false);
-  
-      const fetchUser = async () => {
-        try {
-          const response = await fetch(`${API_URL}/api/user/${userId}`);
-          if (!response.ok) {
-            if (response.status === 404) {
-              throw new Error('User not found');
-            } else {
-              throw new Error('Failed to fetch user data');
-            }
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/user/${userId}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('User not found');
+          } else {
+            throw new Error('Failed to fetch user data');
           }
-          const userData = await response.json();
-          if (userData) {
-            const { dating_preferences } = userData;
-            setPreferences({
-              datingPreferences: dating_preferences,
-            });
-          }
-        } catch (error) {
-          setTimeout(fetchUser, 1000);
         }
-      };
-  
-      fetchUser();
-    }, [userId])
-  );
+        const userData = await response.json();
+        if (userData) {
+          const { dating_preferences } = userData;
+          setPreferences({
+            datingPreferences: dating_preferences,
+          });
+        }
+      } catch (error) {
+        setTimeout(fetchUser, 1000);
+      }
+    };
+
+
+    fetchUser();
+  }, [userId]);
 
   useEffect(() => {
     if (preferences){

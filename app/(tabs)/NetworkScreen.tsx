@@ -379,7 +379,7 @@ const NetworkScreen  = () => {
             Alert.alert('Report submitted', 'Thank you for your feedback.');
         } catch (error) {
             console.error('Error reporting:', error);
-            Alert.alert('Report failed', 'There was an issue submitting your report.');
+            Alert.alert('Report Failed', 'There was an issue submitting your report. Please try again later or contact support if the problem persists.');
         }
     };
     
