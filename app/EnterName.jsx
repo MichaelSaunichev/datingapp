@@ -31,14 +31,6 @@ const EnterName = () => {
                         onChangeText={handleNameChange}
                         maxLength={10}
                     />
-                    <TouchableOpacity
-                        style={[styles.button]}
-                        onPress={() => {
-                            navigation.navigate('Welcome');
-                        }}
-                    >
-                        <Text style={styles.buttonText}>Back</Text>
-                    </TouchableOpacity>
 
                     <TouchableOpacity
                         style={[styles.button, !isButtonEnabled && { opacity: 0.5 }]}
@@ -52,6 +44,14 @@ const EnterName = () => {
                         disabled={!isButtonEnabled}
                     >
                         <Text style={styles.buttonText}>Next</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.button]}
+                        onPress={() => {
+                            navigation.navigate('Welcome');
+                        }}
+                    >
+                        <Text style={styles.buttonText}>Back</Text>
                     </TouchableOpacity>
                 </KeyboardAvoidingView>
             </View>

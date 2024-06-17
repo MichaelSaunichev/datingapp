@@ -36,14 +36,6 @@ const EnterBio = () => {
                     />
                     <Text style={styles.charCount}>{profile.bio.length}/100</Text>
                     <TouchableOpacity
-                        style={[styles.button]}
-                        onPress={() => {
-                            navigation.navigate('SelectGender');
-                        }}
-                    >
-                        <Text style={styles.buttonText}>Back</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
                         style={[styles.button, !isButtonEnabled && { opacity: 0.5 }]}
                         onPress={() => {
                             if (profile.bio.trim().length > 0) {
@@ -55,6 +47,14 @@ const EnterBio = () => {
                         disabled={!isButtonEnabled}
                     >
                         <Text style={styles.buttonText}>Next</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.button]}
+                        onPress={() => {
+                            navigation.navigate('SelectGender');
+                        }}
+                    >
+                        <Text style={styles.buttonText}>Back</Text>
                     </TouchableOpacity>
                 </KeyboardAvoidingView>
             </View>

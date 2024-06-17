@@ -193,7 +193,7 @@ const ProfileScreen: React.FC = ({}) => {
             }
         }));
 
-        const response = await fetch(`http://3.133.25.164:3000/api/user/delete/${userId}`, {
+        const response = await fetch(`${API_URL}/api/user/delete/${userId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

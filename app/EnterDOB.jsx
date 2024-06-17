@@ -37,14 +37,6 @@ const EnterDOB = () => {
                 />
             </View>
             <TouchableOpacity
-                style={[styles.button]}
-                onPress={() => {
-                    navigation.navigate('EnterName');
-                }}
-            >
-                <Text style={styles.buttonText}>Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
                 style={[styles.button, { opacity: profile.dob && calculateAge(profile.dob) > 18 && calculateAge(profile.dob) < 100 ? 1 : 0.5 }]}
                 onPress={() => {
                     if (profile.dob) {
@@ -59,6 +51,14 @@ const EnterDOB = () => {
                 disabled={!profile.dob || calculateAge(profile.dob) <= 18 || calculateAge(profile.dob) >= 100}
             >
                 <Text style={styles.buttonText}>Next</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.button]}
+                onPress={() => {
+                    navigation.navigate('EnterName');
+                }}
+            >
+                <Text style={styles.buttonText}>Back</Text>
             </TouchableOpacity>
         </View>
     );
